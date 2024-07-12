@@ -1,11 +1,14 @@
 """
 Reader for ScanImage 5 scans (including multiROI).
 
-Example:
+Examples:
+----------
+
     import scanreader
     scan = scanreader.read_scan('my_scan_*.tif')
     for field in scan:
         #process field
+
 """
 import re
 from glob import glob
@@ -28,8 +31,10 @@ _scans = {'5.1': scans.Scan5Point1, '5.2': scans.Scan5Point2, '5.3': scans.Scan5
 
 
 def read_scan(pathnames, dtype=np.int16, join_contiguous=False, lbm=False, x_cut=(), y_cut=()):
-    """ Reads a ScanImage scan.
-    Parameters:
+    """
+    Reads a ScanImage scan.
+
+    Parameters
     ----------
     pathnames: os.PathLike or str or list of os.PathLike or str
         Pathname(s) or pathname pattern(s) to read.
@@ -51,8 +56,12 @@ def read_scan(pathnames, dtype=np.int16, join_contiguous=False, lbm=False, x_cut
         The `x_cut` and `y_cut` parameters are used to cut the scan in the x_center_coordinate and y_center_coordinate dimensions, respectively.
         For example, `x_cut=slice(10, 20)` will start the image 10 pixels in, and end the image 20 pixels from the far edge.
 
-    Returns:
+    Returns
+    -------
+
+    LBMScanMultiROI
         A Scan object (subclass of BaseScan) with metadata and data. See Readme for details.
+
     """
     # Expand wildcards
     filenames = expand_wildcard(pathnames)
@@ -85,14 +94,7 @@ def read_scan(pathnames, dtype=np.int16, join_contiguous=False, lbm=False, x_cut
 
 
 def expand_wildcard(wildcard):
-    """ Expands a list of pathname patterns to form a sorted list of absolute filenames.
-
-    Args:
-        wildcard: String or list of strings. Pathname pattern(s) to be extended with glob.
-
-    Returns:
-        A list of string. Absolute filenames.
-    """
+    """ Expands a list of pathname patterns to form a sorted list of absolute filenames. """
     if isinstance(wildcard, str):
         wildcard_list = [wildcard]
     elif isinstance(wildcard, (tuple, list)):
@@ -115,14 +117,7 @@ def expand_wildcard(wildcard):
 
 
 def get_scanimage_version(info):
-    """ Looks for the ScanImage version in the tiff file headers.
-
-    Args:
-        info: A string. All headers from tiff tags.
-
-    Returns:
-        A string. ScanImage version
-    """
+    """ Looks for the ScanImage version in the tiff file headers. """
     pattern = re.compile(r"SI.?\.VERSION_MAJOR = '?(?P<version>[^\s']*)'?")
     match = re.search(pattern, info)
     if match:
@@ -134,14 +129,8 @@ def get_scanimage_version(info):
 
 
 def is_scan_multiROI(info):
-    """Looks whether the scan is multiROI in the tiff file headers.
+    """ Looks whether the scan is multiROI in the tiff file headers. """
 
-    Args:
-        info: A string. All headers from tiff tags.
-
-    Returns:
-        A bool. Whether scan is multiroi or not.
-    """
     match = re.search(r'hRoiManager\.mroiEnable = (?P<is_multiROI>.)', info)
     is_multiROI = (match.group('is_multiROI') == '1') if match else None
     return is_multiROI

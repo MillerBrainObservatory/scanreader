@@ -1,21 +1,12 @@
-.. scanreader documentation master file, created by
-   sphinx-quickstart on Sat Jun 15 21:36:31 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+scanreader Documentation!
+#########################
 
-Welcome to scanreader's documentation!
-======================================
+
+Contents
+=================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Section Navigation:
+   :maxdepth: 3
 
-    guide <user_guide/index>
-    API <api/index>
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    usage
+    api/index

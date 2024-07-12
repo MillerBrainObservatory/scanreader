@@ -1,14 +1,34 @@
-
-
-###
 API
 ###
 
-.. toctree::
-    :maxdepth: 2
-    :caption: Core Functions:
+.. currentmodule:: scanreader
 
-    core
-    .. scans
-    .. multiroi
-    .. exceptions
+.. autofunction:: read_scan
+
+Scans
+=======
+
+.. autoclass:: LBMScanMultiROI
+.. autoclass:: BaseScan
+.. autoclass:: BaseScan5
+.. autoclass:: ScanMultiROI
+
+ROI's
+=======
+
+.. currentmodule:: multiroi
+.. autoclass:: ROI
+.. autoclass:: Scanfield
+.. autoclass:: Field
+
+
+Exceptions
+==============
+
+.. currentmodule:: exceptions
+.. autoclass:: ScanReaderException
+.. autoclass:: ScanImageVersionError
+.. autoclass:: PathnameError
+.. autoclass:: FieldDimensionMismatch
+
+.. _ScanImage: https://www.mbfbioscience.com/products/scanimage/

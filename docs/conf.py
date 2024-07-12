@@ -13,8 +13,8 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../scanreader/'))
 
 # -- Project information -----------------------------------------------------
 
@@ -25,43 +25,68 @@ author = 'Flynn OConnell'
 # The full version, including alpha/beta/rc tags
 release = 'v1.0.0'
 
+myst_url_schemes = ("http", "https", "mailto")
+myst_enable_extensions = [
+    "amsmath",
+    "attrs_inline",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "fieldlist",
+    "html_admonition",
+    "html_image",
+    "replacements",
+    "smartquotes",
+    "strikethrough",
+    "substitution",
+    "tasklist",
+]
 
-# -- General configuration ---------------------------------------------------
+source_suffix = {
+        '.rst': 'restructuredtext',
+        '.myst': 'myst-nb',
+        '.ipynb': 'myst-nb',
+        }
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+templates_path = ['_templates']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'exclude']
 extensions = ["sphinx.ext.autodoc",
               "sphinxcontrib.images",
               "sphinxcontrib.video" ,
+              "sphinxcontrib.matlab",
+              "myst_nb",
+              "sphinx_copybutton",
+              "numpydoc",
               "sphinx.ext.intersphinx",
+              "sphinx.ext.viewcode",
               "sphinx.ext.napoleon",
               "sphinx.ext.autosectionlabel",
-              "numpydoc" ]
+              "sphinx_togglebutton",
+              ]
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '__pycache__/']
 
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.9", None),
+    'mbo': ('https://millerbrainobservatory.github.io/',None),
+    'lbmpy': ('https://millerbrainobservatory.github.io/LBM-CaImAn-Python/', None),
+    'lbmmat': ('https://millerbrainobservatory.github.io/LBM-CaImAn-MATLAB/', None)
+}
 
-html_theme = 'sphinx_book_theme'
-html_logo = 'mbo.ico'
+html_logo = '_static/scanreader.svg'
+html_short_title = "scanreader"
+html_theme = 'pydata_sphinx_theme'
 html_title = "scanreader"
-html_css_files = [
-    'mbo.css'
-]
-
-pygments_style = 'sphinx'
-source_suffix = ['.rst', '.md']
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+html_css_files = [ 'custom.css' ]
+html_favicon = "_static/mbo_icon_dark.ico"
 html_static_path = ['_static']
+
+html_context = {
+    "github_user": "https://github.com/MillerBrainObservatory/",
+    "github_repo": "https://github.com/MillerBrainObservatory/scanreader/",
+    "doc_path": "docs"
+}
+
 
 # sphinxcontrib.images config
 images_config = dict(backend='LightBox2',
@@ -69,3 +94,13 @@ images_config = dict(backend='LightBox2',
                      default_show_title='True',
                      default_group='default')
 
+
+sphinx_book_options = {
+    "external_links": [
+        {"name": "MBO.io", "url": "https://millerbrainobservatory.github.io/index.html"},
+        {"name": "LBM.Mat", "url": "https://millerbrainobservatory.github.io/LBM-CaImAn-MATLAB/index.html"},
+        {"name": "LBM.Py", "url": "https://millerbrainobservatory.github.io/LBM-CaImAn-Python/index.html"},
+    ],
+}
+
+html_theme_options = sphinx_book_options

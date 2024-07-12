@@ -1,5 +1,5 @@
+/* Custom CSS For MBO Documentation */
 
-/* Originally from numpydocs numpy.css */
 
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
 
@@ -62,16 +62,3 @@ html[data-theme=dark] .sd-card img[src*='.svg'] {
   filter: invert(0.82) brightness(0.8) contrast(1.2);
 }
 
-/* Legacy admonition */
-
-div.admonition-legacy {
-  border-color: var(--pst-color-warning);
-}
-
-div.admonition-legacy>.admonition-title::after {
-  color: var(--pst-color-warning);
-}
-
-div.admonition-legacy>.admonition-title {
-  background-color: var(--pst-color-warning-bg);
-}

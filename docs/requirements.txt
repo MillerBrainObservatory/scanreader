@@ -6,6 +6,9 @@ sphinx_gallery
 sphinx-togglebutton
 sphinx-copybutton
 sphinx_book_theme
+pydata_sphinx_theme
 sphinx_design
 sphinxcontrib-images
 sphinxcontrib-video
+myst_nb
+linkify

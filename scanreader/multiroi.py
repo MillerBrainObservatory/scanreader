@@ -1,4 +1,3 @@
-""" Some classes used for MultiROI scan processing. """
 import numpy as np
 
 
@@ -87,7 +86,7 @@ class ROI:
         return scanfields
 
     def get_field_at(self, scanning_depth):
-        """ 
+        """
         Interpolates between the ROI scanfields to generate the 2-d field at the
         desired depth.
 

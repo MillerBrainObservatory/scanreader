@@ -42,15 +42,25 @@ myst_enable_extensions = [
     "tasklist",
 ]
 
+autodoc2_packages = [
+    "../scanreader",
+]
+
 source_suffix = {
-        '.rst': 'restructuredtext',
-        '.myst': 'myst-nb',
-        '.ipynb': 'myst-nb',
-        }
+    '.rst': 'restructuredtext',
+    '.myst': 'myst-nb',
+    '.ipynb': 'myst-nb',
+}
+# autodoc2_docstring_parser_regexes = [
+#     # this will render all docstrings as Markdown
+#     (r".*", "myst"),
+#     # this will render select docstrings as Markdown
+#     (r"mypackage\.mymodule\..*", "myst"),
+# ]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'exclude']
-extensions = ["sphinx.ext.autodoc",
+extensions = ["autodoc2",
               "sphinxcontrib.images",
               "sphinxcontrib.video" ,
               "sphinxcontrib.matlab",
@@ -62,10 +72,9 @@ extensions = ["sphinx.ext.autodoc",
               "sphinx.ext.napoleon",
               "sphinx.ext.autosectionlabel",
               "sphinx_togglebutton",
-              ]
+]
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '__pycache__/']
-
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.9", None),
     'mbo': ('https://millerbrainobservatory.github.io/',None),
@@ -75,17 +84,17 @@ intersphinx_mapping = {
 
 html_logo = '_static/scanreader.svg'
 html_short_title = "scanreader"
-html_theme = 'pydata_sphinx_theme'
-html_title = "scanreader"
+html_theme = 'sphinx_book_theme'
+html_title = ""
 html_css_files = [ 'custom.css' ]
 html_favicon = "_static/mbo_icon_dark.ico"
 html_static_path = ['_static']
 
-html_context = {
-    "github_user": "https://github.com/MillerBrainObservatory/",
-    "github_repo": "https://github.com/MillerBrainObservatory/scanreader/",
-    "doc_path": "docs"
-}
+# html_context = {
+#     "github_user": "https://github.com/MillerBrainObservatory/",
+#     "github_repo": "https://github.com/MillerBrainObservatory/scanreader/",
+#     "doc_path": "docs"
+# }
 
 
 # sphinxcontrib.images config
@@ -101,6 +110,17 @@ sphinx_book_options = {
         {"name": "LBM.Mat", "url": "https://millerbrainobservatory.github.io/LBM-CaImAn-MATLAB/index.html"},
         {"name": "LBM.Py", "url": "https://millerbrainobservatory.github.io/LBM-CaImAn-Python/index.html"},
     ],
+}
+
+html_theme_options = {
+    "home_page_in_toc": True,
+    "repository_url": "https://github.com/executablebooks/MyST-Parser",
+    "repository_branch": "master",
+    "path_to_docs": "docs",
+    "use_repository_button": True,
+    "use_edit_page_button": True,
+    "use_issues_button": True,
+    # "announcement": "<b>v3.0.0</b> is now out! See the Changelog for details",
 }
 
 html_theme_options = sphinx_book_options

@@ -1,15 +1,3 @@
-"""
-Reader for ScanImage 5 scans (including multiROI).
-
-Examples:
-----------
-
-    import scanreader
-    scan = scanreader.read_scan('my_scan_*.tif')
-    for field in scan:
-        #process field
-
-"""
 import re
 from glob import glob
 from os import path

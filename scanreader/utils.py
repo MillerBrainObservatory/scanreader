@@ -1,16 +1,17 @@
-"""Utility functions to check that the key and indices send to __getitem__ are valid."""
 import numpy as np
 
 def fill_key(key, num_dimensions):
     """ Fill key with slice(None) (':') until num_dimensions size.
 
-    Args:
-        key: tuple of indices or single index. key as received by __getitem__().
-        num_dimensions: integer. Total number of dimensions needed.
+    Parameters
+    ----------
+    key: tuple
+        Indices or single index. key as received by __getitem__().
+    num_dimensions: int.
+        Total number of dimensions needed.
 
-    Raises:
-        IndexError: Too many indices in key: len(key) > num_dimensions.
     """
+
     # Deal with single valued keys, e.g., scan[:] or scan[0]
     if not isinstance(key, tuple):
         key = (key,)
@@ -27,17 +28,16 @@ def fill_key(key, num_dimensions):
 
 
 def check_index_type(axis, index):
-    """ 
+    """
     Checks that index is an integer, slice or array/list/tuple of integers.
 
-    Parameters:
-        axis: int
-            Axis of the specified index.
-        index: int | tuple | np.ndarray
-            Index to inspect.
+    Parameters
+    ----------
+    axis: int
+        Axis of the specified index.
+    index: int | tuple | np.ndarray
+        Index to inspect.
 
-    Raises:
-        TypeError: If index is not integer, slice, or array/list/tuple of integers.
     """
     if not _index_has_valid_type(index): # raise error
         error_msg = ('index {} in axis {} is not an integer, slice or array/list/tuple '
@@ -66,18 +66,15 @@ def check_index_is_in_bounds(axis, index, dim_size):
 
     By python indexing rules, anything from -dim_size to dim_size-1 is valid.
 
-    Parameters:
-    -----------
-        axis: int
-            Axis of the index.
-        index: int | list | slice
-            Index to check.
-        dim_size: int
-            Size of the dimension against which the index will be checked.
+    Parameters
+    ----------
+    axis: int
+        Axis of the index.
+    index: int | list | slice
+        Index to check.
+    dim_size: int
+        Size of the dimension against which the index will be checked.
 
-    Raises:
-        TypeError: If index is not either integer, slice, or array.
-        IndexError: If index is out of bounds for the specified axis.
     """
     if not _is_index_in_bounds(index, dim_size):
         error_msg = ('index {} is out of bounds for axis {} with size '
@@ -99,18 +96,7 @@ def _is_index_in_bounds(index, dim_size):
 
 
 def listify_index(index, dim_size):
-    """ Generates the list representation of an index for the given dim_size.
-
-    Args:
-        index: A single index (integer, slice or list/tuple/array of integers).
-        dim_size: Size of the dimension corresponding to the index.
-
-    Returns:
-        A list of positive integers. List of indices.
-
-    Raises:
-        TypeError: If index is not either integer, slice, or array.
-    """
+    """ Generates the list representation of an index for the given dim_size."""
     if np.issubdtype(type(index), np.signedinteger):
         index_as_list = [index] if index >= 0 else [dim_size + index]
     elif isinstance(index, (list, tuple, np.ndarray)):

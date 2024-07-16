@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Welcome to scanreader’s documentation! &#8212; scanreader</title>
+    <title>scanreader Documentation</title>
   
   
   
@@ -28,9 +28,12 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/mbo.css?v=8c8b7c0d" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=bb622002" />
     <link rel="stylesheet" type="text/css" href="_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css?v=5c84f910" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -41,13 +44,21 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=636b7f28"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=4a39c7ea"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js?v=ffc8af2d"></script>
     <script src="_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js?v=12818e64"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="icon" href="_static/mbo_icon_dark.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API" href="api/index.html" />
+    <link rel="next" title="API Reference" href="apidocs/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -129,16 +140,28 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="_static/scanreader.svg" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="_static/scanreader.svg" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
-    <p class="title logo__title">scanreader</p>
   
 </a></div>
         <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html"> API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/core.html">Core Functions</a></li>
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="apidocs/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="apidocs/scanreader/scanreader.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.scans</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.core</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.multiroi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.exceptions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.utils</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -195,7 +218,7 @@
       
       
       
-      <li><a href="_sources/index.rst" target="_blank"
+      <li><a href="_sources/index.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -205,7 +228,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.rst</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -279,7 +302,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Welcome to scanreader’s documentation!</h1>
+    <h1>scanreader Documentation</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -289,8 +312,14 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to scanreader’s documentation!</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and tables</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">scanreader Documentation</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader-usage">scanreader usage</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#details-on-data-loading-for-future-developers">Details on data loading (for future developers)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a></li>
+</ul>
+</li>
 </ul>
 
             </nav>
@@ -303,25 +332,287 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="welcome-to-scanreader-s-documentation">
-<h1>Welcome to scanreader’s documentation!<a class="headerlink" href="#welcome-to-scanreader-s-documentation" title="Permalink to this heading">#</a></h1>
+  <section id="scanreader-documentation">
+<h1>scanreader Documentation<a class="headerlink" href="#scanreader-documentation" title="Permalink to this heading">#</a></h1>
+</section>
+<section id="scanreader-usage">
+<h1>scanreader usage<a class="headerlink" href="#scanreader-usage" title="Permalink to this heading">#</a></h1>
+<p>Python TIFF Stack Reader for ScanImage 5 scans (including multiROI).</p>
+<p>We treat a scan as a collection of recording fields: rectangular planes at a given x, y, z position in the scan recorded in a number of channels during a preset amount of time. All fields have the same number of channels and number of frames.</p>
+<p>We plan to support new versions of ScanImage scans as our lab starts using them. If you would like us to add support for an older (or different) version of ScanImage, send us a small sample scan.</p>
+<section id="installation">
+<span id="installation-label"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>git+https://github.com/MillerBrainObservatory/scanreader.git
+</pre></div>
+</div>
+</section>
+<section id="usage">
+<span id="header-label"></span><h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">scanreader</span>
+<span class="n">scan</span> <span class="o">=</span> <span class="n">scanreader</span><span class="o">.</span><span class="n">read_scan</span><span class="p">(</span><span class="s1">&#39;/data/my_scan_*.tif&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scan</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scan</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scan</span><span class="o">.</span><span class="n">num_channels</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scan</span><span class="o">.</span><span class="n">num_fields</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">scan</span><span class="p">:</span>
+    <span class="c1"># process field (4-d array: [y_center_coordinate, x_center_coordinate, channels, frames])</span>
+    <span class="k">del</span> <span class="n">field</span>  <span class="c1"># free memory before next iteration</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">scan</span><span class="p">[:]</span>  <span class="c1"># 5-d array [fields, y_center_coordinate, x_center_coordinate, channel, frames]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">scan</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1000</span><span class="p">:]</span>  <span class="c1"># 5-d array: last 1000 frames of first 2 fields on the first channel</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">scan</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># 4-d array: the second field (over all channels and time)</span>
+
+<span class="n">scan</span> <span class="o">=</span> <span class="n">scanreader</span><span class="o">.</span><span class="n">read_scan</span><span class="p">(</span><span class="s1">&#39;/data/my_scan_*.tif&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">join_contiguous</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># scan loaded as np.float32 (default is np.int16) and adjacent fields at same depth will be joined.</span>
+
+</pre></div>
+</div>
+<p>Scan objects (returned by <code class="docutils literal notranslate"><span class="pre">read_scan()</span></code>) are iterable and indexable (as shown). Indexes can be integers, slice objects (:) or lists/tuples/arrays of integers. It should act like a numpy 5-d array—no boolean indexing, though.</p>
+</section>
+<section id="details-on-data-loading-for-future-developers">
+<h2>Details on data loading (for future developers)<a class="headerlink" href="#details-on-data-loading-for-future-developers" title="Permalink to this heading">#</a></h2>
+<p>As of this version, <code class="docutils literal notranslate"><span class="pre">scanreader</span></code> relies on <a class="reference external" href="https://pypi.org/project/tifffile/"><code class="docutils literal notranslate"><span class="pre">tifffile</span></code></a> to read the underlying tiff files. Reading a scan happens in three stages:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scan</span> <span class="pre">=</span> <span class="pre">scanreader.read_scan(filename)</span></code> will create a list of <code class="docutils literal notranslate"><span class="pre">tifffile.TiffFile</span></code>s, one per each tiff file in the scan. This entails opening a file handle and reading the tags of the first page of each; tags for the rest of pages are ignored (they have the same info).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scan.num_frames</span></code>, <code class="docutils literal notranslate"><span class="pre">scan.shape</span></code> or another operation that requires the number of frames in the scan—which includes the first stage of any data loading operation—will need the number of pages in each tiff file. <code class="docutils literal notranslate"><span class="pre">tifffile</span></code> was designed for files with pages of varying shapes so it iterates over each page looking for its offset (number of bytes from the start of the file until the very first byte of the page), which it saves to use for reading. After this operation, it knows the number of pages per file.</p></li>
+<li><p>Once the file has been opened and the offset to each page has been calculated we can load the actual data. We load each page sequentially and take care of reformatting them to match the desired output.</p></li>
+</ol>
+<p>This reader and documentation are based off of  is based on a previous <a class="reference external" href="https://github.com/atlab/scanreader">version</a> developed by <a class="reference external" href="https://github.com/atlab/">atlab</a>.</p>
+<p>Some of the older scans have been removed for general cleanliness. These can be reimplemented by cherry-picking the commit. See documentation on <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">reflog</span></code> to find the commits you want and <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">cherry-pick</span></code> to apply changes that were introduced by those commits.</p>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this heading">#</a></h2>
+<table class="autosummary longtable table autosummary">
+<tbody>
+</tbody>
+</table>
 <div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Section Navigation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/index.html"> API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/core.html">Core Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apidocs/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apidocs/scanreader/scanreader.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.scans</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#classes">Classes</a></li>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#api">API</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan"><code class="docutils literal notranslate"><span class="pre">BaseScan</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.tiff_files"><code class="docutils literal notranslate"><span class="pre">BaseScan.tiff_files</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.version"><code class="docutils literal notranslate"><span class="pre">BaseScan.version</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.power_percent"><code class="docutils literal notranslate"><span class="pre">BaseScan.power_percent</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.is_slow_stack"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_slow_stack</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.is_multiROI"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_multiROI</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.num_channels"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_channels</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.requested_scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.requested_scanning_depths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.num_scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_scanning_depths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanning_depths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.num_requested_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_requested_frames</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.num_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_frames</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.is_bidirectional"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_bidirectional</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.scanner_frequency"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanner_frequency</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.seconds_per_line"><code class="docutils literal notranslate"><span class="pre">BaseScan.seconds_per_line</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._num_pages"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_pages</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._page_height"><code class="docutils literal notranslate"><span class="pre">BaseScan._page_height</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._page_width"><code class="docutils literal notranslate"><span class="pre">BaseScan._page_width</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._num_averaged_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_averaged_frames</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.num_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_fields</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.field_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.field_depths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.fps"><code class="docutils literal notranslate"><span class="pre">BaseScan.fps</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.spatial_fill_fraction"><code class="docutils literal notranslate"><span class="pre">BaseScan.spatial_fill_fraction</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.temporal_fill_fraction"><code class="docutils literal notranslate"><span class="pre">BaseScan.temporal_fill_fraction</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.scanner_type"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanner_type</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.motor_position_at_zero"><code class="docutils literal notranslate"><span class="pre">BaseScan.motor_position_at_zero</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.initial_secondary_z"><code class="docutils literal notranslate"><span class="pre">BaseScan.initial_secondary_z</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._initial_frame_number"><code class="docutils literal notranslate"><span class="pre">BaseScan._initial_frame_number</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._num_fly_back_lines"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_fly_back_lines</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._num_lines_between_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_lines_between_fields</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_slow_stack_with_fastZ</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.field_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan.field_offsets</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.read_data"><code class="docutils literal notranslate"><span class="pre">BaseScan.read_data()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.__array__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__array__()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.__str__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__str__()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.__len__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__len__()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__getitem__()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan.__iter__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__iter__()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._read_pages"><code class="docutils literal notranslate"><span class="pre">BaseScan._read_pages()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._seconds_to_lines"><code class="docutils literal notranslate"><span class="pre">BaseScan._seconds_to_lines()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan._compute_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan._compute_offsets()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanLegacy"><code class="docutils literal notranslate"><span class="pre">ScanLegacy</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5"><code class="docutils literal notranslate"><span class="pre">BaseScan5</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.num_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan5.num_fields</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.field_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan5.field_depths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.image_height"><code class="docutils literal notranslate"><span class="pre">BaseScan5.image_height</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.image_width"><code class="docutils literal notranslate"><span class="pre">BaseScan5.image_width</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.shape"><code class="docutils literal notranslate"><span class="pre">BaseScan5.shape</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.zoom"><code class="docutils literal notranslate"><span class="pre">BaseScan5.zoom</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">BaseScan5.is_slow_stack_with_fastZ</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.field_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan5.field_offsets</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5._y_angle_scale_factor"><code class="docutils literal notranslate"><span class="pre">BaseScan5._y_angle_scale_factor</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5._x_angle_scale_factor"><code class="docutils literal notranslate"><span class="pre">BaseScan5._x_angle_scale_factor</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.BaseScan5.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseScan5.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point1"><code class="docutils literal notranslate"><span class="pre">Scan5Point1</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point2"><code class="docutils literal notranslate"><span class="pre">Scan5Point2</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point2.image_height_in_microns"><code class="docutils literal notranslate"><span class="pre">Scan5Point2.image_height_in_microns</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point2.image_width_in_microns"><code class="docutils literal notranslate"><span class="pre">Scan5Point2.image_width_in_microns</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.NewerScan"><code class="docutils literal notranslate"><span class="pre">NewerScan</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.NewerScan.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">NewerScan.is_slow_stack_with_fastZ</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point3"><code class="docutils literal notranslate"><span class="pre">Scan5Point3</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point4"><code class="docutils literal notranslate"><span class="pre">Scan5Point4</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point5"><code class="docutils literal notranslate"><span class="pre">Scan5Point5</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point6"><code class="docutils literal notranslate"><span class="pre">Scan5Point6</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan5Point7"><code class="docutils literal notranslate"><span class="pre">Scan5Point7</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2016b"><code class="docutils literal notranslate"><span class="pre">Scan2016b</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2017a"><code class="docutils literal notranslate"><span class="pre">Scan2017a</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2017b"><code class="docutils literal notranslate"><span class="pre">Scan2017b</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2018a"><code class="docutils literal notranslate"><span class="pre">Scan2018a</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2018b"><code class="docutils literal notranslate"><span class="pre">Scan2018b</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2019a"><code class="docutils literal notranslate"><span class="pre">Scan2019a</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2019b"><code class="docutils literal notranslate"><span class="pre">Scan2019b</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2020"><code class="docutils literal notranslate"><span class="pre">Scan2020</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.Scan2021"><code class="docutils literal notranslate"><span class="pre">Scan2021</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.num_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.num_fields</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.num_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.num_rois</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_heights"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_heights</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_widths"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_widths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_depths"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_depths</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_slices"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_slices</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_rois</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_masks"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_masks</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_offsets"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_offsets</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_heights_in_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_heights_in_microns</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.field_widths_in_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_widths_in_microns</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._num_fly_to_lines"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._num_fly_to_lines</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._degrees_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_microns()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._microns_to_decrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._microns_to_decrees()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._degrees_to_pixels"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_pixels()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._pixels_to_degrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_degrees()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._pixels_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_microns()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.read_data"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.read_data()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._create_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_rois()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_fields()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI._join_contiguous_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._join_contiguous_fields()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.ScanMultiROI.__getitem__"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.LBMScanMultiROI"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.scans.html#scanreader.scans.LBMScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI._create_fields()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.core</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#functions">Functions</a></li>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#data">Data</a></li>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#api">API</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#scanreader.core._scans"><code class="docutils literal notranslate"><span class="pre">_scans</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#scanreader.core.read_scan"><code class="docutils literal notranslate"><span class="pre">read_scan()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#scanreader.core.expand_wildcard"><code class="docutils literal notranslate"><span class="pre">expand_wildcard()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#scanreader.core.get_scanimage_version"><code class="docutils literal notranslate"><span class="pre">get_scanimage_version()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.core.html#scanreader.core.is_scan_multiROI"><code class="docutils literal notranslate"><span class="pre">is_scan_multiROI()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.multiroi</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#classes">Classes</a></li>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#api">API</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.ROI"><code class="docutils literal notranslate"><span class="pre">ROI</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.ROI.scanfields"><code class="docutils literal notranslate"><span class="pre">ROI.scanfields</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.ROI.is_discrete_plane_mode_on"><code class="docutils literal notranslate"><span class="pre">ROI.is_discrete_plane_mode_on</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.ROI._create_scanfields"><code class="docutils literal notranslate"><span class="pre">ROI._create_scanfields()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.ROI.get_field_at"><code class="docutils literal notranslate"><span class="pre">ROI.get_field_at()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Scanfield"><code class="docutils literal notranslate"><span class="pre">Scanfield</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Scanfield.as_field"><code class="docutils literal notranslate"><span class="pre">Scanfield.as_field()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field"><code class="docutils literal notranslate"><span class="pre">Field</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field.has_contiguous_subfields"><code class="docutils literal notranslate"><span class="pre">Field.has_contiguous_subfields</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field.roi_mask"><code class="docutils literal notranslate"><span class="pre">Field.roi_mask</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field.offset_mask"><code class="docutils literal notranslate"><span class="pre">Field.offset_mask</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field._type_of_contiguity"><code class="docutils literal notranslate"><span class="pre">Field._type_of_contiguity()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field.is_contiguous_to"><code class="docutils literal notranslate"><span class="pre">Field.is_contiguous_to()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Field.join_with"><code class="docutils literal notranslate"><span class="pre">Field.join_with()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Position"><code class="docutils literal notranslate"><span class="pre">Position</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Position.NONCONTIGUOUS"><code class="docutils literal notranslate"><span class="pre">Position.NONCONTIGUOUS</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Position.ABOVE"><code class="docutils literal notranslate"><span class="pre">Position.ABOVE</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Position.BELOW"><code class="docutils literal notranslate"><span class="pre">Position.BELOW</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Position.LEFT"><code class="docutils literal notranslate"><span class="pre">Position.LEFT</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="apidocs/scanreader/scanreader.multiroi.html#scanreader.multiroi.Position.RIGHT"><code class="docutils literal notranslate"><span class="pre">Position.RIGHT</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.exceptions</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html#api">API</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html#scanreader.exceptions.ScanReaderException"><code class="docutils literal notranslate"><span class="pre">ScanReaderException</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html#scanreader.exceptions.ScanImageVersionError"><code class="docutils literal notranslate"><span class="pre">ScanImageVersionError</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html#scanreader.exceptions.PathnameError"><code class="docutils literal notranslate"><span class="pre">PathnameError</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.exceptions.html#scanreader.exceptions.FieldDimensionMismatch"><code class="docutils literal notranslate"><span class="pre">FieldDimensionMismatch</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.utils</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#functions">Functions</a></li>
+<li class="toctree-l6"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#api">API</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#scanreader.utils.fill_key"><code class="docutils literal notranslate"><span class="pre">fill_key()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#scanreader.utils.check_index_type"><code class="docutils literal notranslate"><span class="pre">check_index_type()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#scanreader.utils._index_has_valid_type"><code class="docutils literal notranslate"><span class="pre">_index_has_valid_type()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#scanreader.utils.check_index_is_in_bounds"><code class="docutils literal notranslate"><span class="pre">check_index_is_in_bounds()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#scanreader.utils._is_index_in_bounds"><code class="docutils literal notranslate"><span class="pre">_is_index_in_bounds()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="apidocs/scanreader/scanreader.utils.html#scanreader.utils.listify_index"><code class="docutils literal notranslate"><span class="pre">listify_index()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apidocs/scanreader/scanreader.html#package-contents">Package Contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.html#data">Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apidocs/scanreader/scanreader.html#api">API</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="apidocs/scanreader/scanreader.html#scanreader.__all__"><code class="docutils literal notranslate"><span class="pre">__all__</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
 </section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">#</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
 </section>
 
 
@@ -336,11 +627,11 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="right-next"
-       href="api/index.html"
+       href="apidocs/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">API</p>
+        <p class="prev-next-title">API Reference</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -359,8 +650,14 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to scanreader’s documentation!</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and tables</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">scanreader Documentation</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader-usage">scanreader usage</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#details-on-data-loading-for-future-developers">Details on data loading (for future developers)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a></li>
+</ul>
+</li>
 </ul>
 
   </nav></div>

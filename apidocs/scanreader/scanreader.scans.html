@@ -1,0 +1,1467 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>scanreader.scans</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=bb622002" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css?v=5c84f910" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=636b7f28"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js?v=ffc8af2d"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js?v=12818e64"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'apidocs/scanreader/scanreader.scans';</script>
+    <link rel="icon" href="../../_static/mbo_icon_dark.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="scanreader.core" href="scanreader.core.html" />
+    <link rel="prev" title="scanreader" href="scanreader.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/scanreader.svg" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/scanreader.svg" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="scanreader.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.scans</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="scanreader.core.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.core</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="scanreader.multiroi.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.multiroi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="scanreader.exceptions.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.exceptions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="scanreader.utils.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.utils</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/apidocs/scanreader/scanreader.scans.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>scanreader.scans</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan"><code class="docutils literal notranslate"><span class="pre">BaseScan</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.tiff_files"><code class="docutils literal notranslate"><span class="pre">BaseScan.tiff_files</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.version"><code class="docutils literal notranslate"><span class="pre">BaseScan.version</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.power_percent"><code class="docutils literal notranslate"><span class="pre">BaseScan.power_percent</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_slow_stack"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_slow_stack</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_multiROI"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_multiROI</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_channels"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_channels</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.requested_scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.requested_scanning_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_scanning_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanning_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_requested_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_requested_frames</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_frames</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_bidirectional"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_bidirectional</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.scanner_frequency"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanner_frequency</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.seconds_per_line"><code class="docutils literal notranslate"><span class="pre">BaseScan.seconds_per_line</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_pages"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_pages</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._page_height"><code class="docutils literal notranslate"><span class="pre">BaseScan._page_height</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._page_width"><code class="docutils literal notranslate"><span class="pre">BaseScan._page_width</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_averaged_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_averaged_frames</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.field_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.field_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.fps"><code class="docutils literal notranslate"><span class="pre">BaseScan.fps</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.spatial_fill_fraction"><code class="docutils literal notranslate"><span class="pre">BaseScan.spatial_fill_fraction</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.temporal_fill_fraction"><code class="docutils literal notranslate"><span class="pre">BaseScan.temporal_fill_fraction</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.scanner_type"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanner_type</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.motor_position_at_zero"><code class="docutils literal notranslate"><span class="pre">BaseScan.motor_position_at_zero</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.initial_secondary_z"><code class="docutils literal notranslate"><span class="pre">BaseScan.initial_secondary_z</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._initial_frame_number"><code class="docutils literal notranslate"><span class="pre">BaseScan._initial_frame_number</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_fly_back_lines"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_fly_back_lines</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_lines_between_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_lines_between_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_slow_stack_with_fastZ</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.field_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan.field_offsets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.read_data"><code class="docutils literal notranslate"><span class="pre">BaseScan.read_data()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__array__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__array__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__str__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__str__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__len__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__len__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__getitem__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__iter__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__iter__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._read_pages"><code class="docutils literal notranslate"><span class="pre">BaseScan._read_pages()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._seconds_to_lines"><code class="docutils literal notranslate"><span class="pre">BaseScan._seconds_to_lines()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._compute_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan._compute_offsets()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanLegacy"><code class="docutils literal notranslate"><span class="pre">ScanLegacy</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5"><code class="docutils literal notranslate"><span class="pre">BaseScan5</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.num_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan5.num_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.field_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan5.field_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.image_height"><code class="docutils literal notranslate"><span class="pre">BaseScan5.image_height</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.image_width"><code class="docutils literal notranslate"><span class="pre">BaseScan5.image_width</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.shape"><code class="docutils literal notranslate"><span class="pre">BaseScan5.shape</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.zoom"><code class="docutils literal notranslate"><span class="pre">BaseScan5.zoom</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">BaseScan5.is_slow_stack_with_fastZ</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.field_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan5.field_offsets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5._y_angle_scale_factor"><code class="docutils literal notranslate"><span class="pre">BaseScan5._y_angle_scale_factor</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5._x_angle_scale_factor"><code class="docutils literal notranslate"><span class="pre">BaseScan5._x_angle_scale_factor</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseScan5.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point1"><code class="docutils literal notranslate"><span class="pre">Scan5Point1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point2"><code class="docutils literal notranslate"><span class="pre">Scan5Point2</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point2.image_height_in_microns"><code class="docutils literal notranslate"><span class="pre">Scan5Point2.image_height_in_microns</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point2.image_width_in_microns"><code class="docutils literal notranslate"><span class="pre">Scan5Point2.image_width_in_microns</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.NewerScan"><code class="docutils literal notranslate"><span class="pre">NewerScan</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.NewerScan.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">NewerScan.is_slow_stack_with_fastZ</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point3"><code class="docutils literal notranslate"><span class="pre">Scan5Point3</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point4"><code class="docutils literal notranslate"><span class="pre">Scan5Point4</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point5"><code class="docutils literal notranslate"><span class="pre">Scan5Point5</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point6"><code class="docutils literal notranslate"><span class="pre">Scan5Point6</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point7"><code class="docutils literal notranslate"><span class="pre">Scan5Point7</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2016b"><code class="docutils literal notranslate"><span class="pre">Scan2016b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2017a"><code class="docutils literal notranslate"><span class="pre">Scan2017a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2017b"><code class="docutils literal notranslate"><span class="pre">Scan2017b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2018a"><code class="docutils literal notranslate"><span class="pre">Scan2018a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2018b"><code class="docutils literal notranslate"><span class="pre">Scan2018b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2019a"><code class="docutils literal notranslate"><span class="pre">Scan2019a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2019b"><code class="docutils literal notranslate"><span class="pre">Scan2019b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2020"><code class="docutils literal notranslate"><span class="pre">Scan2020</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2021"><code class="docutils literal notranslate"><span class="pre">Scan2021</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.num_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.num_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.num_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.num_rois</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_heights"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_heights</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_widths"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_widths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_depths"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_slices"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_slices</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_rois</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_masks"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_masks</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_offsets"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_offsets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_heights_in_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_heights_in_microns</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_widths_in_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_widths_in_microns</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._num_fly_to_lines"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._num_fly_to_lines</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_microns()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._microns_to_decrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._microns_to_decrees()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_pixels"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_pixels()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_degrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_degrees()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_microns()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.read_data"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.read_data()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_rois()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_fields()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._join_contiguous_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._join_contiguous_fields()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.__getitem__"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI._create_fields()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="module-scanreader.scans">
+<span id="scanreader-scans"></span><h1><a class="reference internal" href="#module-scanreader.scans" title="scanreader.scans"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.scans</span></code></a><a class="headerlink" href="#module-scanreader.scans" title="Permalink to this heading">#</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table table-left">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.BaseScan" title="scanreader.scans.BaseScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseScan</span></code></a></p></td>
+<td><p>Properties and methods shared among all scan versions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.ScanLegacy" title="scanreader.scans.ScanLegacy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScanLegacy</span></code></a></p></td>
+<td><p>Scan versions 4 and below. Not implemented.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.BaseScan5" title="scanreader.scans.BaseScan5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseScan5</span></code></a></p></td>
+<td><p>ScanImage 5 scans: one field per scanning depth and all fields have the same
+height_px and width_px.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point1" title="scanreader.scans.Scan5Point1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point1</span></code></a></p></td>
+<td><p>ScanImage 5.1. Basic.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point2" title="scanreader.scans.Scan5Point2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point2</span></code></a></p></td>
+<td><p>ScanImage 5.2. Addition of FOV measures in microns.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.NewerScan" title="scanreader.scans.NewerScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NewerScan</span></code></a></p></td>
+<td><p>Shared features among all newer scans.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point3</span></code></a></p></td>
+<td><p>ScanImage 5.3</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point4" title="scanreader.scans.Scan5Point4"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point4</span></code></a></p></td>
+<td><p>ScanImage 5.4</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point5" title="scanreader.scans.Scan5Point5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point5</span></code></a></p></td>
+<td><p>ScanImage 5.5</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point6" title="scanreader.scans.Scan5Point6"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point6</span></code></a></p></td>
+<td><p>ScanImage 5.6</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point7" title="scanreader.scans.Scan5Point7"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point7</span></code></a></p></td>
+<td><p>ScanImage 5.7</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan2016b" title="scanreader.scans.Scan2016b"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2016b</span></code></a></p></td>
+<td><p>ScanImage 2016b</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan2017a" title="scanreader.scans.Scan2017a"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2017a</span></code></a></p></td>
+<td><p>ScanImage 2017a</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan2017b" title="scanreader.scans.Scan2017b"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2017b</span></code></a></p></td>
+<td><p>ScanImage 2017b</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan2018a" title="scanreader.scans.Scan2018a"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2018a</span></code></a></p></td>
+<td><p>ScanImage 2018a</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan2018b" title="scanreader.scans.Scan2018b"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2018b</span></code></a></p></td>
+<td><p>ScanImage 2018b</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan2019a" title="scanreader.scans.Scan2019a"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2019a</span></code></a></p></td>
+<td><p>ScanImage 2019a</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan2019b" title="scanreader.scans.Scan2019b"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2019b</span></code></a></p></td>
+<td><p>ScanImage 2019b</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.Scan2020" title="scanreader.scans.Scan2020"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2020</span></code></a></p></td>
+<td><p>ScanImage 2020</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan2021" title="scanreader.scans.Scan2021"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan2021</span></code></a></p></td>
+<td><p>ScanImage 2021</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.ScanMultiROI" title="scanreader.scans.ScanMultiROI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScanMultiROI</span></code></a></p></td>
+<td><p>An extension of ScanImage v5 that manages multiROI data (output from mesoscope).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.LBMScanMultiROI" title="scanreader.scans.LBMScanMultiROI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a></p></td>
+<td><p>A subclass of ScanMultiROI that adds the ability to cut off pixels from each X slice
+when images are loaded, adjusting the dimensions of the image data.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="api">
+<h3>API<a class="headerlink" href="#api" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">BaseScan</span></span><a class="headerlink" href="#scanreader.scans.BaseScan" title="Permalink to this definition">#</a></dt>
+<dd><p>Properties and methods shared among all scan versions.</p>
+<p>Scan objects are a collection of recording fields: rectangular planes at a given x_center_coordinate, y_center_coordinate,
+z position in the scan recorded in a number of channels during a preset amount of
+time. All fields have the same number of channels and number of frames.
+Scan objects are:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>indexable: scan[field, y_center_coordinate, x_center_coordinate, channel, frame] works as long as the fields’ spatial</dt><dd><p>dimensions (y_center_coordinate, x_center_coordinate) match.</p>
+</dd>
+</dl>
+<p>iterable: ‘for field in scan:’ iterates over all fields (4-d array) in the scan.</p>
+</div></blockquote>
+<dl>
+<dt>Examples:</dt><dd><p>scan.version                ScanImage version of the scan.
+scan[:, :, :3, :, :1000]    5-d numpy array with the first 1000 frames of the</p>
+<blockquote>
+<div><p>first 3 fields (if x_center_coordinate, y_center_coordinate dimensions match).</p>
+</div></blockquote>
+<p>for field in scan:          generates 4-d numpy arrays ([y_center_coordinate, x_center_coordinate, channels, frames]).</p>
+</dd>
+<dt>Note:</dt><dd><p>We use the word ‘frames’ as in video frames, i.e., number of timesteps the scan
+was recorded; ScanImage uses frames to refer to slices/scanning depths in the
+scan.</p>
+</dd>
+</dl>
+<p class="rubric">Initialization</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.tiff_files">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tiff_files</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.tiff_files" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.version">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">version</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.version" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.power_percent">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">power_percent</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.power_percent" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.is_slow_stack">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_slow_stack</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.is_slow_stack" title="Permalink to this definition">#</a></dt>
+<dd><p>True if fastZ is disabled. All frames for one slice are recorded first before
+moving to the next slice.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.is_multiROI">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_multiROI</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.is_multiROI" title="Permalink to this definition">#</a></dt>
+<dd><p>Only True if mroiEnable exists (2016b and up) and is set to True.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.num_channels">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_channels</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.num_channels" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.requested_scanning_depths">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">requested_scanning_depths</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.requested_scanning_depths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.num_scanning_depths">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_scanning_depths</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.num_scanning_depths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.scanning_depths">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scanning_depths</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.scanning_depths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.num_requested_frames">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_requested_frames</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.num_requested_frames" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.num_frames">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_frames</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.num_frames" title="Permalink to this definition">#</a></dt>
+<dd><p>Each tiff page is an image at a given channel, scanning depth combination.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.is_bidirectional">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_bidirectional</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.is_bidirectional" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.scanner_frequency">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scanner_frequency</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.scanner_frequency" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.seconds_per_line">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">seconds_per_line</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.seconds_per_line" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._num_pages">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_num_pages</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._num_pages" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._page_height">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_page_height</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._page_height" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._page_width">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_page_width</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._page_width" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._num_averaged_frames">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_num_averaged_frames</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._num_averaged_frames" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of requested frames are averaged to form one saved frame.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.num_fields">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_fields</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.num_fields" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.field_depths">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_depths</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.field_depths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.fps">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fps</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.fps" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.spatial_fill_fraction">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">spatial_fill_fraction</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.spatial_fill_fraction" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.temporal_fill_fraction">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">temporal_fill_fraction</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.temporal_fill_fraction" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.scanner_type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scanner_type</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.scanner_type" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.motor_position_at_zero">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">motor_position_at_zero</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.motor_position_at_zero" title="Permalink to this definition">#</a></dt>
+<dd><p>Motor position (x_center_coordinate, y_center_coordinate and z in microns) corresponding to the scan’s (0, 0, 0)
+point. For non-multiroi scans, (x_center_coordinate=0, y_center_coordinate=0) marks the center of the FOV.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.initial_secondary_z">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_secondary_z</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.initial_secondary_z" title="Permalink to this definition">#</a></dt>
+<dd><p>Initial position in z (microns) of the secondary motor (if any).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._initial_frame_number">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_initial_frame_number</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._initial_frame_number" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._num_fly_back_lines">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_num_fly_back_lines</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._num_fly_back_lines" title="Permalink to this definition">#</a></dt>
+<dd><p>Lines/mirror cycles that it takes to move from one depth to the next.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._num_lines_between_fields">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_num_lines_between_fields</span></span><a class="headerlink" href="#scanreader.scans.BaseScan._num_lines_between_fields" title="Permalink to this definition">#</a></dt>
+<dd><p>Lines/mirror cycles scanned from the start of one field to the start of the
+next.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.is_slow_stack_with_fastZ">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_slow_stack_with_fastZ</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.is_slow_stack_with_fastZ" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.field_offsets">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_offsets</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.field_offsets" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.read_data">
+<span class="sig-name descname"><span class="pre">read_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan.read_data" title="Permalink to this definition">#</a></dt>
+<dd><p>Set self.header, self.filenames and self.dtype. Data is read lazily when needed.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>filenames: List of strings. Tiff filenames.
+dtype: Data type of the output array.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.__array__">
+<span class="sig-name descname"><span class="pre">__array__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan.__array__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan.__str__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan.__len__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.__getitem__">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan.__getitem__" title="Permalink to this definition">#</a></dt>
+<dd><p>Index scans by field, y_center_coordinate, x_center_coordinate, channels, frames. Supports integer, slice and
+array/tuple/list of integers as indices.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan.__iter__">
+<span class="sig-name descname"><span class="pre">__iter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan.__iter__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._read_pages">
+<span class="sig-name descname"><span class="pre">_read_pages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yslice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">slice(None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xslice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">slice(None)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan._read_pages" title="Permalink to this definition">#</a></dt>
+<dd><p>Reads the tiff pages with the content of each slice, channel, frame
+combination and slices them in the y_center_coordinate, x_center_coordinate dimension.</p>
+<p>Each tiff page holds a single depth/channel/frame combination. For slow stacks,
+channels change first, timeframes change second and slices/depths change last.
+Example:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>For two channels, three slices, two frames.</dt><dd><p>Page:       0   1   2   3   4   5   6   7   8   9   10  11
+Channel:    0   1   0   1   0   1   0   1   0   1   0   1
+Frame:      0   0   1   1   2   2   0   0   1   1   2   2
+Slice:      0   0   0   0   0   0   1   1   1   1   1   1</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>For scans, channels change first, slices/depths change second and timeframes
+change last.
+Example:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>For two channels, three slices, two frames.</dt><dd><p>Page:       0   1   2   3   4   5   6   7   8   9   10  11
+Channel:    0   1   0   1   0   1   0   1   0   1   0   1
+Slice:      0   0   1   1   2   2   0   0   1   1   2   2
+Frame:      0   0   0   0   0   0   1   1   1   1   1   1</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Args:</dt><dd><p>slice_list: List of integers. Slices to read.
+channel_list: List of integers. Channels to read.
+frame_list: List of integers. Frames to read
+yslice: Slice object. How to slice the pages in the y_center_coordinate axis.
+xslice: Slice object. How to slice the pages in the x_center_coordinate axis.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>A 5-D array (num_slices, output_height, output_width, num_channels, num_frames).</dt><dd><p>Required pages reshaped to have slice, channel and frame as different
+dimensions. Channel, slice and frame order received in the input lists are
+respected; for instance, if slice_list = [1, 0, 2, 0], then the first
+dimension will have four slices: [1, 0, 2, 0].</p>
+</dd>
+</dl>
+</dd>
+<dt>Note:</dt><dd><p>We use slices in y_center_coordinate, x_center_coordinate for memory efficiency, If lists were passed another copy
+of the pages will be needed coming up to 3x the amount of data we actually
+want to read (the output array, the read pages and the list-sliced pages).
+Slices limit this to 2x (output array and read pages which are sliced in place).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._seconds_to_lines">
+<span class="sig-name descname"><span class="pre">_seconds_to_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seconds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan._seconds_to_lines" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute how many lines would be scanned in the given amount of seconds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan._compute_offsets">
+<span class="sig-name descname"><span class="pre">_compute_offsets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan._compute_offsets" title="Permalink to this definition">#</a></dt>
+<dd><p>Computes the time offsets at which a given field was recorded.</p>
+<p>Computes the time delay at which each pixel was recorded using the start of the
+scan as zero. It first creates an image with the number of lines scanned until
+that point and then uses self.seconds_per_line to  transform it into seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_height</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Height of the field.</p></li>
+<li><p><strong>start_line</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Line at which this field starts.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A field_height x_center_coordinate page_width mask with time offsets in seconds.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.ScanLegacy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">ScanLegacy</span></span><a class="headerlink" href="#scanreader.scans.ScanLegacy" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.BaseScan" title="scanreader.scans.BaseScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan</span></code></a></p>
+<p>Scan versions 4 and below. Not implemented.</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">BaseScan5</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.BaseScan" title="scanreader.scans.BaseScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan</span></code></a></p>
+<p>ScanImage 5 scans: one field per scanning depth and all fields have the same
+height_px and width_px.</p>
+<p class="rubric">Initialization</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.num_fields">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_fields</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.num_fields" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.field_depths">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_depths</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.field_depths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.image_height">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_height</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.image_height" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.image_width">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_width</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.image_width" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.shape" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.zoom">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">zoom</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.zoom" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.is_slow_stack_with_fastZ">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_slow_stack_with_fastZ</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.is_slow_stack_with_fastZ" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.field_offsets">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_offsets</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5.field_offsets" title="Permalink to this definition">#</a></dt>
+<dd><p>Seconds elapsed between start of frame scanning and each pixel.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5._y_angle_scale_factor">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_y_angle_scale_factor</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5._y_angle_scale_factor" title="Permalink to this definition">#</a></dt>
+<dd><p>Scan angles in y_center_coordinate are scaled by this factor, shrinking the angle range.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5._x_angle_scale_factor">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_x_angle_scale_factor</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5._x_angle_scale_factor" title="Permalink to this definition">#</a></dt>
+<dd><p>Scan angles in x_center_coordinate are scaled by this factor, shrinking the angle range.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.BaseScan5.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.BaseScan5.__getitem__" title="Permalink to this definition">#</a></dt>
+<dd><p>In non-multiROI, all fields have the same x_center_coordinate, y_center_coordinate dimensions.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point1</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point1" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.BaseScan5" title="scanreader.scans.BaseScan5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan5</span></code></a></p>
+<p>ScanImage 5.1. Basic.</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point2</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point2" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.BaseScan5" title="scanreader.scans.BaseScan5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan5</span></code></a></p>
+<p>ScanImage 5.2. Addition of FOV measures in microns.</p>
+<p class="rubric">Initialization</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point2.image_height_in_microns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_height_in_microns</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point2.image_height_in_microns" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point2.image_width_in_microns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_width_in_microns</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point2.image_width_in_microns" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.NewerScan">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">NewerScan</span></span><a class="headerlink" href="#scanreader.scans.NewerScan" title="Permalink to this definition">#</a></dt>
+<dd><p>Shared features among all newer scans.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.NewerScan.is_slow_stack_with_fastZ">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_slow_stack_with_fastZ</span></span><a class="headerlink" href="#scanreader.scans.NewerScan.is_slow_stack_with_fastZ" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point3</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point3" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.NewerScan" title="scanreader.scans.NewerScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.NewerScan</span></code></a>, <a class="reference internal" href="#scanreader.scans.Scan5Point2" title="scanreader.scans.Scan5Point2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point2</span></code></a></p>
+<p>ScanImage 5.3</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point4</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point4" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 5.4</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point5">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point5</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point5" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 5.5</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point6">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point6</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point6" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 5.6</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan5Point7">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan5Point7</span></span><a class="headerlink" href="#scanreader.scans.Scan5Point7" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 5.7</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2016b">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2016b</span></span><a class="headerlink" href="#scanreader.scans.Scan2016b" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2016b</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2017a">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2017a</span></span><a class="headerlink" href="#scanreader.scans.Scan2017a" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2017a</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2017b">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2017b</span></span><a class="headerlink" href="#scanreader.scans.Scan2017b" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2017b</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2018a">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2018a</span></span><a class="headerlink" href="#scanreader.scans.Scan2018a" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2018a</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2018b">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2018b</span></span><a class="headerlink" href="#scanreader.scans.Scan2018b" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2018b</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2019a">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2019a</span></span><a class="headerlink" href="#scanreader.scans.Scan2019a" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2019a</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2019b">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2019b</span></span><a class="headerlink" href="#scanreader.scans.Scan2019b" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2019b</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2020">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2020</span></span><a class="headerlink" href="#scanreader.scans.Scan2020" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2020</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.Scan2021">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">Scan2021</span></span><a class="headerlink" href="#scanreader.scans.Scan2021" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.Scan5Point3" title="scanreader.scans.Scan5Point3"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.Scan5Point3</span></code></a></p>
+<p>ScanImage 2021</p>
+<p class="rubric">Initialization</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">ScanMultiROI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">join_contiguous</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.NewerScan" title="scanreader.scans.NewerScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.NewerScan</span></code></a>, <a class="reference internal" href="#scanreader.scans.BaseScan" title="scanreader.scans.BaseScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan</span></code></a></p>
+<p>An extension of ScanImage v5 that manages multiROI data (output from mesoscope).</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>join_contiguous: A bool. Whether contiguous fields are joined into one.
+rois: List of ROI objects (defined in multiroi.py)
+fields: List of Field objects (defined in multiroi.py)</p>
+</dd>
+</dl>
+<p class="rubric">Initialization</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.num_fields">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_fields</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.num_fields" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.num_rois">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_rois</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.num_rois" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_heights">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_heights</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_heights" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_widths">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_widths</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_widths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_depths">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_depths</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_depths" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_slices">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_slices</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_slices" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_rois">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_rois</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_rois" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_masks">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_masks</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_masks" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_offsets">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_offsets</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_offsets" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_heights_in_microns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_heights_in_microns</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_heights_in_microns" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.field_widths_in_microns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">field_widths_in_microns</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.field_widths_in_microns" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._num_fly_to_lines">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_num_fly_to_lines</span></span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._num_fly_to_lines" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of lines recorded in the tiff page while flying to a different field,
+i.e., distance between fields in the tiff page.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._degrees_to_microns">
+<span class="sig-name descname"><span class="pre">_degrees_to_microns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">degrees</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._degrees_to_microns" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert scan angle degrees to microns using the objective resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._microns_to_decrees">
+<span class="sig-name descname"><span class="pre">_microns_to_decrees</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">microns</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._microns_to_decrees" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert microns to scan angle degrees using the objective resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._degrees_to_pixels">
+<span class="sig-name descname"><span class="pre">_degrees_to_pixels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">degrees</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pixels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._degrees_to_pixels" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert scan angle degrees to pixels using the objective resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._pixels_to_degrees">
+<span class="sig-name descname"><span class="pre">_pixels_to_degrees</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pixels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._pixels_to_degrees" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert pixels to scan angle degrees using the objective resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._pixels_to_microns">
+<span class="sig-name descname"><span class="pre">_pixels_to_microns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pixels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._pixels_to_microns" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert pixels to microns using the objective resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.read_data">
+<span class="sig-name descname"><span class="pre">read_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.read_data" title="Permalink to this definition">#</a></dt>
+<dd><p>Set the header, create rois and fields (joining them if necessary).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._create_rois">
+<span class="sig-name descname"><span class="pre">_create_rois</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._create_rois" title="Permalink to this definition">#</a></dt>
+<dd><p>Create scan rois from the configuration file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._create_fields">
+<span class="sig-name descname"><span class="pre">_create_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._create_fields" title="Permalink to this definition">#</a></dt>
+<dd><p>Go over each slice depth and each roi generating the scanned fields.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._join_contiguous_fields">
+<span class="sig-name descname"><span class="pre">_join_contiguous_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._join_contiguous_fields" title="Permalink to this definition">#</a></dt>
+<dd><p>In each scanning depth, join fields that are contiguous.</p>
+<p>Fields are considered contiguous if they appear next to each other and have the
+same size in their touching axis. Process is iterative: it tries to join each
+field with the remaining ones (checked in order); at the first union it will break
+and restart the process at the first field. When two fields are joined, it deletes
+the one appearing last and modifies info such as field height_px, field width_px and
+slices in the one appearing first.</p>
+<p>Any rectangular area in the scan formed by the union of two or more fields which
+have been joined will be treated as a single field after this operation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.__getitem__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scanreader.scans.LBMScanMultiROI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">LBMScanMultiROI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">join_contiguous</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.LBMScanMultiROI" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.ScanMultiROI" title="scanreader.scans.ScanMultiROI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.ScanMultiROI</span></code></a></p>
+<p>A subclass of ScanMultiROI that adds the ability to cut off pixels from each X slice
+when images are loaded, adjusting the dimensions of the image data.</p>
+<dl class="simple">
+<dt>join_contiguous<span class="classifier">bool</span></dt><dd><p>Whether contiguous fields are joined into a single field.</p>
+</dd>
+<dt>x_cut<span class="classifier">int, optional</span></dt><dd><p>The number of pixels to cut from the start of each X slice. Default is no pixels being trimmed.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>x_cut<span class="classifier">sequence, optional</span></dt><dd><p>The number of pixels to cut from the start of each X slice.</p>
+</dd>
+<dt>y_cut<span class="classifier">sequence, optional</span></dt><dd><p>The number of pixels to cut from the start of each Y slice.</p>
+</dd>
+</dl>
+<p class="rubric">Initialization</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="scanreader.scans.LBMScanMultiROI._create_fields">
+<span class="sig-name descname"><span class="pre">_create_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.LBMScanMultiROI._create_fields" title="Permalink to this definition">#</a></dt>
+<dd><p>Override the _create_fields method to adjust the X slices of each field, cutting off
+a specified number of pixels from the start of each X slice.</p>
+<dl class="simple">
+<dt>list</dt><dd><p>A list of Field objects with adjusted X slices.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>RuntimeError</dt><dd><p>If the calculated number of lines exceeds the page height_px at any scanning depth.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>self._page_height (145 pixels normally) is going to be &gt; scanfield height_px by a pixel or two</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="scanreader.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader</span></code></p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="scanreader.core.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.core</span></code></p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan"><code class="docutils literal notranslate"><span class="pre">BaseScan</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.tiff_files"><code class="docutils literal notranslate"><span class="pre">BaseScan.tiff_files</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.version"><code class="docutils literal notranslate"><span class="pre">BaseScan.version</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.power_percent"><code class="docutils literal notranslate"><span class="pre">BaseScan.power_percent</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_slow_stack"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_slow_stack</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_multiROI"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_multiROI</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_channels"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_channels</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.requested_scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.requested_scanning_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_scanning_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.scanning_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanning_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_requested_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_requested_frames</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_frames</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_bidirectional"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_bidirectional</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.scanner_frequency"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanner_frequency</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.seconds_per_line"><code class="docutils literal notranslate"><span class="pre">BaseScan.seconds_per_line</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_pages"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_pages</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._page_height"><code class="docutils literal notranslate"><span class="pre">BaseScan._page_height</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._page_width"><code class="docutils literal notranslate"><span class="pre">BaseScan._page_width</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_averaged_frames"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_averaged_frames</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.num_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan.num_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.field_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan.field_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.fps"><code class="docutils literal notranslate"><span class="pre">BaseScan.fps</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.spatial_fill_fraction"><code class="docutils literal notranslate"><span class="pre">BaseScan.spatial_fill_fraction</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.temporal_fill_fraction"><code class="docutils literal notranslate"><span class="pre">BaseScan.temporal_fill_fraction</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.scanner_type"><code class="docutils literal notranslate"><span class="pre">BaseScan.scanner_type</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.motor_position_at_zero"><code class="docutils literal notranslate"><span class="pre">BaseScan.motor_position_at_zero</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.initial_secondary_z"><code class="docutils literal notranslate"><span class="pre">BaseScan.initial_secondary_z</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._initial_frame_number"><code class="docutils literal notranslate"><span class="pre">BaseScan._initial_frame_number</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_fly_back_lines"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_fly_back_lines</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._num_lines_between_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan._num_lines_between_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">BaseScan.is_slow_stack_with_fastZ</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.field_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan.field_offsets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.read_data"><code class="docutils literal notranslate"><span class="pre">BaseScan.read_data()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__array__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__array__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__str__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__str__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__len__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__len__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__getitem__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan.__iter__"><code class="docutils literal notranslate"><span class="pre">BaseScan.__iter__()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._read_pages"><code class="docutils literal notranslate"><span class="pre">BaseScan._read_pages()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._seconds_to_lines"><code class="docutils literal notranslate"><span class="pre">BaseScan._seconds_to_lines()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan._compute_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan._compute_offsets()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanLegacy"><code class="docutils literal notranslate"><span class="pre">ScanLegacy</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5"><code class="docutils literal notranslate"><span class="pre">BaseScan5</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.num_fields"><code class="docutils literal notranslate"><span class="pre">BaseScan5.num_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.field_depths"><code class="docutils literal notranslate"><span class="pre">BaseScan5.field_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.image_height"><code class="docutils literal notranslate"><span class="pre">BaseScan5.image_height</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.image_width"><code class="docutils literal notranslate"><span class="pre">BaseScan5.image_width</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.shape"><code class="docutils literal notranslate"><span class="pre">BaseScan5.shape</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.zoom"><code class="docutils literal notranslate"><span class="pre">BaseScan5.zoom</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">BaseScan5.is_slow_stack_with_fastZ</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.field_offsets"><code class="docutils literal notranslate"><span class="pre">BaseScan5.field_offsets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5._y_angle_scale_factor"><code class="docutils literal notranslate"><span class="pre">BaseScan5._y_angle_scale_factor</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5._x_angle_scale_factor"><code class="docutils literal notranslate"><span class="pre">BaseScan5._x_angle_scale_factor</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.BaseScan5.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseScan5.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point1"><code class="docutils literal notranslate"><span class="pre">Scan5Point1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point2"><code class="docutils literal notranslate"><span class="pre">Scan5Point2</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point2.image_height_in_microns"><code class="docutils literal notranslate"><span class="pre">Scan5Point2.image_height_in_microns</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point2.image_width_in_microns"><code class="docutils literal notranslate"><span class="pre">Scan5Point2.image_width_in_microns</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.NewerScan"><code class="docutils literal notranslate"><span class="pre">NewerScan</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.NewerScan.is_slow_stack_with_fastZ"><code class="docutils literal notranslate"><span class="pre">NewerScan.is_slow_stack_with_fastZ</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point3"><code class="docutils literal notranslate"><span class="pre">Scan5Point3</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point4"><code class="docutils literal notranslate"><span class="pre">Scan5Point4</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point5"><code class="docutils literal notranslate"><span class="pre">Scan5Point5</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point6"><code class="docutils literal notranslate"><span class="pre">Scan5Point6</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan5Point7"><code class="docutils literal notranslate"><span class="pre">Scan5Point7</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2016b"><code class="docutils literal notranslate"><span class="pre">Scan2016b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2017a"><code class="docutils literal notranslate"><span class="pre">Scan2017a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2017b"><code class="docutils literal notranslate"><span class="pre">Scan2017b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2018a"><code class="docutils literal notranslate"><span class="pre">Scan2018a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2018b"><code class="docutils literal notranslate"><span class="pre">Scan2018b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2019a"><code class="docutils literal notranslate"><span class="pre">Scan2019a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2019b"><code class="docutils literal notranslate"><span class="pre">Scan2019b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2020"><code class="docutils literal notranslate"><span class="pre">Scan2020</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.Scan2021"><code class="docutils literal notranslate"><span class="pre">Scan2021</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.num_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.num_fields</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.num_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.num_rois</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_heights"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_heights</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_widths"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_widths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_depths"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_depths</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_slices"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_slices</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_rois</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_masks"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_masks</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_offsets"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_offsets</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_heights_in_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_heights_in_microns</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.field_widths_in_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.field_widths_in_microns</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._num_fly_to_lines"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._num_fly_to_lines</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_microns()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._microns_to_decrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._microns_to_decrees()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_pixels"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_pixels()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_degrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_degrees()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_microns()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.read_data"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.read_data()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_rois()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_fields()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._join_contiguous_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._join_contiguous_fields()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.__getitem__"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.__getitem__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI._create_fields()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Flynn OConnell
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, Elizabeth R. Miller Brain Observatory (MBO) | The Rockefeller University. All Rights Reserved..
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

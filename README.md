@@ -6,9 +6,12 @@ We treat a scan as a collection of recording fields: rectangular planes at a giv
 
 We plan to support new versions of ScanImage scans as our lab starts using them. If you would like us to add support for an older (or different) version of ScanImage, send us a small sample scan.
 
+
+
 ```shell
 ### Installation
 pip3 install git+https://github.com/atlab/scanreader.git
+
 ```
 
 ### Usage
@@ -31,7 +34,9 @@ z = scan[1]  # 4-d array: the second field (over all channels and time)
 scan = scanreader.read_scan('/data/my_scan_*.tif', dtype=np.float32, join_contiguous=True)
 # scan loaded as np.float32 (default is np.int16) and adjacent fields at same depth will be joined.
 ```
-Scan objects (returned by `read_scan()`) are iterable and indexable (as shown). Indexes can be integers, slice objects (:) or lists/tuples/arrays of integers. It should act like a numpy 5-d array---no boolean indexing, though.
+Scan objects (returned by `read_scan()`) are iterable and indexable (as shown).
+Indexes can be integers, slice objects (:) or lists/tuples/arrays of
+integers. It should act like a numpy 5-d array---no boolean indexing, though.
 
 ## Details on data loading (for future developers)
 

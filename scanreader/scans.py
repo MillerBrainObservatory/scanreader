@@ -736,6 +736,7 @@ class ScanMultiROI(NewerScan, BaseScan):
             num_fly_to_lines = None
         return num_fly_to_lines
 
+    # Conversions
     def _degrees_to_microns(self, degrees):
         """ Convert scan angle degrees to microns using the objective resolution."""
         match = re.search(r'objectiveResolution = (?P<deg2um_factor>.*)', self.header)

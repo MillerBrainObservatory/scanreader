@@ -1,0 +1,25 @@
+# environment.yml
+
+name: mbo-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - python
+  - sphinx>=6.0
+  - sphinxcontrib-video
+  - numpydoc
+  - sphinx-book-theme
+  - ipython
+  - numpy
+  - tifffile
+  - pip:
+    - myst-nb
+    - sphinx-prompt
+    - sphinxcontrib-matlabdomain
+    - pydata-sphinx-theme
+    - sphinxcontrib-images
+    - sphinx-copybutton
+    - sphinx-togglebutton
+

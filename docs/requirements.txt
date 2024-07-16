@@ -2,6 +2,7 @@ sphinx>=6.1.3
 docutils>=0.19
 nbsphinx
 numpydoc
+sphinx-autodoc2
 sphinx_gallery
 sphinx-togglebutton
 sphinx-copybutton
@@ -11,4 +12,3 @@ sphinx_design
 sphinxcontrib-images
 sphinxcontrib-video
 myst_nb
-linkify

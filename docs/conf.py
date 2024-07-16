@@ -63,7 +63,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'exclude']
 extensions = ["autodoc2",
               "sphinxcontrib.images",
               "sphinxcontrib.video" ,
-              "sphinxcontrib.matlab",
               "myst_nb",
               "sphinx_copybutton",
               "numpydoc",

@@ -2,11 +2,9 @@ Metadata-Version: 2.1
 Name: scanreader
 Version: 0.4.12
 Summary: Reader for ScanImage 5 scans (including slow stacks and multiROI).
-Home-page: https://github.com/atlab/scanreader
-Author: Erick Cobos
-Author-email: ecobos@bcm.edu
+Home-page: https://github.com/MillerBrainObservtory/scanreader
 License: MIT
-Keywords: ScanImage scanreader multiROI 2016b tiff
+Keywords: ScanImage scanreader multiROI 2019 tiff
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Science/Research
 Classifier: Programming Language :: Python :: 3 :: Only
@@ -16,4 +14,4 @@ License-File: LICENSE
 Requires-Dist: numpy>=1.12.0
 Requires-Dist: tifffile>=2019.2.22
 
-Python TIFF Stack Reader for ScanImage 5 scans (including multiROI).
+Python TIFF Stack Reader for ScanImage recordings (including multiROI).

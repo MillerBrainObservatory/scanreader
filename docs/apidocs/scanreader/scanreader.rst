@@ -13,10 +13,10 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
-   scanreader.multiroi
    scanreader.utils
    scanreader.scans
    scanreader.exceptions
+   scanreader.multiroi
    scanreader.core
 
 Package Contents

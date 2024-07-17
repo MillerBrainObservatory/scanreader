@@ -22,4 +22,5 @@ dependencies:
     - sphinxcontrib-images
     - sphinx-copybutton
     - sphinx-togglebutton
+    - sphinx-autodoc2
 

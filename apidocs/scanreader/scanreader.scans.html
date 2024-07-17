@@ -313,6 +313,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
@@ -414,17 +415,11 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_microns()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._microns_to_decrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._microns_to_decrees()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_pixels"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_pixels()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_degrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_degrees()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_microns()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.read_data"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.read_data()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_rois()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_fields()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._join_contiguous_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._join_contiguous_fields()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.__getitem__"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.__getitem__()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI._create_fields()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -444,6 +439,15 @@ document.write(`
                   
   <section id="module-scanreader.scans">
 <span id="scanreader-scans"></span><h1><a class="reference internal" href="#module-scanreader.scans" title="scanreader.scans"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.scans</span></code></a><a class="headerlink" href="#module-scanreader.scans" title="Permalink to this heading">#</a></h1>
+<p>scans.py</p>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this heading">#</a></h2>
+<p>Interface rules:</p>
+<p>1. If it (method or property) is shared among all subclasses it should be here, either implemented or as an abstract
+method. Even if private (e.g. _page_height) 2. If one subclass needs to overwrite it, then erase it here and
+implement them in the subclasses (this applies for now that I only have two subclasses). If code needs to be shared
+add it as a private method here. 3. If it is not in every subclass, it should not be here.</p>
+</section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
 <section id="classes">
@@ -458,7 +462,7 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.BaseScan5" title="scanreader.scans.BaseScan5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseScan5</span></code></a></p></td>
 <td><p>ScanImage 5 scans: one field per scanning depth and all fields have the same
-height_px and width_px.</p></td>
+height and width.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.Scan5Point1" title="scanreader.scans.Scan5Point1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scan5Point1</span></code></a></p></td>
 <td><p>ScanImage 5.1. Basic.</p></td>
@@ -514,10 +518,6 @@ height_px and width_px.</p></td>
 <tr class="row-odd"><td><p><a class="reference internal" href="#scanreader.scans.ScanMultiROI" title="scanreader.scans.ScanMultiROI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScanMultiROI</span></code></a></p></td>
 <td><p>An extension of ScanImage v5 that manages multiROI data (output from mesoscope).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#scanreader.scans.LBMScanMultiROI" title="scanreader.scans.LBMScanMultiROI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a></p></td>
-<td><p>A subclass of ScanMultiROI that adds the ability to cut off pixels from each X slice
-when images are loaded, adjusting the dimensions of the image data.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -527,30 +527,25 @@ when images are loaded, adjusting the dimensions of the image data.</p></td>
 <dt class="sig sig-object py" id="scanreader.scans.BaseScan">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">BaseScan</span></span><a class="headerlink" href="#scanreader.scans.BaseScan" title="Permalink to this definition">#</a></dt>
 <dd><p>Properties and methods shared among all scan versions.</p>
-<p>Scan objects are a collection of recording fields: rectangular planes at a given x_center_coordinate, y_center_coordinate,
-z position in the scan recorded in a number of channels during a preset amount of
-time. All fields have the same number of channels and number of frames.
-Scan objects are:</p>
-<blockquote>
-<div><dl class="simple">
-<dt>indexable: scan[field, y_center_coordinate, x_center_coordinate, channel, frame] works as long as the fields’ spatial</dt><dd><p>dimensions (y_center_coordinate, x_center_coordinate) match.</p>
-</dd>
-</dl>
-<p>iterable: ‘for field in scan:’ iterates over all fields (4-d array) in the scan.</p>
-</div></blockquote>
-<dl>
-<dt>Examples:</dt><dd><p>scan.version                ScanImage version of the scan.
+<p>scan.version                ScanImage version of the scan.
 scan[:, :, :3, :, :1000]    5-d numpy array with the first 1000 frames of the</p>
 <blockquote>
 <div><p>first 3 fields (if x_center_coordinate, y_center_coordinate dimensions match).</p>
 </div></blockquote>
-<p>for field in scan:          generates 4-d numpy arrays ([y_center_coordinate, x_center_coordinate, channels, frames]).</p>
-</dd>
-<dt>Note:</dt><dd><p>We use the word ‘frames’ as in video frames, i.e., number of timesteps the scan
+<p>original_image_slice = scan.fields[0].xslices  # how the original image is trimmed
+new_slice =
+new_image_slice = [i for s in original_image_slice for i in range(s.start, s.stop)]</p>
+<p>Scan objects are a collection of recording fields: rectangular planes at a given x_center_coordinate, y_center_coordinate,
+z position in the scan recorded in a number of channels during a preset amount of
+time. All fields have the same number of channels and number of frames.</p>
+<p>Scan objects are:</p>
+<p>1.indexable
+: scan[field, y_center_coordinate, x_center_coordinate, channel, frame] works as long as the fields’ spatial dimensions (y_center_coordinate, x_center_coordinate) match.</p>
+<p>2. iterable
+: ‘for field in scan:’ iterates over all fields (4-d array) in the scan.</p>
+<p>We use the word ‘frames’ as in video frames, i.e., number of timesteps the scan
 was recorded; ScanImage uses frames to refer to slices/scanning depths in the
 scan.</p>
-</dd>
-</dl>
 <p class="rubric">Initialization</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scanreader.scans.BaseScan.tiff_files">
@@ -608,7 +603,9 @@ moving to the next slice.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scanreader.scans.BaseScan.num_frames">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_frames</span></span><a class="headerlink" href="#scanreader.scans.BaseScan.num_frames" title="Permalink to this definition">#</a></dt>
-<dd><p>Each tiff page is an image at a given channel, scanning depth combination.</p>
+<dd><p>Number of timesteps in this file, corresponding to the number of tiff pages.</p>
+<p>How these pages are aligned depends on the scan.
+Each tiff page is an image at a given channel, at a different scanning depth. Slow stack aquisition collects all</p>
 </dd></dl>
 
 <dl class="py property">
@@ -800,12 +797,11 @@ dimension will have four slices: [1, 0, 2, 0].</p>
 </dd>
 </dl>
 </dd>
-<dt>Note:</dt><dd><p>We use slices in y_center_coordinate, x_center_coordinate for memory efficiency, If lists were passed another copy
-of the pages will be needed coming up to 3x the amount of data we actually
-want to read (the output array, the read pages and the list-sliced pages).
-Slices limit this to 2x (output array and read pages which are sliced in place).</p>
-</dd>
 </dl>
+<p>Note: We use slices in y_center_coordinate, x_center_coordinate for memory efficiency. If lists were passed
+another copy of the pages will be needed coming up to 3x the amount of data we actually want to read (the
+output array, the read pages and the list-sliced pages). Slices limit this to 2x (output array and read pages
+which are sliced in place).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -849,7 +845,7 @@ that point and then uses self.seconds_per_line to  transform it into seconds.</p
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">BaseScan5</span></span><a class="headerlink" href="#scanreader.scans.BaseScan5" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#scanreader.scans.BaseScan" title="scanreader.scans.BaseScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan</span></code></a></p>
 <p>ScanImage 5 scans: one field per scanning depth and all fields have the same
-height_px and width_px.</p>
+height and width.</p>
 <p class="rubric">Initialization</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scanreader.scans.BaseScan5.num_fields">
@@ -942,6 +938,7 @@ height_px and width_px.</p>
 <dt class="sig sig-object py" id="scanreader.scans.NewerScan">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">NewerScan</span></span><a class="headerlink" href="#scanreader.scans.NewerScan" title="Permalink to this definition">#</a></dt>
 <dd><p>Shared features among all newer scans.</p>
+<p class="rubric">Initialization</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scanreader.scans.NewerScan.is_slow_stack_with_fastZ">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_slow_stack_with_fastZ</span></span><a class="headerlink" href="#scanreader.scans.NewerScan.is_slow_stack_with_fastZ" title="Permalink to this definition">#</a></dt>
@@ -1066,12 +1063,13 @@ height_px and width_px.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">ScanMultiROI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">join_contiguous</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#scanreader.scans.NewerScan" title="scanreader.scans.NewerScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.NewerScan</span></code></a>, <a class="reference internal" href="#scanreader.scans.BaseScan" title="scanreader.scans.BaseScan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.BaseScan</span></code></a></p>
 <p>An extension of ScanImage v5 that manages multiROI data (output from mesoscope).</p>
-<dl class="simple">
-<dt>Attributes:</dt><dd><p>join_contiguous: A bool. Whether contiguous fields are joined into one.
+<blockquote>
+<div><blockquote>
+<div><p>join_contiguous: A bool. Whether contiguous fields are joined into one.
 rois: List of ROI objects (defined in multiroi.py)
 fields: List of Field objects (defined in multiroi.py)</p>
-</dd>
-</dl>
+</div></blockquote>
+</div></blockquote>
 <p class="rubric">Initialization</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.num_fields">
@@ -1154,18 +1152,6 @@ i.e., distance between fields in the tiff page.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._pixels_to_degrees">
-<span class="sig-name descname"><span class="pre">_pixels_to_degrees</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pixels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._pixels_to_degrees" title="Permalink to this definition">#</a></dt>
-<dd><p>Convert pixels to scan angle degrees using the objective resolution.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI._pixels_to_microns">
-<span class="sig-name descname"><span class="pre">_pixels_to_microns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pixels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pixels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI._pixels_to_microns" title="Permalink to this definition">#</a></dt>
-<dd><p>Convert pixels to microns using the objective resolution.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.read_data">
 <span class="sig-name descname"><span class="pre">read_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.read_data" title="Permalink to this definition">#</a></dt>
 <dd><p>Set the header, create rois and fields (joining them if necessary).</p>
@@ -1191,7 +1177,7 @@ i.e., distance between fields in the tiff page.</p>
 same size in their touching axis. Process is iterative: it tries to join each
 field with the remaining ones (checked in order); at the first union it will break
 and restart the process at the first field. When two fields are joined, it deletes
-the one appearing last and modifies info such as field height_px, field width_px and
+the one appearing last and modifies info such as field height, field width and
 slices in the one appearing first.</p>
 <p>Any rectangular area in the scan formed by the union of two or more fields which
 have been joined will be treated as a single field after this operation.</p>
@@ -1201,46 +1187,6 @@ have been joined will be treated as a single field after this operation.</p>
 <dt class="sig sig-object py" id="scanreader.scans.ScanMultiROI.__getitem__">
 <span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.ScanMultiROI.__getitem__" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scanreader.scans.LBMScanMultiROI">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scanreader.scans.</span></span><span class="sig-name descname"><span class="pre">LBMScanMultiROI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">join_contiguous</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.LBMScanMultiROI" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#scanreader.scans.ScanMultiROI" title="scanreader.scans.ScanMultiROI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scanreader.scans.ScanMultiROI</span></code></a></p>
-<p>A subclass of ScanMultiROI that adds the ability to cut off pixels from each X slice
-when images are loaded, adjusting the dimensions of the image data.</p>
-<dl class="simple">
-<dt>join_contiguous<span class="classifier">bool</span></dt><dd><p>Whether contiguous fields are joined into a single field.</p>
-</dd>
-<dt>x_cut<span class="classifier">int, optional</span></dt><dd><p>The number of pixels to cut from the start of each X slice. Default is no pixels being trimmed.</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>x_cut<span class="classifier">sequence, optional</span></dt><dd><p>The number of pixels to cut from the start of each X slice.</p>
-</dd>
-<dt>y_cut<span class="classifier">sequence, optional</span></dt><dd><p>The number of pixels to cut from the start of each Y slice.</p>
-</dd>
-</dl>
-<p class="rubric">Initialization</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="scanreader.scans.LBMScanMultiROI._create_fields">
-<span class="sig-name descname"><span class="pre">_create_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.scans.LBMScanMultiROI._create_fields" title="Permalink to this definition">#</a></dt>
-<dd><p>Override the _create_fields method to adjust the X slices of each field, cutting off
-a specified number of pixels from the start of each X slice.</p>
-<dl class="simple">
-<dt>list</dt><dd><p>A list of Field objects with adjusted X slices.</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>RuntimeError</dt><dd><p>If the calculated number of lines exceeds the page height_px at any scanning depth.</p>
-</dd>
-</dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>self._page_height (145 pixels normally) is going to be &gt; scanfield height_px by a pixel or two</p>
-</div>
-</dd></dl>
 
 </dd></dl>
 
@@ -1292,6 +1238,7 @@ a specified number of pixels from the start of each X slice.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
@@ -1393,17 +1340,11 @@ a specified number of pixels from the start of each X slice.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_microns()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._microns_to_decrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._microns_to_decrees()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._degrees_to_pixels"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._degrees_to_pixels()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_degrees"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_degrees()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._pixels_to_microns"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._pixels_to_microns()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.read_data"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.read_data()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_rois"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_rois()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._create_fields()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI._join_contiguous_fields"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI._join_contiguous_fields()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.ScanMultiROI.__getitem__"><code class="docutils literal notranslate"><span class="pre">ScanMultiROI.__getitem__()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#scanreader.scans.LBMScanMultiROI._create_fields"><code class="docutils literal notranslate"><span class="pre">LBMScanMultiROI._create_fields()</span></code></a></li>
 </ul>
 </li>
 </ul>

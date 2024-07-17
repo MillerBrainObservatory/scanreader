@@ -339,6 +339,8 @@ document.write(`
                   
   <section id="module-scanreader.core">
 <span id="scanreader-core"></span><h1><a class="reference internal" href="#module-scanreader.core" title="scanreader.core"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scanreader.core</span></code></a><a class="headerlink" href="#module-scanreader.core" title="Permalink to this heading">#</a></h1>
+<p>core.py</p>
+<p>Functions for the __main__ entrypoint into the scanreader.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
 <section id="functions">
@@ -379,7 +381,7 @@ document.write(`
 
 <dl class="py function">
 <dt class="sig sig-object py" id="scanreader.core.read_scan">
-<span class="sig-prename descclassname"><span class="pre">scanreader.core.</span></span><span class="sig-name descname"><span class="pre">read_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pathnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.int16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">join_contiguous</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scanreader.core.read_scan" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scanreader.core.</span></span><span class="sig-name descname"><span class="pre">read_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pathnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.9/library/os.html#os.PathLike" title="(in Python v3.9)"><span class="pre">os.PathLike</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.9/library/os.html#os.PathLike" title="(in Python v3.9)"><span class="pre">os.PathLike</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.int16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">join_contiguous</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="scanreader.scans.html#scanreader.scans.ScanMultiROI" title="scanreader.scans.ScanMultiROI"><span class="pre">scanreader.scans.ScanMultiROI</span></a></span></span><a class="headerlink" href="#scanreader.core.read_scan" title="Permalink to this definition">#</a></dt>
 <dd><p>Reads a ScanImage scan.</p>
 <dl class="simple">
 <dt>pathnames: os.PathLike or str or list of os.PathLike or str</dt><dd><p>Pathname(s) or pathname pattern(s) to read.</p>
@@ -389,23 +391,9 @@ document.write(`
 <dt>join_contiguous: bool, optional</dt><dd><p>For multiROI scans (2016b and beyond) it will join contiguous scanfields in the same depth.
 No effect in non-multiROI scans. See help of ScanMultiROI._join_contiguous_fields for details.</p>
 </dd>
-<dt>lbm: bool, optional</dt><dd><p>For Light Beads Microscopy datasets.</p>
-</dd>
-<dt>x_cut: slice-like, optional</dt><dd><p>Slice to cut in x_center_coordinate dimension.</p>
-</dd>
-<dt>y_cut: slice-like, optional</dt><dd><p>Slice to cut in y_center_coordinate dimension.</p>
-</dd>
 </dl>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 0.1.0.</span></p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The <cite>x_cut</cite> and <cite>y_cut</cite> parameters are used to cut the scan in the x_center_coordinate and y_center_coordinate dimensions, respectively.
-For example, <cite>x_cut=slice(10, 20)</cite> will start the image 10 pixels in, and end the image 20 pixels from the far edge.</p>
-</div>
 <dl class="simple">
-<dt>LBMScanMultiROI</dt><dd><p>A Scan object (subclass of BaseScan) with metadata and data. See Readme for details.</p>
+<dt>ScanMultiROI</dt><dd><p>A Scan object with metadata and data. See Readme for details.</p>
 </dd>
 </dl>
 </dd></dl>

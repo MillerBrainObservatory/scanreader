@@ -79,9 +79,6 @@ Classes
    * - :py:obj:`ScanMultiROI <scanreader.scans.ScanMultiROI>`
      - .. autodoc2-docstring:: scanreader.scans.ScanMultiROI
           :summary:
-   * - :py:obj:`LBMScanMultiROI <scanreader.scans.LBMScanMultiROI>`
-     - .. autodoc2-docstring:: scanreader.scans.LBMScanMultiROI
-          :summary:
 
 API
 ~~~
@@ -407,10 +404,14 @@ API
 
       .. autodoc2-docstring:: scanreader.scans.Scan5Point2.image_width_in_microns
 
-.. py:class:: NewerScan
+.. py:class:: NewerScan()
    :canonical: scanreader.scans.NewerScan
 
    .. autodoc2-docstring:: scanreader.scans.NewerScan
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: scanreader.scans.NewerScan.__init__
 
    .. py:property:: is_slow_stack_with_fastZ
       :canonical: scanreader.scans.NewerScan.is_slow_stack_with_fastZ
@@ -657,16 +658,6 @@ API
 
       .. autodoc2-docstring:: scanreader.scans.ScanMultiROI._degrees_to_pixels
 
-   .. py:method:: _pixels_to_degrees(pixels, num_pixels)
-      :canonical: scanreader.scans.ScanMultiROI._pixels_to_degrees
-
-      .. autodoc2-docstring:: scanreader.scans.ScanMultiROI._pixels_to_degrees
-
-   .. py:method:: _pixels_to_microns(pixels, num_pixels)
-      :canonical: scanreader.scans.ScanMultiROI._pixels_to_microns
-
-      .. autodoc2-docstring:: scanreader.scans.ScanMultiROI._pixels_to_microns
-
    .. py:method:: read_data(filenames, dtype)
       :canonical: scanreader.scans.ScanMultiROI.read_data
 
@@ -689,19 +680,3 @@ API
 
    .. py:method:: __getitem__(key)
       :canonical: scanreader.scans.ScanMultiROI.__getitem__
-
-.. py:class:: LBMScanMultiROI(join_contiguous, x_cut=(0, 0), y_cut=(0, 0))
-   :canonical: scanreader.scans.LBMScanMultiROI
-
-   Bases: :py:obj:`scanreader.scans.ScanMultiROI`
-
-   .. autodoc2-docstring:: scanreader.scans.LBMScanMultiROI
-
-   .. rubric:: Initialization
-
-   .. autodoc2-docstring:: scanreader.scans.LBMScanMultiROI.__init__
-
-   .. py:method:: _create_fields()
-      :canonical: scanreader.scans.LBMScanMultiROI._create_fields
-
-      .. autodoc2-docstring:: scanreader.scans.LBMScanMultiROI._create_fields

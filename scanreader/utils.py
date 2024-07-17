@@ -1,4 +1,6 @@
+"""utils.py: general utilities"""
 import numpy as np
+
 
 def fill_key(key, num_dimensions):
     """ Fill key with slice(None) (':') until num_dimensions size.
@@ -39,22 +41,22 @@ def check_index_type(axis, index):
         Index to inspect.
 
     """
-    if not _index_has_valid_type(index): # raise error
+    if not _index_has_valid_type(index):  # raise error
         error_msg = ('index {} in axis {} is not an integer, slice or array/list/tuple '
                      'of integers'.format(index, axis))
         raise TypeError(error_msg)
 
 
 def _index_has_valid_type(index):
-    if np.issubdtype(type(index), np.signedinteger): # integer
+    if np.issubdtype(type(index), np.signedinteger):  # integer
         return True
-    if isinstance(index, slice): # slice
+    if isinstance(index, slice):  # slice
         return True
     if (isinstance(index, (list, tuple)) and
-        all(np.issubdtype(type(x), np.signedinteger) for x in index)):  # list or tuple
+            all(np.issubdtype(type(x), np.signedinteger) for x in index)):  # list or tuple
         return True
     if (isinstance(index, np.ndarray) and np.issubdtype(index.dtype, np.signedinteger)
-        and index.ndim == 1):  # array
+            and index.ndim == 1):  # array
         return True
 
     return False

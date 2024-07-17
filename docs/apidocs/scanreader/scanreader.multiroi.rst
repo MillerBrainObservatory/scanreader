@@ -61,7 +61,7 @@ API
 
       .. autodoc2-docstring:: scanreader.multiroi.ROI.get_field_at
 
-.. py:class:: Scanfield(height_px=None, width_px=None, depth=None, y_center_coordinate=None, x_center_coordinate=None, height_in_degrees=None, width_in_degrees=None)
+.. py:class:: Scanfield(height=None, width=None, depth=None, y_center_coordinate=None, x_center_coordinate=None, height_in_degrees=None, width_in_degrees=None)
    :canonical: scanreader.multiroi.Scanfield
 
    .. autodoc2-docstring:: scanreader.multiroi.Scanfield
@@ -75,7 +75,7 @@ API
 
       .. autodoc2-docstring:: scanreader.multiroi.Scanfield.as_field
 
-.. py:class:: Field(height_px=None, width_px=None, depth=None, y_center_coordinate=None, x_center_coordinate=None, height_in_degrees=None, width_in_degrees=None, yslices=None, xslices=None, output_yslices=None, output_xslices=None, slice_id=None, roi_ids=None, offsets=None)
+.. py:class:: Field(height=None, width=None, depth=None, y_center_coordinate=None, x_center_coordinate=None, height_in_degrees=None, width_in_degrees=None, yslices=None, xslices=None, output_yslices=None, output_xslices=None, slice_id=None, roi_ids=None, offsets=None)
    :canonical: scanreader.multiroi.Field
 
    Bases: :py:obj:`scanreader.multiroi.Scanfield`

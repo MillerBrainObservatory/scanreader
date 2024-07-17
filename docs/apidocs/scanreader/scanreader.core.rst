@@ -49,7 +49,7 @@ API
 
    .. autodoc2-docstring:: scanreader.core._scans
 
-.. py:function:: read_scan(pathnames, dtype=np.int16, join_contiguous=False, lbm=False, x_cut=(), y_cut=())
+.. py:function:: read_scan(pathnames: os.PathLike | [os.PathLike], dtype=np.int16, join_contiguous=True) -> scanreader.scans.ScanMultiROI
    :canonical: scanreader.core.read_scan
 
    .. autodoc2-docstring:: scanreader.core.read_scan

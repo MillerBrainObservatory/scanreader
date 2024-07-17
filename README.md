@@ -12,7 +12,7 @@ All fields have the same number of channels (or z-planes) and number of frames/t
 Install the latest version with `pip`
 
 ```shell
-pip3 install git+https://github.com/atlab/scanreader.git
+pip3 install git+https://github.com/MillerBrainObservatory/scanreader.git
 ```
 
 ## Usage

@@ -532,11 +532,80 @@ class ScanLBM:
         next."""
         return int(self._page_height + self._num_fly_back_lines)
 
+    def _degrees_to_microns(self, degrees):
+        """ Convert scan angle degrees to microns using the objective resolution."""
+        match = re.search(r'objectiveResolution = (?P<deg2um_factor>.*)', self.header)
+        microns = (degrees * float(match.group('deg2um_factor'))) if match else None
+        return microns
+
+    def _microns_to_decrees(self, microns):
+        """ Convert microns to scan angle degrees using the objective resolution."""
+        match = re.search(r'objectiveResolution = (?P<deg2um_factor>.*)', self.header)
+        degrees = (microns / float(match.group('deg2um_factor'))) if match else None
+        return degrees
+
+    def read_data(self, filenames, dtype):
+        """ Set the header, create rois and fields (joining them if necessary)."""
+        super().read_data(filenames, dtype)
+        self.rois = self._create_rois()
+        self.fields = self._create_fields()
+        if self.join_contiguous:
+            self._join_contiguous_fields()
+
     def _create_rois(self):
-        """Create scan rois from the configuration file."""
-        roi_infos = self.roi_metadata
+        """Create scan rois from the configuration file. """
+        roi_infos = self.tiff_files[0].scanimage_metadata['RoiGroups']['imagingRoiGroup']['rois']
+        roi_infos = roi_infos if isinstance(roi_infos, list) else [roi_infos]
+        roi_infos = list(filter(lambda r: isinstance(r['zs'], (int, float, list)),
+                                roi_infos))  # discard empty/malformed ROIs
+
         rois = [ROI(roi_info) for roi_info in roi_infos]
         return rois
+
+    def _create_fields(self):
+        """ Go over each slice depth and each roi generating the scanned fields. """
+        fields = []
+        previous_lines = 0
+        for slice_id, scanning_depth in enumerate(self.scanning_depths):
+            next_line_in_page = 0  # each slice is one tiff page
+            for roi_id, roi in enumerate(self.rois):
+                new_field = roi.get_field_at(scanning_depth)
+
+                if new_field is not None:
+                    if next_line_in_page + new_field.height > self._page_height:
+                        error_msg = ('Overestimated number of fly to lines ({}) at '
+                                     'scanning depth {}'.format(self._num_fly_to_lines,
+                                                                scanning_depth))
+                        raise RuntimeError(error_msg)
+
+                    # Set xslice and yslice (from where in the page to cut it)
+                    new_field.yslices = [slice(next_line_in_page, next_line_in_page
+                                               + new_field.height)]
+                    new_field.xslices = [slice(0, new_field.width)]
+
+                    # Set output xslice and yslice (where to paste it in output)
+                    new_field.output_yslices = [slice(0, new_field.height)]
+                    new_field.output_xslices = [slice(0, new_field.width)]
+
+                    # Set slice and roi id
+                    new_field.slice_id = slice_id
+                    new_field.roi_ids = [roi_id]
+
+                    # Set timing offsets
+                    offsets = self._compute_offsets(new_field.height, previous_lines +
+                                                    next_line_in_page)
+                    new_field.offsets = [offsets]
+
+                    # Compute next starting y_center_coordinate
+                    next_line_in_page += new_field.height + self._num_fly_to_lines
+
+                    # Add field to fields
+                    fields.append(new_field)
+
+            # Accumulate overall number of scanned lines
+            previous_lines += self._num_lines_between_fields
+
+        return fields
 
     def _join_contiguous_fields(self):
         """In each scanning depth, join fields that are contiguous.

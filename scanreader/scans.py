@@ -17,7 +17,8 @@ from dask import delayed
 from tifffile import TiffFile, ZarrTiffStore
 from tifffile.tifffile import matlabstr2py
 
-from . import utils, ROI
+from .utils import listify_index, check_index_is_in_bounds, check_index_type, fill_key, compute
+from .multiroi import ROI
 from .exceptions import FieldDimensionMismatch
 
 
@@ -416,8 +417,8 @@ class BaseScan:
                     pages_to_read.append(new_page)
 
         # Compute output dimensions
-        out_height = len(utils.listify_index(yslice, self._page_height))
-        out_width = len(utils.listify_index(xslice, self._page_width))
+        out_height = len(listify_index(yslice, self._page_height))
+        out_width = len(listify_index(xslice, self._page_width))
 
         # Read pages
         pages = np.empty([len(pages_to_read), out_height, out_width], dtype=self.dtype)
@@ -481,6 +482,7 @@ class BaseScan:
         return field_offsets
 
 
+# noinspection PyMissingConstructor
 class ScanLegacy(BaseScan):
     """ Scan versions 4 and below. Not implemented."""
 
@@ -555,23 +557,23 @@ class BaseScan5(BaseScan):
     def __getitem__(self, key):
         """ In non-multiROI, all fields have the same x_center_coordinate, y_center_coordinate dimensions. """
         # Fill key to size 5 (raises IndexError if more than 5)
-        full_key = utils.fill_key(key, num_dimensions=5)
+        full_key = fill_key(key, num_dimensions=5)
 
         # Check index types are valid
         for i, index in enumerate(full_key):
-            utils.check_index_type(i, index)
+            check_index_type(i, index)
 
         # Check each dimension is in bounds
         max_dimensions = self.shape
         for i, (index, dim_size) in enumerate(zip(full_key, max_dimensions)):
-            utils.check_index_is_in_bounds(i, index, dim_size)
+            check_index_is_in_bounds(i, index, dim_size)
 
         # Get fields, channels and frames as lists
-        field_list = utils.listify_index(full_key[0], self.num_fields)
-        y_list = utils.listify_index(full_key[1], self.image_height)
-        x_list = utils.listify_index(full_key[2], self.image_width)
-        channel_list = utils.listify_index(full_key[3], self.num_channels)
-        frame_list = utils.listify_index(full_key[4], self.num_frames)
+        field_list = listify_index(full_key[0], self.num_fields)
+        y_list = listify_index(full_key[1], self.image_height)
+        x_list = listify_index(full_key[2], self.image_width)
+        channel_list = listify_index(full_key[3], self.num_channels)
+        frame_list = listify_index(full_key[4], self.num_frames)
 
         # Edge case when slice index gives 0 elements or index is empty list, e.g., scan[10:0], scan[[]]
         if [] in [field_list, y_list, x_list, channel_list, frame_list,]:
@@ -627,7 +629,7 @@ class Scan5Point2(BaseScan5):
         return round(image_width_in_microns)
 
 
-class NewerScan():
+class NewerScan:
     """ Shared features among all newer scans. """
 
     @property
@@ -891,28 +893,28 @@ class ScanMultiROI(NewerScan, BaseScan):
 
     def __getitem__(self, key):
         # Fill key to size 5 (raises IndexError if more than 5)
-        full_key = utils.fill_key(key, num_dimensions=5)  # key represents the scanfield index
+        full_key = fill_key(key, num_dimensions=5)  # key represents the scanfield index
 
         # Check index types are valid
         for i, index in enumerate(full_key):
-            utils.check_index_type(i, index)
+            check_index_type(i, index)
 
         # Check each dimension is in bounds
-        utils.check_index_is_in_bounds(0, full_key[0], self.num_fields)
-        for field_id in utils.listify_index(full_key[0], self.num_fields):
-            utils.check_index_is_in_bounds(1, full_key[1], self.field_heights[field_id])
-            utils.check_index_is_in_bounds(2, full_key[2], self.field_widths[field_id])
-        utils.check_index_is_in_bounds(3, full_key[3], self.num_channels)
-        utils.check_index_is_in_bounds(4, full_key[4], self.num_frames)
+        check_index_is_in_bounds(0, full_key[0], self.num_fields)
+        for field_id in listify_index(full_key[0], self.num_fields):
+            check_index_is_in_bounds(1, full_key[1], self.field_heights[field_id])
+            check_index_is_in_bounds(2, full_key[2], self.field_widths[field_id])
+        check_index_is_in_bounds(3, full_key[3], self.num_channels)
+        check_index_is_in_bounds(4, full_key[4], self.num_frames)
 
         # Get fields, channels and frames as lists
-        field_list = utils.listify_index(full_key[0], self.num_fields)
-        y_lists = [utils.listify_index(full_key[1], self.field_heights[field_id]) for
+        field_list = listify_index(full_key[0], self.num_fields)
+        y_lists = [listify_index(full_key[1], self.field_heights[field_id]) for
                    field_id in field_list]
-        x_lists = [utils.listify_index(full_key[2], self.field_widths[field_id]) for
+        x_lists = [listify_index(full_key[2], self.field_widths[field_id]) for
                    field_id in field_list]
-        channel_list = utils.listify_index(full_key[3], self.num_channels)
-        frame_list = utils.listify_index(full_key[4], self.num_frames)
+        channel_list = listify_index(full_key[3], self.num_channels)
+        frame_list = listify_index(full_key[4], self.num_frames)
 
         # Edge case when slice index gives 0 elements or index is empty list, e.g., scan[10:0], scan[[]]
         if [] in [field_list, *y_lists, *x_lists, channel_list, frame_list]:
@@ -1007,22 +1009,22 @@ class ScanLBM(ScanMultiROI, BaseScan):
 
     def __getitem__(self, key):
         # Fill key to size 5 (raises IndexError if more than 5)
-        full_key = utils.fill_key(key, num_dimensions=5)  # key represents the scanfield index
+        full_key = fill_key(key, num_dimensions=5)  # key represents the scanfield index
 
         # Check index types are valid
         for i, index in enumerate(full_key):
-            utils.check_index_type(i, index)
+            check_index_type(i, index)
 
         # Check each dimension is in bounds
-        utils.check_index_is_in_bounds(0, full_key[0], self.num_fields)
-        for field_id in utils.listify_index(full_key[0], self.num_fields):
-            utils.check_index_is_in_bounds(1, full_key[1], self.field_heights[field_id])
-            utils.check_index_is_in_bounds(2, full_key[2], self.field_widths[field_id])
-        utils.check_index_is_in_bounds(3, full_key[3], self.num_channels)
-        utils.check_index_is_in_bounds(4, full_key[4], self.num_frames)
+        check_index_is_in_bounds(0, full_key[0], self.num_fields)
+        for field_id in listify_index(full_key[0], self.num_fields):
+            check_index_is_in_bounds(1, full_key[1], self.field_heights[field_id])
+            check_index_is_in_bounds(2, full_key[2], self.field_widths[field_id])
+        check_index_is_in_bounds(3, full_key[3], self.num_channels)
+        check_index_is_in_bounds(4, full_key[4], self.num_frames)
 
         # Get fields, channels and frames as lists
-        field_list = utils.listify_index(full_key[0], self.num_fields)
+        field_list = listify_index(full_key[0], self.num_fields)
 
         if [] in [field_list]:
             return np.empty(0)
@@ -1038,7 +1040,7 @@ class ScanLBM(ScanMultiROI, BaseScan):
                 elif len(pages) == 1:
                     pages = pages[0]
                 pages_store.append(pages)
-        return da.concatenate(pages_store, axis=2)
+        return da.concatenate(pages_store, axis=-1)
 
     def _compute_offsets(self, slice_object, **kwargs) -> int:
         """
@@ -1055,7 +1057,7 @@ class ScanLBM(ScanMultiROI, BaseScan):
         random_frame = random.randint(0, self.num_frames - 1)
         frame_list = [random_frame + 30 * i for i in range(50)]
         sample_arr = self.tiff_files[0].asarray(frame_list)
-        return utils.compute(sample_arr[:, slice_object, ...])
+        return compute(sample_arr[:, slice_object, ...])
 
     def visualize_offsets(self):
         # TODO: move this to a separate function

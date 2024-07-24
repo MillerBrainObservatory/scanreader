@@ -45,7 +45,7 @@ def read_scan(pathnames: os.PathLike | List[os.PathLike | str], dtype=np.int16, 
 
     """
     # Expand wildcards
-    filenames = expand_wildcard(pathnames)
+    filenames = get_files(pathnames)
 
     if len(filenames) == 0:
         error_msg = 'Pathname(s) {} do not match any files in disk.'.format(pathnames)
@@ -70,18 +70,33 @@ def read_scan(pathnames: os.PathLike | List[os.PathLike | str], dtype=np.int16, 
 
     return scan
 
+def get_files(pathnames: os.PathLike | List[os.PathLike | str]) -> List[PathLike[AnyStr]]:
+    """
+    Expands a list of pathname patterns to form a sorted list of absolute filenames.
+
+    Parameters
+    ----------
+    pathnames: os.PathLike
+        Pathname(s) or pathname pattern(s) to read.
+
+    Returns
+    -------
+    List[PathLike[AnyStr]]
+        List of absolute filenames.
+    """
+    pathnames = Path(pathnames).expanduser()  # expand ~ to /home/user
+    if not pathnames.exists():
+        raise FileNotFoundError(f'Path {pathnames} does not exist as a file or directory.')
+    if pathnames.is_file():
+        return [pathnames]
+    if pathnames.is_dir():
+        pathnames = [fpath for fpath in pathnames.glob("*.tif*")]  # matches .tif and .tiff
+    return sorted(pathnames, key=path.basename)
 
 def expand_wildcard(wildcard: os.PathLike | str | list[os.PathLike | str]) -> list[PathLike[AnyStr]]:
     """ Expands a list of pathname patterns to form a sorted list of absolute filenames. """
-    if hasattr(wildcard, 'suffix'):
-        wildcard_list = [str(wildcard)]
-    elif isinstance(wildcard, str):
-        wildcard_list = [wildcard]
-    elif isinstance(wildcard, (tuple, list)):
-        wildcard_list = wildcard
-    else:
-        error_msg = f'Expected string or list of strings, received: {wildcard}'
-        raise TypeError(error_msg)
+    # Check input type
+    wildcard = Path(wildcard)
 
     # Expand wildcards
     rel_filenames = [glob(wildcard) for wildcard in wildcard_list]

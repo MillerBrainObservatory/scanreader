@@ -5,18 +5,14 @@ import typing
 from pathlib import Path
 
 import dask
+import napari
+
 import scanreader as sr
 import argparse
 
 
-def main(path) -> sr.ScanLBM:
-    datapath = Path(path)
-    files = [str(x) for x in datapath.glob("*.tif*")]
-    return sr.read_scan(files, join_contiguous=True)
-
-
 def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
-    _scan = main(path)
+    _scan = sr.read_scan(path, join_contiguous=True)
     return _scan[slice_objects]
 
 
@@ -27,24 +23,40 @@ def parse_args():
         "If a directory is given, all .tiff files in the directory will be read. \n"
         "If a file is given, only that file will be read."
     )
-    parser.add_argument("path", type=Path, help=help_str)
-    parser.add_argument(
-        "slice_objects",
-        type=str,
-        help="Slicing objects in the format start:stop:step for each dimension, separated by commas."
-    )
-    return parser.parse_args()
+    parser.add_argument('path', type=Path, help=help_str)
+    parser.add_argument('-t', '--timepoints', type=str, help='Frames to read (i.e. 1:50)', default=':')
+    parser.add_argument('-z', '--zslice', type=str, help='Z-Planes to read (i.e. 1:50)', default=':')
+    parser.add_argument('-x', '--xslice', type=str, help='X-pixels to read (i.e. 1:50)', default=':')
+    parser.add_argument('-y', '--yslice', type=str, help='Y-pixels to read (i.e. 1:50)', default=':')
+    _args = parser.parse_args()
+    if _args.path is None:
+        path = Path().home() / 'caiman_data'
+        if not path.is_dir():
+            path.mkdir()
+        else:
+            tiff_files = [str(x) for x in path.glob("*.tif*")]
+            print(f'Files found in {path}: \n{tiff_files}')
+    for arg_slice in ['timepoints', 'zslice', 'xslice', 'yslice']:
+        setattr(_args, arg_slice, process_slice_str(getattr(_args, arg_slice)))
+    return _args
 
 
-def open_gui(_scan):
-    import napari
-    _viewer = napari.Viewer()
-    _viewer.add_image(_scan, name="data", colormap='gray')
-    napari.run()
+def process_slice_str(slice_str):
+    if not isinstance(slice_str, str):
+        raise ValueError(f'Expected a string argument, received: {slice_str}')
+    else:
+        parts = slice_str.split(':')
+    return slice(*[int(p) if p else None for p in parts])
+
+
+def process_slice_objects(slice_str):
+    return tuple(map(process_slice_str, slice_str.split(',')))
 
 
 if __name__ == "__main__":
     args = parse_args()
-    slices = tuple(slice(*map(lambda x: int(x) if x else None, s.split(':'))) for s in args.slice_objects.split(','))
-    scan = imread(args.path, slices)
-    open_gui(scan)
+    scan = imread(args.path, (args.timepoints, args.zslice, args.xslice, args.yslice))
+
+    _viewer = napari.Viewer()
+    _viewer.add_image(scan, name="data", colormap='gray')
+    napari.run()

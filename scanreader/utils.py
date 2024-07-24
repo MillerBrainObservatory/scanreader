@@ -137,7 +137,7 @@ def check_index_is_in_bounds(axis, index, dim_size):
 
 def _is_index_in_bounds(index, dim_size):
     if np.issubdtype(type(index), np.signedinteger):
-        return (index in range(-dim_size, dim_size))
+        return index in range(-dim_size, dim_size)
     elif isinstance(index, (list, tuple, np.ndarray)):
         return all(x in range(-dim_size, dim_size) for x in index)
     elif isinstance(index, slice):

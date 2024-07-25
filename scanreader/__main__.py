@@ -6,13 +6,13 @@ from pathlib import Path
 
 import dask
 import napari
+import tifffile
 
 import scanreader as sr
 import argparse
 
-
 def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
-    _scan = sr.read_scan(path, join_contiguous=True)
+    _scan = sr.read_scan(path, join_contiguous=True, debug=True)
     return _scan[slice_objects]
 
 
@@ -39,6 +39,8 @@ def parse_args():
     for arg_slice in ['timepoints', 'zslice', 'xslice', 'yslice']:
         setattr(_args, arg_slice, process_slice_str(getattr(_args, arg_slice)))
     return _args
+
+
 
 
 def process_slice_str(slice_str):

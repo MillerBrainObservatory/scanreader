@@ -352,7 +352,7 @@ def correct_raster(scan, raster_phase, temporal_fill_fraction, in_place=True):
     return np.reshape(reshaped_scan, original_shape)
 
 
-def return_scan_offset(image_in, dim, n_corr=3, run_napari=False):
+def return_scan_offset(image_in, dim, n_corr=3):
     """
     Compute the scan offset correction between interleaved lines or columns in an image.
 

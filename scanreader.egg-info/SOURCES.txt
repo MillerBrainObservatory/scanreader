@@ -2,6 +2,7 @@ LICENSE
 README.md
 setup.py
 scanreader/__init__.py
+scanreader/__main__.py
 scanreader/core.py
 scanreader/exceptions.py
 scanreader/multiroi.py

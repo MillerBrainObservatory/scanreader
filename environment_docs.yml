@@ -6,6 +6,7 @@ channels:
   - defaults
 dependencies:
   - pip
+  - scipy
   - python
   - sphinx>=6.0
   - sphinxcontrib-video

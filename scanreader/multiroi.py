@@ -249,12 +249,14 @@ class Field(Scanfield):
     Example
     -------
     Assuming a setup where each page represents a different depth and each ROI is a different region,
-    you can extract and manipulate specific fields as follows:
+    you can extract and manipulate specific fields as follows::
 
         field = roi.get_field_at(depth)
         output_field[field.output_yslices, field.output_xslices] = page[field.yslices, field.xslices]
 
-    Notes ----- - When a field is formed by joining two or more subfields (via join_contiguous), the slice lists hold
+    Notes
+    -----
+    When a field is formed by joining two or more subfields (via join_contiguous), the slice lists hold
     multiple slices representing where each subfield will be taken from the page and inserted into the (joint) output
     field. - For non-contiguous fields, each slice list has a single slice. - The attributes `height`, `width`,
     `x_center_coordinate`, `y_center_coordinate`, `height_in_degrees`, and `width_in_degrees` are adjusted
@@ -263,7 +265,7 @@ class Field(Scanfield):
 
     def __init__(self, height=None, width=None, depth=None, y_center_coordinate=None, x_center_coordinate=None,
                  height_in_degrees=None, width_in_degrees=None, yslices=None, xslices=None, output_yslices=None,
-                 output_xslices=None, slice_id=None, roi_ids=None, offsets=None):
+                 output_xslices=None, slice_id=None, roi_ids=None, offsets=()):
         """
         Initialize a field with dimensions and position.
 

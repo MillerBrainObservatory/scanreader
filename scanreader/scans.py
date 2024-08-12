@@ -9,18 +9,27 @@ add it as a private method here. 3. If it is not in every subclass, it should no
 """
 import itertools
 import re
+import typing
+from typing import overload
 
+import dask.array as da
 import numpy as np
-from tifffile import TiffFile
+import zarr
+from dask import delayed
+from tifffile import TiffFile, ZarrTiffStore
 from tifffile.tifffile import matlabstr2py
-
-from . import utils
-from .exceptions import FieldDimensionMismatch
+from .utils import listify_index, check_index_is_in_bounds, check_index_type, fill_key, compute
 from .multiroi import ROI
+from .exceptions import FieldDimensionMismatch
 
 
-class BaseScan():
-    """ Properties and methods shared among all scan versions.
+def apply_slice_to_dask(array, channel_list, frame_list, yslice, xslice):
+    return array[channel_list, frame_list, yslice, xslice]
+
+
+class BaseScan:
+    """
+    Properties and methods shared among all scan versions.
 
     Scan objects are a collection of recording fields: rectangular planes at a given x_center_coordinate, y_center_coordinate,
     z position in the scan recorded in a number of channels during a preset amount of
@@ -50,10 +59,10 @@ class BaseScan():
             needs to be shared add it as a private method here.
         If it is not in every subclass, it should not be here.
     """
+
     def __init__(self):
         self.filenames = None
         self.dtype = None
-        self._tiff_files = None
         self.header = ''
 
     @property
@@ -122,7 +131,7 @@ class BaseScan():
         if self.is_slow_stack:
             """ Number of scanning depths actually recorded in this stack."""
             num_scanning_depths = self._num_pages / (self.num_channels * self.num_frames)
-            num_scanning_depths = int(num_scanning_depths) # discard last slice if incomplete
+            num_scanning_depths = int(num_scanning_depths)  # discard last slice if incomplete
         else:
             num_scanning_depths = len(self.requested_scanning_depths)
         return num_scanning_depths
@@ -134,11 +143,11 @@ class BaseScan():
     @property
     def num_requested_frames(self):
         if self.is_slow_stack:
-             match = re.search(r'hStackManager\.framesPerSlice = (?P<num_frames>.*)',
+            match = re.search(r'hStackManager\.framesPerSlice = (?P<num_frames>.*)',
                               self.header)
         else:
             match = re.search(r'hFastZ\.numVolumes = (?P<num_frames>.*)', self.header)
-        num_requested_frames = int(1e9 if match.group('num_frames')=='Inf' else
+        num_requested_frames = int(1e9 if match.group('num_frames') == 'Inf' else
                                    float(match.group('num_frames'))) if match else None
         return num_requested_frames
 
@@ -147,10 +156,10 @@ class BaseScan():
         """ Each tiff page is an image at a given channel, scanning depth combination."""
         if self.is_slow_stack:
             num_frames = min(self.num_requested_frames / self._num_averaged_frames,
-                             self._num_pages / self.num_channels) # finished in the first slice
+                             self._num_pages / self.num_channels)  # finished in the first slice
         else:
             num_frames = self._num_pages / (self.num_channels * self.num_scanning_depths)
-        num_frames = int(num_frames) # discard last frame if incomplete
+        num_frames = int(num_frames)  # discard last frame if incomplete
         return num_frames
 
     @property
@@ -171,7 +180,7 @@ class BaseScan():
             match = re.search(r'hRoiManager\.linePeriod = (?P<secs_per_line>.*)', self.header)
             seconds_per_line = float(match.group('secs_per_line')) if match else None
         else:
-            scanner_period = 1 / self.scanner_frequency # secs for mirror to return to initial position
+            scanner_period = 1 / self.scanner_frequency  # secs for mirror to return to initial position
             seconds_per_line = scanner_period / 2 if self.is_bidirectional else scanner_period
         return seconds_per_line
 
@@ -206,7 +215,7 @@ class BaseScan():
     # Properties from here on are not strictly necessary
     @property
     def fps(self):
-        match = re.search(r'hRoiManager\.scanVolumeRate = (?P<fps>.*)',self.header)
+        match = re.search(r'hRoiManager\.scanVolumeRate = (?P<fps>.*)', self.header)
         fps = float(match.group('fps')) if match else None
         return fps
 
@@ -291,10 +300,10 @@ class BaseScan():
             filenames: List of strings. Tiff filenames.
             dtype: Data type of the output array.
         """
-        self.filenames = filenames # set filenames
-        self.dtype=dtype # set dtype of read data
+        self.filenames = filenames  # set filenames
+        self.dtype = dtype  # set dtype of read data
         self.header = '{}\n{}'.format(self.tiff_files[0].pages[0].description,
-                                      self.tiff_files[0].pages[0].software) # set header (ScanImage metadata)
+                                      self.tiff_files[0].pages[0].software)  # set header (ScanImage metadata)
 
     def __array__(self):
         return self[:]
@@ -314,6 +323,7 @@ class BaseScan():
     def __iter__(self):
         class ScanIterator:
             """ Iterator for Scan objects."""
+
             def __init__(self, scan):
                 self.scan = scan
                 self.next_field = 0
@@ -330,11 +340,13 @@ class BaseScan():
 
     def _read_pages(self, slice_list, channel_list, frame_list, yslice=slice(None),
                     xslice=slice(None)):
-        """ Reads the tiff pages with the content of each slice, channel, frame
+        """
+        Reads the tiff pages with the content of each slice, channel, frame
         combination and slices them in the y_center_coordinate, x_center_coordinate dimension.
 
-        Each tiff page holds a single depth/channel/frame combination. For slow stacks,
-        channels change first, timeframes change second and slices/depths change last.
+        Each tiff page holds a single depth/channel/frame combination.
+
+        For slow stacks, channels change first, timeframes change second and slices/depths change last.
         Example:
             For two channels, three slices, two frames.
                 Page:       0   1   2   3   4   5   6   7   8   9   10  11
@@ -342,7 +354,7 @@ class BaseScan():
                 Frame:      0   0   1   1   2   2   0   0   1   1   2   2
                 Slice:      0   0   0   0   0   0   1   1   1   1   1   1
 
-        For scans, channels change first, slices/depths change second and timeframes
+        For fast-stack aquisition scans, channels change first, slices/depths change second and timeframes
         change last.
         Example:
             For two channels, three slices, two frames.
@@ -351,25 +363,33 @@ class BaseScan():
                 Slice:      0   0   1   1   2   2   0   0   1   1   2   2
                 Frame:      0   0   0   0   0   0   1   1   1   1   1   1
 
-        Args:
-            slice_list: List of integers. Slices to read.
-            channel_list: List of integers. Channels to read.
-            frame_list: List of integers. Frames to read
-            yslice: Slice object. How to slice the pages in the y_center_coordinate axis.
-            xslice: Slice object. How to slice the pages in the x_center_coordinate axis.
 
-        Returns:
-            A 5-D array (num_slices, output_height, output_width, num_channels, num_frames).
-                Required pages reshaped to have slice, channel and frame as different
-                dimensions. Channel, slice and frame order received in the input lists are
-                respected; for instance, if slice_list = [1, 0, 2, 0], then the first
-                dimension will have four slices: [1, 0, 2, 0].
+        Parameters
+        ----------
+        slice_list: List of integers. Slices to read.
+        channel_list: List of integers. Channels to read.
+        frame_list: List of integers. Frames to read
+        yslice: Slice object. How to slice the pages in the y_center_coordinate axis.
+        xslice: Slice object. How to slice the pages in the x_center_coordinate axis.
 
-        Note:
-            We use slices in y_center_coordinate, x_center_coordinate for memory efficiency, If lists were passed another copy
-            of the pages will be needed coming up to 3x the amount of data we actually
-            want to read (the output array, the read pages and the list-sliced pages).
-            Slices limit this to 2x (output array and read pages which are sliced in place).
+        Returns
+        -------
+        pages: np.ndarray
+        A 5-D array (num_slices, output_height, output_width, num_channels, num_frames).
+
+        Required pages reshaped to have slice, channel and frame as different
+        dimensions. Channel, slice and frame order received in the input lists are
+        respected; for instance, if slice_list = [1, 0, 2, 0], then the first
+        dimension will have four slices: [1, 0, 2, 0].
+
+        Notes
+        -----
+
+        We use slices in y_center_coordinate, x_center_coordinate for memory efficiency, If lists were passed another copy
+        of the pages will be needed coming up to 3x the amount of data we actually
+        want to read (the output array, the read pages and the list-sliced pages).
+        Slices limit this to 2x (output array and read pages which are sliced in place).
+
         """
         # Compute pages to load from tiff files
         if self.is_slow_stack:
@@ -386,8 +406,8 @@ class BaseScan():
                     pages_to_read.append(new_page)
 
         # Compute output dimensions
-        out_height = len(utils.listify_index(yslice, self._page_height))
-        out_width = len(utils.listify_index(xslice, self._page_width))
+        out_height = len(listify_index(yslice, self._page_height))
+        out_width = len(listify_index(xslice, self._page_width))
 
         # Read pages
         pages = np.empty([len(pages_to_read), out_height, out_width], dtype=self.dtype)
@@ -442,7 +462,7 @@ class BaseScan():
 
         # Compute offsets for entire field
         field_offsets = np.expand_dims(np.arange(0, field_height), -1) + line_offsets
-        if self.is_bidirectional: # odd lines scanned from left to right
+        if self.is_bidirectional:  # odd lines scanned from left to right
             field_offsets[1::2] = field_offsets[1::2] - line_offsets + (1 - line_offsets)
 
         # Transform offsets from line counts to seconds
@@ -451,6 +471,7 @@ class BaseScan():
         return field_offsets
 
 
+# noinspection PyMissingConstructor
 class ScanLegacy(BaseScan):
     """ Scan versions 4 and below. Not implemented."""
 
@@ -464,7 +485,7 @@ class BaseScan5(BaseScan):
 
     @property
     def num_fields(self):
-        return self.num_scanning_depths # one field per scanning depth
+        return self.num_scanning_depths  # one field per scanning depth
 
     @property
     def field_depths(self):
@@ -525,26 +546,26 @@ class BaseScan5(BaseScan):
     def __getitem__(self, key):
         """ In non-multiROI, all fields have the same x_center_coordinate, y_center_coordinate dimensions. """
         # Fill key to size 5 (raises IndexError if more than 5)
-        full_key = utils.fill_key(key, num_dimensions=5)
+        full_key = fill_key(key, num_dimensions=5)
 
         # Check index types are valid
         for i, index in enumerate(full_key):
-            utils.check_index_type(i, index)
+            check_index_type(i, index)
 
         # Check each dimension is in bounds
         max_dimensions = self.shape
         for i, (index, dim_size) in enumerate(zip(full_key, max_dimensions)):
-            utils.check_index_is_in_bounds(i, index, dim_size)
+            check_index_is_in_bounds(i, index, dim_size)
 
         # Get fields, channels and frames as lists
-        field_list = utils.listify_index(full_key[0], self.num_fields)
-        y_list = utils.listify_index(full_key[1], self.image_height)
-        x_list = utils.listify_index(full_key[2], self.image_width)
-        channel_list = utils.listify_index(full_key[3], self.num_channels)
-        frame_list = utils.listify_index(full_key[4], self.num_frames)
+        field_list = listify_index(full_key[0], self.num_fields)
+        y_list = listify_index(full_key[1], self.image_height)
+        x_list = listify_index(full_key[2], self.image_width)
+        channel_list = listify_index(full_key[3], self.num_channels)
+        frame_list = listify_index(full_key[4], self.num_frames)
 
         # Edge case when slice index gives 0 elements or index is empty list, e.g., scan[10:0], scan[[]]
-        if [] in [field_list, y_list, x_list, channel_list, frame_list,]:
+        if [] in [field_list, y_list, x_list, channel_list, frame_list, ]:
             return np.empty(0)
 
         # Read the required pages
@@ -553,12 +574,12 @@ class BaseScan5(BaseScan):
         # Index in y_center_coordinate, x_center_coordinate using the original key (usually slices) for memory efficiency.
         if isinstance(full_key[1], list) and isinstance(full_key[2], list):
             # Our behaviour for lists is to take the submatrix defined by those indices.
-            ys = [[y] for y in y_list] # ys as nested lists does the trick
+            ys = [[y] for y in y_list]  # ys as nested lists does the trick
             item = pages[:, ys, x_list, :, :]
         else:
             item = pages[:, full_key[1], full_key[2], :, :]
             item = item.reshape(len(field_list), len(y_list), len(x_list), len(channel_list),
-                                len(frame_list)) # put back any dropped dimension
+                                len(frame_list))  # put back any dropped dimension
 
         # If original index was an integer, delete that axis (as in numpy indexing)
         squeeze_dims = [i for i, index in enumerate(full_key) if np.issubdtype(type(index),
@@ -584,21 +605,22 @@ class Scan5Point2(BaseScan5):
             image_height_in_microns = fov_corners[2][1] - fov_corners[1][1]  # y1-y0
         else:
             image_height_in_microns = None
-        return image_height_in_microns
+        return round(image_height_in_microns)
 
     @property
     def image_width_in_microns(self):
         match = re.search(r'hRoiManager\.imagingFovUm = (?P<fov_corners>.*)', self.header)
         if match:
             fov_corners = matlabstr2py(match.group('fov_corners'))
-            image_width_in_microns = fov_corners[1][0] - fov_corners[0][0] # x1-x0
+            image_width_in_microns = fov_corners[1][0] - fov_corners[0][0]  # x1-x0
         else:
             image_width_in_microns = None
-        return image_width_in_microns
+        return round(image_width_in_microns)
 
 
-class NewerScan():
+class NewerScan:
     """ Shared features among all newer scans. """
+
     @property
     def is_slow_stack_with_fastZ(self):
         match = re.search(r'hStackManager\.slowStackWithFastZ = (?P<slow_with_fastZ>.*)',
@@ -607,21 +629,25 @@ class NewerScan():
         return slow_with_fastZ
 
 
-class Scan5Point3(NewerScan, Scan5Point2): # NewerScan first to shadow Scan5Point2's properties
+class Scan5Point3(NewerScan, Scan5Point2):  # NewerScan first to shadow Scan5Point2's properties
     """ScanImage 5.3"""
     pass
+
 
 class Scan5Point4(Scan5Point3):
     """ScanImage 5.4"""
     pass
 
+
 class Scan5Point5(Scan5Point3):
     """ScanImage 5.5"""
     pass
 
+
 class Scan5Point6(Scan5Point3):
     """ScanImage 5.6"""
     pass
+
 
 class Scan5Point7(Scan5Point3):
     """ScanImage 5.7"""
@@ -662,9 +688,11 @@ class Scan2019b(Scan5Point3):
     """ ScanImage 2019b"""
     pass
 
+
 class Scan2020(Scan5Point3):
     """ ScanImage 2020"""
     pass
+
 
 class Scan2021(Scan5Point3):
     """ ScanImage 2021"""
@@ -725,12 +753,12 @@ class ScanMultiROI(NewerScan, BaseScan):
     @property
     def field_heights_in_microns(self):
         field_heights_in_degrees = [field.height_in_degrees for field in self.fields]
-        return [self._degrees_to_microns(deg) for deg in field_heights_in_degrees]
+        return [round(self._degrees_to_microns(deg)) for deg in field_heights_in_degrees]
 
     @property
     def field_widths_in_microns(self):
         field_widths_in_degrees = [field.width_in_degrees for field in self.fields]
-        return [self._degrees_to_microns(deg) for deg in field_widths_in_degrees]
+        return [round(self._degrees_to_microns(deg)) for deg in field_widths_in_degrees]
 
     @property
     def _num_fly_to_lines(self):
@@ -757,24 +785,6 @@ class ScanMultiROI(NewerScan, BaseScan):
         degrees = (microns / float(match.group('deg2um_factor'))) if match else None
         return degrees
 
-    def _degrees_to_pixels(self, degrees, num_pixels):
-        """ Convert scan angle degrees to pixels using the objective resolution."""
-        # first, get the microns
-        microns = self._degrees_to_microns(degrees)
-        pixels = microns / num_pixels
-        return pixels
-
-    def _pixels_to_degrees(self, pixels, num_pixels):
-        """ Convert pixels to scan angle degrees using the objective resolution."""
-        microns = pixels * num_pixels
-        degrees = self._microns_to_decrees(microns)
-        return degrees
-
-    def _pixels_to_microns(self, pixels, num_pixels):
-        """ Convert pixels to microns using the objective resolution."""
-        microns = pixels * num_pixels
-        return microns
-
     def read_data(self, filenames, dtype):
         """ Set the header, create rois and fields (joining them if necessary)."""
         super().read_data(filenames, dtype)
@@ -783,22 +793,12 @@ class ScanMultiROI(NewerScan, BaseScan):
         if self.join_contiguous:
             self._join_contiguous_fields()
 
-    def _create_rois(self):
-        """Create scan rois from the configuration file. """
-        roi_infos = self.tiff_files[0].scanimage_metadata['RoiGroups']['imagingRoiGroup']['rois']
-        roi_infos = roi_infos if isinstance(roi_infos, list) else [roi_infos]
-        roi_infos = list(filter(lambda r: isinstance(r['zs'], (int, float, list)),
-                                roi_infos)) # discard empty/malformed ROIs
-
-        rois = [ROI(roi_info) for roi_info in roi_infos]
-        return rois
-
     def _create_fields(self):
         """ Go over each slice depth and each roi generating the scanned fields. """
         fields = []
         previous_lines = 0
         for slice_id, scanning_depth in enumerate(self.scanning_depths):
-            next_line_in_page = 0 # each slice is one tiff page
+            next_line_in_page = 0  # each slice is one tiff page
             for roi_id, roi in enumerate(self.rois):
                 new_field = roi.get_field_at(scanning_depth)
 
@@ -853,7 +853,7 @@ class ScanMultiROI(NewerScan, BaseScan):
         """
         for scanning_depth in self.scanning_depths:
             two_fields_were_joined = True
-            while two_fields_were_joined: # repeat until no fields were joined
+            while two_fields_were_joined:  # repeat until no fields were joined
                 two_fields_were_joined = False
 
                 fields = filter(lambda field: field.depth == scanning_depth, self.fields)
@@ -872,28 +872,28 @@ class ScanMultiROI(NewerScan, BaseScan):
 
     def __getitem__(self, key):
         # Fill key to size 5 (raises IndexError if more than 5)
-        full_key = utils.fill_key(key, num_dimensions=5)  # key represents the scanfield index
+        full_key = fill_key(key, num_dimensions=5)  # key represents the scanfield index
 
         # Check index types are valid
         for i, index in enumerate(full_key):
-            utils.check_index_type(i, index)
+            check_index_type(i, index)
 
         # Check each dimension is in bounds
-        utils.check_index_is_in_bounds(0, full_key[0], self.num_fields)
-        for field_id in utils.listify_index(full_key[0], self.num_fields):
-            utils.check_index_is_in_bounds(1, full_key[1], self.field_heights[field_id])
-            utils.check_index_is_in_bounds(2, full_key[2], self.field_widths[field_id])
-        utils.check_index_is_in_bounds(3, full_key[3], self.num_channels)
-        utils.check_index_is_in_bounds(4, full_key[4], self.num_frames)
+        check_index_is_in_bounds(0, full_key[0], self.num_fields)
+        for field_id in listify_index(full_key[0], self.num_fields):
+            check_index_is_in_bounds(1, full_key[1], self.field_heights[field_id])
+            check_index_is_in_bounds(2, full_key[2], self.field_widths[field_id])
+        check_index_is_in_bounds(3, full_key[3], self.num_channels)
+        check_index_is_in_bounds(4, full_key[4], self.num_frames)
 
         # Get fields, channels and frames as lists
-        field_list = utils.listify_index(full_key[0], self.num_fields)
-        y_lists = [utils.listify_index(full_key[1], self.field_heights[field_id]) for
+        field_list = listify_index(full_key[0], self.num_fields)
+        y_lists = [listify_index(full_key[1], self.field_heights[field_id]) for
                    field_id in field_list]
-        x_lists = [utils.listify_index(full_key[2], self.field_widths[field_id]) for
+        x_lists = [listify_index(full_key[2], self.field_widths[field_id]) for
                    field_id in field_list]
-        channel_list = utils.listify_index(full_key[3], self.num_channels)
-        frame_list = utils.listify_index(full_key[4], self.num_frames)
+        channel_list = listify_index(full_key[3], self.num_channels)
+        frame_list = listify_index(full_key[4], self.num_frames)
 
         # Edge case when slice index gives 0 elements or index is empty list, e.g., scan[10:0], scan[[]]
         if [] in [field_list, *y_lists, *x_lists, channel_list, frame_list]:
@@ -907,14 +907,13 @@ class ScanMultiROI(NewerScan, BaseScan):
 
         # Over each field, read required pages and slice
         item = np.empty([len(field_list), len(y_lists[0]), len(x_lists[0]),
-                        len(channel_list), len(frame_list)], dtype=self.dtype)
+                         len(channel_list), len(frame_list)], dtype=self.dtype)
         for i, (field_id, y_list, x_list) in enumerate(zip(field_list, y_lists, x_lists)):
             field = self.fields[field_id]
 
             # Over each subfield in field (only one for non-contiguous fields)
             slices = zip(field.yslices, field.xslices, field.output_yslices, field.output_xslices)
             for yslice, xslice, output_yslice, output_xslice in slices:
-
                 # Read the required pages (and slice out the subfield)
                 pages = self._read_pages([field.slice_id], channel_list, frame_list,
                                          yslice, xslice)
@@ -935,5 +934,254 @@ class ScanMultiROI(NewerScan, BaseScan):
         squeeze_dims = [i for i, index in enumerate(full_key) if np.issubdtype(type(index),
                                                                                np.signedinteger)]
         item = np.squeeze(item, axis=tuple(squeeze_dims))
-
         return item
+
+
+class ScanLBM(ScanMultiROI, BaseScan):
+    def __init__(self, metadata, join_contiguous=True, **kwargs):
+        self.header = kwargs.get('header', None)
+        super().__init__(join_contiguous)
+        self.shape = None
+        self.axes = None
+        self.dims = None
+        self.multifile = None
+        self.nbytes_raw = None
+        #
+        self.metadata = metadata
+        self._zarr_store = None
+        self.offsets = []
+        self.rois = None
+        self.fields = None
+        self._join_contiguous = join_contiguous
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata):
+        self._metadata = metadata
+        self.axes = metadata['axes']
+        self.shape = metadata['shape']
+        self.dims = metadata['dims']
+        self.dimlabels = metadata['dim_labels']
+        self._objective_resolution = metadata['objective_resolution']
+        # TODO: validate metadata contains what we need to set the rest of the attributes
+        self.rois = self._create_rois()
+        self.fields = self._create_fields()
+        if self.join_contiguous:
+            self._join_contiguous_fields()
+
+    def __repr__(self):
+        if self.tiff_files:
+            return f'{type(self).__name__} with {len(self.tiff_files)} of shape {self.shape}'
+
+    @property
+    def tiff_files(self):
+        if self._tiff_files is None:
+            self._tiff_files = [TiffFile(filename) for filename in self.filenames]
+        return self._tiff_files
+
+    @tiff_files.deleter
+    def tiff_files(self):
+        if self._tiff_files is not None:
+            for tiff_file in self._tiff_files:
+                tiff_file.close()
+            self._tiff_files = None
+
+    @property
+    def zarr_store(self):
+        if not self._zarr_store:
+            self._zarr_store = [ZarrTiffStore(tfile.series[0], chunkmode=2, squeeze=True, ) for tfile in
+                                self._tiff_files]
+        return self._zarr_store
+
+    @zarr_store.deleter
+    def zarr_store(self):
+        if self._zarr_store is not None:
+            for zarr_store in self._zarr_store:
+                zarr_store.close()
+            self._zarr_store = None
+
+    def __getitem__(self, key):
+        full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
+        for i, index in enumerate(full_key):
+            check_index_type(i, index)
+        # Check each dimension is in bounds
+        check_index_is_in_bounds(3, full_key[3], self.shape[3])
+        check_index_is_in_bounds(4, full_key[4], self.shape[4])
+        pages_store = []
+        field = self.field
+        slices = zip(field.yslices, field.xslices, field.output_yslices, field.output_xslices)
+        for yslice, xslice, output_yslice, output_xslice in slices:
+            # Read the required pages (and slice out the subfield)
+            pages = self._read_pages(full_key[3], full_key[4], yslice, xslice)
+            if len(pages) == 0:
+                continue
+            elif len(pages) == 1:
+                pages = pages[0]
+            pages_store.append(pages)
+        return da.block(pages_store)
+
+    def _create_field(self):
+        """ Go over each slice depthl and each roi generating the scanned fields. """
+        previous_lines = 0
+        next_line_in_page = 0  # each slice is one tiff page
+        aggregate_fields = []
+        for roi_id, roi in enumerate(self.rois):
+            new_field = roi.get_field_at(0)
+            if new_field is not None:
+                if next_line_in_page + new_field.height > self._page_height:
+                    error_msg = (f'Overestimated number of fly to lines ({self._num_fly_to_lines}) at '
+                                 f'scanning depth {0}')
+                    raise RuntimeError(error_msg)
+
+                # Set xslice and yslice (from where in the page to cut it)
+                new_field.yslices = [slice(next_line_in_page, next_line_in_page + new_field.height)]
+                new_field.xslices = [slice(0, new_field.width)]
+
+                # Set output xslice and yslice (where to paste it in output)
+                new_field.output_yslices = [slice(0, new_field.height)]
+                new_field.output_xslices = [slice(0, new_field.width)]
+
+                # Set slice and roi id
+                new_field.roi_ids = [roi_id]
+
+                # offset = self._compute_offsets(new_field.yslices[0])
+                # self.offsets.append(offset)
+
+                # Compute next starting y_center_coordinate
+                next_line_in_page += new_field.height + self._num_fly_to_lines
+
+                # Add field to fields
+                aggregate_fields.append(new_field)
+        # Accumulate overall number of scanned lines
+        previous_lines += self._num_lines_between_fields
+        return aggregate_fields
+
+    def _compute_offsets(self, slice_object: slice, **kwargs) -> typing.Any:
+        """
+        Compute the affine transform needed to correct for pixel shifts.
+
+        Parameters
+        ----------
+        slice_object: np.ndarray
+            The array to compute the affine transform for.
+        **kwargs : dict
+            For compatibility with other scans.
+        """
+        import random
+        random_frame = random.randint(0, self.num_frames - 1)
+        frame_list = [random_frame + 30 * i for i in range(50)]
+        sample_arr = self.tiff_files[0].asarray(frame_list)
+        return compute(sample_arr[:, slice_object, ...])
+
+    def visualize_offsets(self):
+        # TODO: move this to a separate function
+        import napari
+        stores = self.delayed_zarr_reader()
+        viewer = napari.Viewer()
+        for store in stores:
+            viewer.add_image(store)
+        return viewer
+
+    def _read_pages(self, channel_list, frame_list, yslice=slice(None), xslice=slice(None), **kwargs):
+        return self.delayed_zarr_reader(channel_list, frame_list, yslice, xslice)
+
+    def delayed_zarr_reader(self, channel_list=None, frame_list=None, yslice=slice(None), xslice=slice(None)):
+        arr_info = self.tiff_files[0].series[0]
+        lazy_imread = delayed(self.imread)
+
+        lazy_arrays = [lazy_imread(idx) for idx, _ in enumerate(self.zarr_store)]
+        dask_arrays = [
+            da.from_delayed(delayed_reader, shape=arr_info.shape, dtype=arr_info.dtype, meta=arr_info)
+            for delayed_reader in lazy_arrays
+        ]
+        sliced_dask_arrays = [
+            apply_slice_to_dask(dask_array, frame_list, channel_list, yslice=yslice, xslice=xslice)
+            for dask_array in dask_arrays
+        ]
+        return sliced_dask_arrays
+
+    def imread(self, idx):
+        return zarr.open(self.zarr_store[idx])
+
+    @property
+    def num_fields(self):
+        return 1
+
+    def _create_rois(self):
+        """Create scan rois from the configuration file. """
+        roi_infos = self.metadata['roi_info']
+        rois = [ROI(roi_info) for roi_info in roi_infos]
+        return rois
+
+    @property
+    def objective_resolution(self):
+        return self.metadata['objective_resolution']
+
+    @property
+    def _num_pages(self):
+        return self.metadata['num_pages']
+
+    @property
+    def _page_height(self):
+        return self.metadata['image_height']
+
+    @property
+    def _page_width(self):
+        return self.metadata['image_width']
+
+    @property
+    def num_frames(self):
+        return self.dims[0]
+
+    def _degrees_to_microns(self, degrees):
+        """ Convert scan angle degrees to microns using the objective resolution."""
+        return degrees * self._objective_resolution
+
+    def _microns_to_decrees(self, microns):
+        """ Convert microns to scan angle degrees using the objective resolution."""
+        return microns / self._objective_resolution
+
+    @property
+    def _num_fly_to_lines(self):
+        return self.metadata["metadata"]['metadata']['SI.hScan2D.flytoTimePerScanfield']
+
+    def _create_fields(self):
+        """ Go over each slice depth and each roi generating the scanned fields. """
+        fields = []
+        previous_lines = 0
+        next_line_in_page = 0  # each slice is one tiff page
+        for roi_id, roi in enumerate(self.rois):
+            new_field = roi.get_field_at(0)
+
+            if new_field is not None:
+                if next_line_in_page + new_field.height > self._page_height:
+                    raise RuntimeError(f'Overestimated number of fly to lines ({self._num_fly_to_lines})')
+
+                # Set xslice and yslice (from where in the page to cut it)
+                new_field.yslices = [slice(next_line_in_page, next_line_in_page + new_field.height)]
+                new_field.xslices = [slice(0, new_field.width)]
+
+                # Set output xslice and yslice (where to paste it in output)
+                new_field.output_yslices = [slice(0, new_field.height)]
+                new_field.output_xslices = [slice(0, new_field.width)]
+
+                # Set slice and roi id
+                new_field.roi_ids = [roi_id]
+
+                # Set timing offsets
+                # offsets = self._compute_offsets(new_field.height, previous_lines + next_line_in_page)
+                # new_field.offsets = [offsets]
+
+                # Compute next starting y_center_coordinate
+                next_line_in_page += new_field.height + self._num_fly_to_lines
+
+                # Add field to fields
+                fields.append(new_field)
+
+        # Accumulate overall number of scanned lines
+        previous_lines += self._num_lines_between_fields
+
+        return fields

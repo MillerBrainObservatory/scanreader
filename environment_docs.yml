@@ -3,24 +3,11 @@
 name: scanreader
 channels:
   - conda-forge
-  - defaults
 dependencies:
+  - python
   - pip
   - scipy
-  - python
-  - sphinx>=6.0
-  - sphinxcontrib-video
-  - numpydoc
-  - sphinx-book-theme
-  - ipython
-  - numpy
+  - dask
+  - zarr
   - tifffile
-  - pip:
-    - myst-nb
-    - sphinx-prompt
-    - sphinxcontrib-matlabdomain
-    - pydata-sphinx-theme
-    - sphinxcontrib-images
-    - sphinx-copybutton
-    - sphinx-togglebutton
-    - sphinx-autodoc2
+  - numpy

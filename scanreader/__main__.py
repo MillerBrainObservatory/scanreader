@@ -59,7 +59,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     _scan = sr.read_scan(args.path, join_contiguous=True, debug=True)
-    img = _scan.data[0,0,:,:]
+    img=_scan[0,0,:,:]
     plt.imshow(img)
     plt.show()
     # scan = _scan[args.timepoints, args.zslice, args.xslice, args.yslice]

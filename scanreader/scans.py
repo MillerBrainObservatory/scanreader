@@ -975,22 +975,27 @@ class ScanLBM(ScanMultiROI, BaseScan):
         # TODO: validate metadata contains what we need to set the rest of the attributes
 
     def __repr__(self):
-        if self.zarr_store:
-            return f'{type(self).__name__} with {len(self.zarr_store)} of shape {self.shape}'
+        return f'{self.data}'
+
+    def __str__(self):
+        return f'{self.data}'
 
     def __getitem__(self, key):
-        full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
-        for i, index in enumerate(full_key):
-            check_index_type(i, index)
-            check_index_is_in_bounds(i, full_key[i], self.shape[i])
-        if len(self.fields) == 1:
-            field = self.fields[0]
-        else:
-            raise NotImplementedError("Multi-Field recordings are not yet supported for LBM scans. This error occured due to multiple ROIs not being re-tiled properly.")
-        slices = zip(field.yslices, field.xslices)
-        for yslice, xslice in slices:
-            # Read the required pages (z-plane, frame, yslice, xslice)
-            pages = self._read_pages(full_key[0], full_key[1], yslice, xslice)
+        return self.data[key]
+        # full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
+        # for i, index in enumerate(full_key):
+        #     check_index_type(i, index)
+        #     check_index_is_in_bounds(i, full_key[i], self.shape[i])
+        # if len(self.fields) == 1:
+        #     field = self.fields[0]
+        # else:
+        #     raise NotImplementedError("Multi-Field recordings are not yet supported for LBM scans. This error occured due to multiple ROIs not being re-tiled properly.")
+        # slices = zip(field.yslices, field.xslices)
+        #
+        # data = self.data.__getitem__(key)
+        # for yslice, xslice in slices:
+        #     # Read the required pages (z-plane, frame, yslice, xslice)
+        #     self.data = self._read_pages(full_key[0], full_key[1], yslice, xslice)
 
     def _create_field(self):
         """ Go over each slice depthl and each roi generating the scanned fields. """
@@ -1027,23 +1032,6 @@ class ScanLBM(ScanMultiROI, BaseScan):
         # Accumulate overall number of scanned lines
         previous_lines += self._num_lines_between_fields
         return aggregate_fields
-
-    def _compute_offsets(self, slice_object: slice, **kwargs) -> typing.Any:
-        """
-        Compute the affine transform needed to correct for pixel shifts.
-
-        Parameters
-        ----------
-        slice_object: np.ndarray
-            The array to compute the affine transform for.
-        **kwargs : dict
-            For compatibility with other scans.
-        """
-        import random
-        random_frame = random.randint(0, self.num_frames - 1)
-        frame_list = [random_frame + 30 * i for i in range(50)]
-        sample_arr = self.tiff_files[0].asarray(frame_list)
-        return compute(sample_arr[:, slice_object, ...])
 
     def visualize_offsets(self):
         # TODO: move this to a separate function

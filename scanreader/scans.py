@@ -262,6 +262,7 @@ class BaseScan:
         initial_frame_number = int(match.group('frame_number')) if match else None
         return initial_frame_number
 
+
     @property
     def _num_fly_back_lines(self):
         """ Lines/mirror cycles that it takes to move from one depth to the next."""
@@ -283,7 +284,7 @@ class BaseScan:
                                         (self.num_frames * self._num_averaged_frames))
         else:
             num_lines_between_fields = self._page_height + self._num_fly_back_lines
-        return num_lines_between_fields
+        return int(num_lines_between_fields)
 
     @property
     def is_slow_stack_with_fastZ(self):
@@ -851,24 +852,22 @@ class ScanMultiROI(NewerScan, BaseScan):
         Any rectangular area in the scan formed by the union of two or more fields which
         have been joined will be treated as a single field after this operation.
         """
-        for scanning_depth in self.scanning_depths:
-            two_fields_were_joined = True
-            while two_fields_were_joined:  # repeat until no fields were joined
-                two_fields_were_joined = False
+        two_fields_were_joined = True
+        while two_fields_were_joined:  # repeat until no fields were joined
+            two_fields_were_joined = False
 
-                fields = filter(lambda field: field.depth == scanning_depth, self.fields)
-                for field1, field2 in itertools.combinations(fields, 2):
+            for field1, field2 in itertools.combinations(self.fields, 2):
 
-                    if field1.is_contiguous_to(field2):
-                        # Change info in field 1 to reflect the union
-                        field1.join_with(field2)
+                if field1.is_contiguous_to(field2):
+                    # Change info in field 1 to reflect the union
+                    field1.join_with(field2)
 
-                        # Delete field 2 in self.fields
-                        self.fields.remove(field2)
+                    # Delete field 2 in self.fields
+                    self.fields.remove(field2)
 
-                        # Restart join contiguous search (at while)
-                        two_fields_were_joined = True
-                        break
+                    # Restart join contiguous search (at while)
+                    two_fields_were_joined = True
+                    break
 
     def __getitem__(self, key):
         # Fill key to size 5 (raises IndexError if more than 5)
@@ -937,91 +936,61 @@ class ScanMultiROI(NewerScan, BaseScan):
         return item
 
 
+def lbm_imread(_zstore):
+    return zarr.open(_zstore)
+
+
 class ScanLBM(ScanMultiROI, BaseScan):
-    def __init__(self, metadata, join_contiguous=True, **kwargs):
+    def __init__(self, store, metadata, join_contiguous=True, **kwargs):
+        self.data=None
+        self._meta = None
+        self.zarr_store = store
         self.header = kwargs.get('header', None)
         super().__init__(join_contiguous)
         self.shape = None
+        self.dtype = None
         self.axes = None
         self.dims = None
+        self.dim_labels = None
         self.multifile = None
-        self.nbytes_raw = None
-        #
-        self.metadata = metadata
-        self._zarr_store = None
-        self.offsets = []
-        self.rois = None
-        self.fields = None
-        self._join_contiguous = join_contiguous
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-    @metadata.setter
-    def metadata(self, metadata):
-        self._metadata = metadata
-        self.axes = metadata['axes']
-        self.shape = metadata['shape']
-        self.dims = metadata['dims']
-        self.dimlabels = metadata['dim_labels']
-        self._objective_resolution = metadata['objective_resolution']
-        # TODO: validate metadata contains what we need to set the rest of the attributes
+        self.metadata = None
+        self.set_metadata(metadata)
         self.rois = self._create_rois()
         self.fields = self._create_fields()
         if self.join_contiguous:
             self._join_contiguous_fields()
+        #
+        full_key = tuple([slice(None)] * len(self.shape))
+        self.data = self._read_pages(*full_key)
+
+    def set_metadata(self, metadata):
+        required_fields = ['dtype', 'shape', 'nbytes', 'size']
+        self.axes = metadata['axes']
+        self.shape = metadata['shape']
+        self.dims = metadata['dims']
+        self.dtype = metadata['dtype']
+        self.dim_labels = metadata['dim_labels']
+        self.metadata = metadata
+        self._meta = {key: value for key, value in self.metadata.items() if key in required_fields}
+        # TODO: validate metadata contains what we need to set the rest of the attributes
 
     def __repr__(self):
-        if self.tiff_files:
-            return f'{type(self).__name__} with {len(self.tiff_files)} of shape {self.shape}'
-
-    @property
-    def tiff_files(self):
-        if self._tiff_files is None:
-            self._tiff_files = [TiffFile(filename) for filename in self.filenames]
-        return self._tiff_files
-
-    @tiff_files.deleter
-    def tiff_files(self):
-        if self._tiff_files is not None:
-            for tiff_file in self._tiff_files:
-                tiff_file.close()
-            self._tiff_files = None
-
-    @property
-    def zarr_store(self):
-        if not self._zarr_store:
-            self._zarr_store = [ZarrTiffStore(tfile.series[0], chunkmode=2, squeeze=True, ) for tfile in
-                                self._tiff_files]
-        return self._zarr_store
-
-    @zarr_store.deleter
-    def zarr_store(self):
-        if self._zarr_store is not None:
-            for zarr_store in self._zarr_store:
-                zarr_store.close()
-            self._zarr_store = None
+        if self.zarr_store:
+            return f'{type(self).__name__} with {len(self.zarr_store)} of shape {self.shape}'
 
     def __getitem__(self, key):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
         for i, index in enumerate(full_key):
             check_index_type(i, index)
-        # Check each dimension is in bounds
-        check_index_is_in_bounds(3, full_key[3], self.shape[3])
-        check_index_is_in_bounds(4, full_key[4], self.shape[4])
-        pages_store = []
-        field = self.field
-        slices = zip(field.yslices, field.xslices, field.output_yslices, field.output_xslices)
-        for yslice, xslice, output_yslice, output_xslice in slices:
-            # Read the required pages (and slice out the subfield)
-            pages = self._read_pages(full_key[3], full_key[4], yslice, xslice)
-            if len(pages) == 0:
-                continue
-            elif len(pages) == 1:
-                pages = pages[0]
-            pages_store.append(pages)
-        return da.block(pages_store)
+            check_index_is_in_bounds(i, full_key[i], self.shape[i])
+        if len(self.fields) == 1:
+            field = self.fields[0]
+        else:
+            raise NotImplementedError("Multi-Field recordings are not yet supported for LBM scans. This error occured due to multiple ROIs not being re-tiled properly.")
+        slices = zip(field.yslices, field.xslices)
+        for yslice, xslice in slices:
+            # Read the required pages (z-plane, frame, yslice, xslice)
+            pages = self._read_pages(full_key[0], full_key[1], yslice, xslice)
 
     def _create_field(self):
         """ Go over each slice depthl and each roi generating the scanned fields. """
@@ -1085,40 +1054,24 @@ class ScanLBM(ScanMultiROI, BaseScan):
             viewer.add_image(store)
         return viewer
 
-    def _read_pages(self, channel_list, frame_list, yslice=slice(None), xslice=slice(None), **kwargs):
-        return self.delayed_zarr_reader(channel_list, frame_list, yslice, xslice)
+    def _read_pages(self, channel_list=slice(None), frame_list=slice(None), yslice=slice(None), xslice=slice(None), **kwargs):
 
-    def delayed_zarr_reader(self, channel_list=None, frame_list=None, yslice=slice(None), xslice=slice(None)):
-        arr_info = self.tiff_files[0].series[0]
-        lazy_imread = delayed(self.imread)
-
-        lazy_arrays = [lazy_imread(idx) for idx, _ in enumerate(self.zarr_store)]
-        dask_arrays = [
-            da.from_delayed(delayed_reader, shape=arr_info.shape, dtype=arr_info.dtype, meta=arr_info)
-            for delayed_reader in lazy_arrays
-        ]
-        sliced_dask_arrays = [
-            apply_slice_to_dask(dask_array, frame_list, channel_list, yslice=yslice, xslice=xslice)
-            for dask_array in dask_arrays
-        ]
-        return sliced_dask_arrays
-
-    def imread(self, idx):
-        return zarr.open(self.zarr_store[idx])
-
-    @property
-    def num_fields(self):
-        return 1
+        lazy_imread = delayed(lbm_imread)
+        lazy_arrays = [lazy_imread(self.zarr_store)]
+        dask_arrays = [da.from_delayed(delayed_reader, shape=self.shape, dtype=self.dtype) for delayed_reader in lazy_arrays]
+        arr = dask_arrays[0]
+        ysl = self.fields[0].yslices
+        xsl = self.fields[0].xslices
+        slices = []
+        for y,x in zip(ysl,xsl):
+            slices.append(arr[frame_list,channel_list,y,x])
+        return da.block(slices)
 
     def _create_rois(self):
         """Create scan rois from the configuration file. """
         roi_infos = self.metadata['roi_info']
         rois = [ROI(roi_info) for roi_info in roi_infos]
         return rois
-
-    @property
-    def objective_resolution(self):
-        return self.metadata['objective_resolution']
 
     @property
     def _num_pages(self):
@@ -1136,17 +1089,64 @@ class ScanLBM(ScanMultiROI, BaseScan):
     def num_frames(self):
         return self.dims[0]
 
+    @property
+    def num_channels(self):
+        return self.dims[1]
+
+    @property
+    def num_planes(self):
+        return self.dims[1]
+
     def _degrees_to_microns(self, degrees):
         """ Convert scan angle degrees to microns using the objective resolution."""
-        return degrees * self._objective_resolution
+        return degrees * self.objective_resolution
 
     def _microns_to_decrees(self, microns):
         """ Convert microns to scan angle degrees using the objective resolution."""
-        return microns / self._objective_resolution
+        return microns / self.objective_resolution
+
+    @property
+    def objective_resolution(self):
+        return self.metadata["si"]["SI.objectiveResolution"]
 
     @property
     def _num_fly_to_lines(self):
-        return self.metadata["metadata"]['metadata']['SI.hScan2D.flytoTimePerScanfield']
+        return int(
+            self.metadata["si"]["SI.hScan2D.flytoTimePerScanfield"]
+            / float(self.metadata["si"]["SI.hRoiManager.linePeriod"])
+        )
+
+    @property
+    def is_slow_stack(self):
+        """
+        Fast stack or slow stack. Fast stacks collect all frames for one slice before moving on.
+        """
+        return self.metadata["si"]["SI.hFastZ.enable"]
+
+    @property
+    def multi_roi(self):
+        """If ScanImage 2016 or newer. This should be True"""
+        return self.metadata["si"]["SI.hRoiManager.mroiEnable"]
+
+    @property
+    def fps(self):
+        """If ScanImage 2016 or newer. This should be True"""
+        # This check is due to us not knowing which metadata value to trust for the scan rate.
+        if not self.metadata["si"]["SI.hRoiManager.scanFrameRate"] == self.metadata["si"]["SI.hRoiManager.scanVolumeRate"]:
+            raise ValueError("ScanImage metadata used for frame rate is inconsistent. Double check values for SI.hRoiManager.scanFrameRate and SI.hRoiManager.scanVolumeRate")
+        return self.metadata["si"]["SI.hRoiManager.scanFrameRate"]
+
+    @property
+    def bidirectional(self):
+        """If ScanImage 2016 or newer. This should be True"""
+        # This check is due to us not knowing which metadata value to trust for the scan rate.
+        return self.metadata["si"]["SI.hScan2D.bidirectional"]
+
+    @property
+    def uniform_sampling(self):
+        """If ScanImage 2016 or newer. This should be True"""
+        # This check is due to us not knowing which metadata value to trust for the scan rate.
+        return self.metadata["si"]["SI.hScan2D.uniformSampling"]
 
     def _create_fields(self):
         """ Go over each slice depth and each roi generating the scanned fields. """
@@ -1185,3 +1185,19 @@ class ScanLBM(ScanMultiROI, BaseScan):
         previous_lines += self._num_lines_between_fields
 
         return fields
+
+    @property
+    def _num_fly_back_lines(self):
+        """ Lines/mirror cycles scanned from the start of one field to the start of the next. """
+        return int(self.metadata["si"]["SI.hScan2D.flytoTimePerScanfield"] / float(self.metadata['si']["SI.hRoiManager.linePeriod"]))
+
+    @property
+    def _num_lines_between_fields(self):
+        """ Lines/mirror cycles scanned from the start of one field to the start of the
+        next. """
+        if self.is_slow_stack:
+            num_lines_between_fields = ((self._page_height + self._num_fly_back_lines) *
+                                        (self.num_frames * self._num_averaged_frames))
+        else:
+            num_lines_between_fields = self._page_height + self._num_fly_back_lines
+        return int(num_lines_between_fields)

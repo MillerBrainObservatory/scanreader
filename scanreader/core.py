@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, AnyStr
 
 import numpy as np
-from tifffile import TiffFile
+import tifffile
 
 from . import scans
 from .exceptions import ScanImageVersionError, PathnameError
@@ -70,7 +70,7 @@ def read_scan(
         raise PathnameError(error_msg)
 
     # Get metadata from first file
-    with TiffFile(filenames[0]) as tiff_file:
+    with tifffile.TiffFile(filenames[0]) as tiff_file:
         header = tiff_file.pages[0].description
         head2 = tiff_file.pages[0].software
         series = tiff_file.series[0]
@@ -93,15 +93,12 @@ def read_scan(
             "size": series.size,
             "dim_labels": series.sizes,
             "num_rois": len(roi_group),
-            # 'pxy': roi_group[0]['scanfields']['pixelResolutionXY'],
-            # 'sxy': roi_group[0]['scanfields']['sizeXY'],
-            "objective_resolution": scanimage_metadata["FrameData"][
-                "SI.objectiveResolution"
-            ],
-            "metadata": scanimage_metadata["FrameData"],
+            "si": scanimage_metadata["FrameData"],
         }
+
+    store = tifffile.imread(filenames[0], aszarr=True)
     return scans.ScanLBM(
-        image_info, join_contiguous=join_contiguous, header=f"{header}\n{head2}"
+        store, image_info, join_contiguous=join_contiguous, header=f"{header}\n{head2}"
     )
 
 
@@ -140,10 +137,11 @@ def expand_wildcard(
 ) -> list[PathLike[AnyStr]]:
     """Expands a list of pathname patterns to form a sorted list of absolute filenames."""
     # Check input type
-    wildcard = Path(wildcard)
+    wildcart = Path(wildcard)
+    wcl = [x for x in wildcard.glob(wildcard)]
 
     # Expand wildcards
-    rel_filenames = [glob(wildcard) for wildcard in wildcard_list]
+    rel_filenames = [glob(wildcard) for wildcard in wcl]
     rel_filenames = [
         item for sublist in rel_filenames for item in sublist
     ]  # flatten list

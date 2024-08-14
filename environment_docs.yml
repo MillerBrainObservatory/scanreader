@@ -1,6 +1,6 @@
 # environment.yml
 
-name: mbo-docs
+name: scanreader
 channels:
   - conda-forge
   - defaults

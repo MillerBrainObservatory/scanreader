@@ -12,7 +12,7 @@ setup(
     url='https://github.com/MillerBrainObservtory/scanreader',
     keywords='ScanImage scanreader multiROI 2019 tiff',
     packages=['scanreader'],
-    install_requires=['numpy>=1.12.0', 'tifffile>=2019.2.22'],
+    install_requires=['numpy>=1.12.0', 'tifffile>=2024.8'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',

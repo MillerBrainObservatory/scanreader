@@ -3,17 +3,12 @@ __main__.py: scanreader entrypoint.
 """
 import typing
 from pathlib import Path
-
-import dask
-import napari
-import tifffile
-
-import scanreader as sr
 import argparse
 
-def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
-    _scan = sr.read_scan(path, join_contiguous=True, debug=True)
-    return _scan[slice_objects]
+import dask
+
+import scanreader as sr
+
 
 
 def parse_args():
@@ -41,8 +36,6 @@ def parse_args():
     return _args
 
 
-
-
 def process_slice_str(slice_str):
     if not isinstance(slice_str, str):
         raise ValueError(f'Expected a string argument, received: {slice_str}')
@@ -54,11 +47,17 @@ def process_slice_str(slice_str):
 def process_slice_objects(slice_str):
     return tuple(map(process_slice_str, slice_str.split(',')))
 
+# needed as entrypoint to napari
+def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
+    __scan = sr.read_scan(path, join_contiguous=True, debug=True)
+    return __scan[slice_objects]
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     args = parse_args()
-    scan = imread(args.path, (args.timepoints, args.zslice, args.xslice, args.yslice))
-
-    _viewer = napari.Viewer()
-    _viewer.add_image(scan, name="data", colormap='gray')
-    napari.run()
+    _scan = sr.read_scan(args.path, join_contiguous=True, debug=True)
+    for i in range(0, _scan.shape[1]-1):
+        new_arr = _scan[0,i,:,:]
+        plt.imshow(new_arr)
+        plt.show()
+    x = 2

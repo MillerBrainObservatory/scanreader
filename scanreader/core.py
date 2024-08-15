@@ -9,23 +9,17 @@ from pathlib import Path
 from typing import List, AnyStr
 
 import numpy as np
-from tifffile import TiffFile
+import tifffile
 
 from . import scans
 from .exceptions import ScanImageVersionError, PathnameError
 
-_scans = {'5.1': scans.Scan5Point1, '5.2': scans.Scan5Point2, '5.3': scans.Scan5Point3,
-          '5.4': scans.Scan5Point4, '5.5': scans.Scan5Point5,
-          '5.6': scans.Scan5Point6, '5.7': scans.Scan5Point7,
-          '2016b': scans.Scan2016b,
-          '2017a': scans.Scan2017a, '2017b': scans.Scan2017b,
-          '2018a': scans.Scan2018a, '2018b': scans.Scan2018b,
-          '2019a': scans.Scan2019a, '2019b': scans.Scan2019b,
-          '2020': scans.Scan2020, '2021': scans.Scan2021}
-
-
-def read_scan(pathnames: os.PathLike | typing.Iterable[os.PathLike], dtype=np.int16, join_contiguous=True,
-              debug=False) -> scans.BaseScan:
+def read_scan(
+    pathnames: os.PathLike | typing.Iterable[os.PathLike],
+    dtype=np.int16,
+    join_contiguous=True,
+    debug=False,
+) -> scans.ScanLBM:
     """
     Reads a ScanImage scan.
 
@@ -52,42 +46,42 @@ def read_scan(pathnames: os.PathLike | typing.Iterable[os.PathLike], dtype=np.in
     filenames = get_files(pathnames)
 
     if len(filenames) == 0:
-        error_msg = 'Pathname(s) {} do not match any files in disk.'.format(pathnames)
+        error_msg = "Pathname(s) {} do not match any files in disk.".format(pathnames)
         raise PathnameError(error_msg)
 
     # Get metadata from first file
-    with TiffFile(filenames[0]) as tiff_file:
-        header = tiff_file.pages[0].description
-        head2 = tiff_file.pages[0].software
+    with tifffile.TiffFile(filenames[0]) as tiff_file:
         series = tiff_file.series[0]
-        if 'SI.VERSION_MAJOR' not in tiff_file.scanimage_metadata['FrameData']:
-            raise ScanImageVersionError('No SI.VERSION_MAJOR found in metadata.')
+        if "SI.VERSION_MAJOR" not in tiff_file.scanimage_metadata["FrameData"]:
+            raise ScanImageVersionError("No SI.VERSION_MAJOR found in metadata.")
         scanimage_metadata = tiff_file.scanimage_metadata
-        roi_group = scanimage_metadata['RoiGroups']['imagingRoiGroup']['rois']
+        roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
         pages = tiff_file.pages
         image_info = {
-            'roi_info': roi_group,
-            'image_height': pages[0].shape[0],
-            'image_width': pages[0].shape[1],
-            'num_pages': len(pages),
-            'dims': series.dims,
-            'axes': series.axes,
-            'dtype': series.dtype,
-            'is_multifile': series.is_multifile,
-            'nbytes': series.nbytes,
-            'shape': series.shape,
-            'size': series.size,
-            'dim_labels': series.sizes,
-            'num_rois': len(roi_group),
-            'pxy': roi_group[0]['scanfields']['pixelResolutionXY'],
-            'sxy': roi_group[0]['scanfields']['sizeXY'],
-            'objective_resolution': scanimage_metadata['FrameData']['SI.objectiveResolution'],
-            'metadata': scanimage_metadata['FrameData']
+            "roi_info": roi_group,
+            "photometric": 'minisblack',
+            "image_height": pages[0].shape[0],
+            "image_width": pages[0].shape[1],
+            "num_pages": len(pages),
+            "dims": series.dims,
+            "axes": series.axes,
+            "dtype": series.dtype,
+            "is_multifile": series.is_multifile,
+            "nbytes": series.nbytes,
+            "shape": series.shape,
+            "size": series.size,
+            "dim_labels": series.sizes,
+            "num_rois": len(roi_group),
+            "si": scanimage_metadata["FrameData"],
         }
-    return scans.ScanLBM(image_info, join_contiguous=join_contiguous, header=f'{header}\n{head2}')
 
+    return scans.ScanLBM(
+        filenames, image_info, join_contiguous=join_contiguous,
+    )
 
-def get_files(pathnames: os.PathLike | List[os.PathLike | str]) -> List[PathLike[AnyStr]]:
+def get_files(
+    pathnames: os.PathLike | List[os.PathLike | str],
+) -> list[PathLike | str]:
     """
     Expands a list of pathname patterns to form a sorted list of absolute filenames.
 
@@ -101,23 +95,31 @@ def get_files(pathnames: os.PathLike | List[os.PathLike | str]) -> List[PathLike
     List[PathLike[AnyStr]]
         List of absolute filenames.
     """
-    pathnames = Path(pathnames).expanduser()  # expand ~ to /home/user
-    if not pathnames.exists():
-        raise FileNotFoundError(f'Path {pathnames} does not exist as a file or directory.')
-    if pathnames.is_file():
-        return [pathnames]
-    if pathnames.is_dir():
-        pathnames = [fpath for fpath in pathnames.glob("*.tif*")]  # matches .tif and .tiff
-    return sorted(pathnames, key=path.basename)
+    out_files = []
+    if isinstance(pathnames, (list, tuple)):
+        for fpath in pathnames:
+            out_files.append(str(x) for x in Path(fpath).expanduser().glob("*.tif*"))
+    elif Path(pathnames).is_dir():
+        file_list = [str(x) for x in Path(pathnames).expanduser().glob("*.tif*")]
+        return file_list
+    elif Path(pathnames).is_file():
+        if Path(pathnames).suffix in ['.tif', '.tiff']:
+            out_files.append(str(pathnames))
+    return sorted(out_files)
 
-def expand_wildcard(wildcard: os.PathLike | str | list[os.PathLike | str]) -> list[PathLike[AnyStr]]:
-    """ Expands a list of pathname patterns to form a sorted list of absolute filenames. """
+def expand_wildcard(
+    wildcard: os.PathLike | str | list[os.PathLike | str],
+) -> list[PathLike[AnyStr]]:
+    """Expands a list of pathname patterns to form a sorted list of absolute filenames."""
     # Check input type
-    wildcard = Path(wildcard)
+    wildcart = Path(wildcard)
+    wcl = [x for x in wildcard.glob(wildcard)]
 
     # Expand wildcards
-    rel_filenames = [glob(wildcard) for wildcard in wildcard_list]
-    rel_filenames = [item for sublist in rel_filenames for item in sublist]  # flatten list
+    rel_filenames = [glob(wildcard) for wildcard in wcl]
+    rel_filenames = [
+        item for sublist in rel_filenames for item in sublist
+    ]  # flatten list
 
     abs_filenames = [path.abspath(filename) for filename in rel_filenames]
     sorted_filenames = sorted(abs_filenames, key=path.basename)
@@ -125,19 +127,37 @@ def expand_wildcard(wildcard: os.PathLike | str | list[os.PathLike | str]) -> li
 
 
 def get_scanimage_version(info):
-    """ Looks for the ScanImage version in the tiff file headers. """
+    """Looks for the ScanImage version in the tiff file headers."""
     pattern = re.compile(r"SI.?\.VERSION_MAJOR = '?(?P<version>[^\s']*)'?")
     match = re.search(pattern, info)
     if match:
-        version = match.group('version')
+        version = match.group("version")
     else:
-        raise ScanImageVersionError('Could not find ScanImage version in the tiff header')
+        raise ScanImageVersionError(
+            "Could not find ScanImage version in the tiff header"
+        )
 
     return version
 
 
 def is_scan_multiROI(info):
-    """ Looks whether the scan is multiROI in the tiff file headers. """
-    match = re.search(r'hRoiManager\.mroiEnable = (?P<is_multiROI>.)', info)
-    is_multiROI = (match.group('is_multiROI') == '1') if match else None
+    """Looks whether the scan is multiROI in the tiff file headers."""
+    match = re.search(r"hRoiManager\.mroiEnable = (?P<is_multiROI>.)", info)
+    is_multiROI = (match.group("is_multiROI") == "1") if match else None
     return is_multiROI
+
+def tiffs2zarr(filenames, zarrurl, chunksize, **kwargs):
+    """Write images from sequence of TIFF files as zarr."""
+
+    def imread(filename):
+        # return first image in TIFF file as numpy array
+        with open(filename, 'rb') as fh:
+            data = fh.read()
+        from imagecodecs.imagecodecs import imagecodecs
+        return imagecodecs.tiff_decode(data)
+
+    with tifffile.FileSequence(imread, filenames) as tifs:
+        with tifs.aszarr() as store:
+            da = dask.array.from_zarr(store)
+            chunks = (chunksize,) + da.shape[1:]
+            da.rechunk(chunks).to_zarr(zarrurl, **kwargs)

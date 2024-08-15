@@ -1,0 +1,19 @@
+# BASE SCANREADER ENVIRONMENT
+#
+#To use:
+# $ conda install -n base -c conda-forge mamba
+# $ conda env create -n scanreader -f ./env_base.yml
+# $ conda activate mbo-caiman
+#
+name: scanreader
+channels:
+- conda-forge
+dependencies:
+- python >= 3.9, <=3.10
+- numpy
+- jupyter
+- tifffile
+- dask
+- zarr
+- h5py
+- pip

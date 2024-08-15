@@ -937,8 +937,9 @@ class ScanMultiROI(NewerScan, BaseScan):
 
 
 def lbm_imread(_zstore):
-    return zarr.open(_zstore)
+    return zarr.open(_zstore, mode='r')
 
+ARRAY_METADATA = ['dtype', 'shape', 'nbytes', 'size']
 
 class ScanLBM(ScanMultiROI, BaseScan):
     def __init__(self, store, metadata, join_contiguous=True, **kwargs):
@@ -954,25 +955,42 @@ class ScanLBM(ScanMultiROI, BaseScan):
         self.dim_labels = None
         self.multifile = None
         self.metadata = None
-        self.set_metadata(metadata)
-        self.rois = self._create_rois()
-        self.fields = self._create_fields()
-        if self.join_contiguous:
-            self._join_contiguous_fields()
-        #
-        full_key = tuple([slice(None)] * len(self.shape))
-        self.data = self._read_pages(*full_key)
 
-    def set_metadata(self, metadata):
-        required_fields = ['dtype', 'shape', 'nbytes', 'size']
         self.axes = metadata['axes']
         self.shape = metadata['shape']
         self.dims = metadata['dims']
         self.dtype = metadata['dtype']
         self.dim_labels = metadata['dim_labels']
-        self.metadata = metadata
-        self._meta = {key: value for key, value in self.metadata.items() if key in required_fields}
-        # TODO: validate metadata contains what we need to set the rest of the attributes
+
+        self.array_meta = {key: value for key, value in metadata.items() if key in ARRAY_METADATA}
+        self.roi_metadata = metadata['roi_info']
+        self.si_metadata = metadata['si']
+
+        self.rois = self._create_rois()
+        self.fields = self._create_fields()
+
+        if self.join_contiguous:
+            self._join_contiguous_fields()
+
+        if len(self.fields) > 1:
+            raise NotImplementedError
+
+        ## Field Slices
+        self.slice_x_out = self.fields[0].output_xslices
+        self.slice_y_out = self.fields[0].output_yslices
+        self.slice_x_in = self.fields[0].xslices
+        self.slice_y_in = self.fields[0].yslices
+
+        full_key = tuple([slice(None)] * len(self.shape))
+        self.data = self._read_pages(*full_key)
+
+    # @property
+    # def slice_x_out(self):
+    #     return self._slice_x_out
+    #
+    # @slice_x_out.setter
+    # def slice_x_out(self, new_slice_x_out):
+    #     self._slice_x_out = new_slice_x_out
 
     def __repr__(self):
         return f'{self.data}'
@@ -982,20 +1000,6 @@ class ScanLBM(ScanMultiROI, BaseScan):
 
     def __getitem__(self, key):
         return self.data[key]
-        # full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
-        # for i, index in enumerate(full_key):
-        #     check_index_type(i, index)
-        #     check_index_is_in_bounds(i, full_key[i], self.shape[i])
-        # if len(self.fields) == 1:
-        #     field = self.fields[0]
-        # else:
-        #     raise NotImplementedError("Multi-Field recordings are not yet supported for LBM scans. This error occured due to multiple ROIs not being re-tiled properly.")
-        # slices = zip(field.yslices, field.xslices)
-        #
-        # data = self.data.__getitem__(key)
-        # for yslice, xslice in slices:
-        #     # Read the required pages (z-plane, frame, yslice, xslice)
-        #     self.data = self._read_pages(full_key[0], full_key[1], yslice, xslice)
 
     def _create_field(self):
         """ Go over each slice depthl and each roi generating the scanned fields. """
@@ -1053,11 +1057,11 @@ class ScanLBM(ScanMultiROI, BaseScan):
         slices = []
         for y,x in zip(ysl,xsl):
             slices.append(arr[frame_list,channel_list,y,x])
-        return da.block(slices)
+        return da.block(slices).rechunk()
 
     def _create_rois(self):
         """Create scan rois from the configuration file. """
-        roi_infos = self.metadata['roi_info']
+        roi_infos = self.roi_metadata
         rois = [ROI(roi_info) for roi_info in roi_infos]
         return rois
 

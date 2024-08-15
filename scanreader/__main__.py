@@ -59,6 +59,8 @@ if __name__ == "__main__":
     args = parse_args()
 
     _scan = sr.read_scan(args.path, join_contiguous=True, debug=True)
+    data = _scan.data
+
     img=_scan[0,0,:,:]
     plt.imshow(img)
     plt.show()

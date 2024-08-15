@@ -71,8 +71,6 @@ def read_scan(
 
     # Get metadata from first file
     with tifffile.TiffFile(filenames[0]) as tiff_file:
-        header = tiff_file.pages[0].description
-        head2 = tiff_file.pages[0].software
         series = tiff_file.series[0]
         if "SI.VERSION_MAJOR" not in tiff_file.scanimage_metadata["FrameData"]:
             raise ScanImageVersionError("No SI.VERSION_MAJOR found in metadata.")
@@ -97,9 +95,10 @@ def read_scan(
         }
 
     store = tifffile.imread(filenames[0], aszarr=True)
-    return scans.ScanLBM(
-        store, image_info, join_contiguous=join_contiguous, header=f"{header}\n{head2}"
-    )
+    # return scans.ScanLBM(
+    #     store, image_info, join_contiguous=join_contiguous, header=f"{header}\n{head2}"
+    # )
+    return store
 
 
 def get_files(

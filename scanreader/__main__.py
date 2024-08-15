@@ -55,17 +55,8 @@ def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
     return __scan[slice_objects]
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
     args = parse_args()
 
     _scan = sr.read_scan(args.path, join_contiguous=True, debug=True)
     data = _scan.data
-
-    img=_scan[0,0,:,:]
-    plt.imshow(img)
-    plt.show()
-    # scan = _scan[args.timepoints, args.zslice, args.xslice, args.yslice]
-
-    # _viewer = napari.Viewer()
-    # _viewer.add_image(scan, name="data", colormap='gray')
-    # napari.run()
+    assert(data[0,0,0,0] is not None)

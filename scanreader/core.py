@@ -14,26 +14,6 @@ import tifffile
 from . import scans
 from .exceptions import ScanImageVersionError, PathnameError
 
-_scans = {
-    "5.1": scans.Scan5Point1,
-    "5.2": scans.Scan5Point2,
-    "5.3": scans.Scan5Point3,
-    "5.4": scans.Scan5Point4,
-    "5.5": scans.Scan5Point5,
-    "5.6": scans.Scan5Point6,
-    "5.7": scans.Scan5Point7,
-    "2016b": scans.Scan2016b,
-    "2017a": scans.Scan2017a,
-    "2017b": scans.Scan2017b,
-    "2018a": scans.Scan2018a,
-    "2018b": scans.Scan2018b,
-    "2019a": scans.Scan2019a,
-    "2019b": scans.Scan2019b,
-    "2020": scans.Scan2020,
-    "2021": scans.Scan2021,
-}
-
-
 def read_scan(
     pathnames: os.PathLike | typing.Iterable[os.PathLike],
     dtype=np.int16,
@@ -94,16 +74,13 @@ def read_scan(
             "si": scanimage_metadata["FrameData"],
         }
 
-    store = tifffile.imread(filenames[0], aszarr=True)
-    # return scans.ScanLBM(
-    #     store, image_info, join_contiguous=join_contiguous, header=f"{header}\n{head2}"
-    # )
-    return store
-
+    return scans.ScanLBM(
+        filenames, image_info, join_contiguous=join_contiguous,
+    )
 
 def get_files(
     pathnames: os.PathLike | List[os.PathLike | str],
-) -> List[PathLike[AnyStr]]:
+) -> list[PathLike | str]:
     """
     Expands a list of pathname patterns to form a sorted list of absolute filenames.
 
@@ -117,19 +94,17 @@ def get_files(
     List[PathLike[AnyStr]]
         List of absolute filenames.
     """
-    pathnames = Path(pathnames).expanduser()  # expand ~ to /home/user
-    if not pathnames.exists():
-        raise FileNotFoundError(
-            f"Path {pathnames} does not exist as a file or directory."
-        )
-    if pathnames.is_file():
-        return [pathnames]
-    if pathnames.is_dir():
-        pathnames = [
-            fpath for fpath in pathnames.glob("*.tif*")
-        ]  # matches .tif and .tiff
-    return sorted(pathnames, key=path.basename)
-
+    out_files = []
+    if isinstance(pathnames, (list, tuple)):
+        for fpath in pathnames:
+            out_files.append(str(x) for x in Path(fpath).expanduser().glob("*.tif*"))
+    elif Path(pathnames).is_dir():
+        file_list = [str(x) for x in Path(pathnames).expanduser().glob("*.tif*")]
+        return file_list
+    elif Path(pathnames).is_file():
+        if Path(pathnames).suffix in ['.tif', '.tiff']:
+            out_files.append(str(pathnames))
+    return sorted(out_files)
 
 def expand_wildcard(
     wildcard: os.PathLike | str | list[os.PathLike | str],
@@ -169,3 +144,19 @@ def is_scan_multiROI(info):
     match = re.search(r"hRoiManager\.mroiEnable = (?P<is_multiROI>.)", info)
     is_multiROI = (match.group("is_multiROI") == "1") if match else None
     return is_multiROI
+
+def tiffs2zarr(filenames, zarrurl, chunksize, **kwargs):
+    """Write images from sequence of TIFF files as zarr."""
+
+    def imread(filename):
+        # return first image in TIFF file as numpy array
+        with open(filename, 'rb') as fh:
+            data = fh.read()
+        from imagecodecs.imagecodecs import imagecodecs
+        return imagecodecs.tiff_decode(data)
+
+    with tifffile.FileSequence(imread, filenames) as tifs:
+        with tifs.aszarr() as store:
+            da = dask.array.from_zarr(store)
+            chunks = (chunksize,) + da.shape[1:]
+            da.rechunk(chunks).to_zarr(zarrurl, **kwargs)

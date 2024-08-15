@@ -6,10 +6,9 @@ from pathlib import Path
 import argparse
 
 import dask
+import numpy as np
 
 import scanreader as sr
-
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Read a LBM ScanImage .tiff file.")
@@ -55,9 +54,9 @@ def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     args = parse_args()
-    _scan = sr.read_scan(args.path, join_contiguous=True, debug=True)
+    _scan = sr.read_scan(args.path, join_contiguous=True)
     for i in range(0, _scan.shape[1]-1):
-        new_arr = _scan[0,i,:,:]
+        scan = _scan[:,i,:,:]
         plt.imshow(new_arr)
         plt.show()
     x = 2

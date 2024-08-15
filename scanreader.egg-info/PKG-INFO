@@ -4,7 +4,7 @@ Version: 0.6.0
 Summary: Tiff reader for ScanImage BigTiff files.
 Home-page: https://github.com/MillerBrainObservtory/scanreader
 License: MIT
-Project-URL: homepage, https://millerbrainobservatory.github.io/scanreader/index.html
+Project-URL: homepage, https://millerbrainobservatory.github.io/
 Project-URL: documentation, https://millerbrainobservatory.github.io/scanreader/index.html
 Project-URL: source, https://github.com/MillerBrainObservatory/scanreader/
 Keywords: ScanImage scanreader multiROI 2019 tiff

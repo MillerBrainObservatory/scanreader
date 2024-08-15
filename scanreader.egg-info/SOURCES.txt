@@ -1,5 +1,6 @@
 LICENSE
 README.md
+pyproject.toml
 setup.py
 scanreader/__init__.py
 scanreader/__main__.py

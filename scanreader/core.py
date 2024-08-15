@@ -19,7 +19,7 @@ def read_scan(
     dtype=np.int16,
     join_contiguous=True,
     debug=False,
-) -> scans.BaseScan:
+) -> scans.ScanLBM:
     """
     Reads a ScanImage scan.
 
@@ -59,6 +59,7 @@ def read_scan(
         pages = tiff_file.pages
         image_info = {
             "roi_info": roi_group,
+            "photometric": 'minisblack',
             "image_height": pages[0].shape[0],
             "image_width": pages[0].shape[1],
             "num_pages": len(pages),

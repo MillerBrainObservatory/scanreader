@@ -10,6 +10,7 @@ add it as a private method here. 3. If it is not in every subclass, it should no
 import itertools
 import re
 import typing
+from ctypes import ARRAY
 from typing import overload, Any
 
 import dask.array as da
@@ -740,25 +741,19 @@ class ScanLBM(ScanMultiROI, BaseScan):
         self.dim_labels = None
         self.multifile = None
 
+        self.roi_metadata = metadata.pop('roi_info')
         self.si_metadata = metadata.pop("si")
-        md = {}
-        for k,v in metadata.items():
-            if k in IJ_METADATA:
-                md[k] = metadata.pop(k)
-
-        self.ij_metadata = {metadata.pop[k]: v for k, v in metadata.items() if k in IJ_METADATA}
-        self.array_meta = {key: value for key, value in metadata.items() if key in ARRAY_METADATA}
+        self.ij_metadata = {k: v for k,v in metadata.items() if k in IJ_METADATA}
+        self.arr_metadata = {k: v for k,v in metadata.items() if k in ARRAY_METADATA}
 
         self.metadata = metadata
 
         self.axes = self.metadata['axes']
-        self.shape = metadata['shape']
-        self.dims = metadata['dims']
-        self.dtype = metadata['dtype']
-        self.dim_labels = metadata['dim_labels']
+        self.shape = self.metadata['shape']
+        self.dims = self.metadata['dims']
+        self.dtype = self.metadata['dtype']
+        self.dim_labels = self.metadata['dim_labels']
 
-        self.roi_metadata = metadata['roi_info']
-        self.si_metadata = metadata['si']
 
         self.rois = self._create_rois()
         self.fields = self._create_fields()
@@ -874,8 +869,8 @@ class ScanLBM(ScanMultiROI, BaseScan):
     @property
     def _num_fly_to_lines(self):
         return int(
-            self.metadata["si"]["SI.hScan2D.flytoTimePerScanfield"]
-            / float(self.metadata["si"]["SI.hRoiManager.linePeriod"])
+            self.si_metadata["SI.hScan2D.flytoTimePerScanfield"]
+            / float(self.si_metadata["SI.hRoiManager.linePeriod"])
         )
 
     @property
@@ -883,26 +878,27 @@ class ScanLBM(ScanMultiROI, BaseScan):
         """
         Fast stack or slow stack. Fast stacks collect all frames for one slice before moving on.
         """
-        return self.metadata["si"]["SI.hFastZ.enable"]
+        return self.si_metadata["SI.hFastZ.enable"]
 
     @property
     def multi_roi(self):
         """If ScanImage 2016 or newer. This should be True"""
-        return self.metadata["si"]["SI.hRoiManager.mroiEnable"]
+        return self.si_metadata["SI.hRoiManager.mroiEnable"]
 
     @property
     def fps(self):
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
-        if not self.metadata["si"]["SI.hRoiManager.scanFrameRate"] == self.metadata["si"]["SI.hRoiManager.scanVolumeRate"]:
+        if not self.si_metadata["SI.hRoiManager.scanFrameRate"] == self.metadata["si"]["SI.hRoiManager.scanVolumeRate"]:
             raise ValueError("ScanImage metadata used for frame rate is inconsistent. Double check values for SI.hRoiManager.scanFrameRate and SI.hRoiManager.scanVolumeRate")
-        return self.metadata["si"]["SI.hRoiManager.scanFrameRate"]
+        return self.si_metadata["SI.hRoiManager.scanFrameRate"]
+
 
     @property
     def bidirectional(self):
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
-        return self.metadata["si"]["SI.hScan2D.bidirectional"]
+        return self.si_metadata["SI.hScan2D.bidirectional"]
 
     @property
     def uniform_sampling(self):
@@ -947,7 +943,7 @@ class ScanLBM(ScanMultiROI, BaseScan):
     @property
     def _num_fly_back_lines(self):
         """ Lines/mirror cycles scanned from the start of one field to the start of the next. """
-        return int(self.metadata["si"]["SI.hScan2D.flytoTimePerScanfield"] / float(self.metadata['si']["SI.hRoiManager.linePeriod"]))
+        return int(self.si_metadata["SI.hScan2D.flytoTimePerScanfield"] / float(self.si_metadata["SI.hRoiManager.linePeriod"]))
 
     @property
     def _num_lines_between_fields(self):

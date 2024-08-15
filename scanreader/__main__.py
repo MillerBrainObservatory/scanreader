@@ -3,13 +3,11 @@ __main__.py: scanreader entrypoint.
 """
 import typing
 from pathlib import Path
+import argparse
 
 import dask
-import napari
-import tifffile
 
 import scanreader as sr
-import argparse
 
 
 
@@ -55,8 +53,11 @@ def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
     return __scan[slice_objects]
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     args = parse_args()
-
     _scan = sr.read_scan(args.path, join_contiguous=True, debug=True)
-    data = _scan.data
-    assert(data[0,0,0,0] is not None)
+    for i in range(0, _scan.shape[1]-1):
+        new_arr = _scan[0,i,:,:]
+        plt.imshow(new_arr)
+        plt.show()
+    x = 2

@@ -46,6 +46,10 @@ def process_slice_str(slice_str):
 def process_slice_objects(slice_str):
     return tuple(map(process_slice_str, slice_str.split(',')))
 
+def trim(_init_scan, amounts_x):
+    new_slice_x = [slice(s.start + amounts_x[0], s.stop - amounts_x[1]) for s in _init_scan.fields[0].output_xslices]
+    return [i for s in new_slice_x for i in range(s.start, s.stop)]
+
 # needed as entrypoint to napari
 def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
     __scan = sr.read_scan(path, join_contiguous=True, debug=True)
@@ -57,6 +61,21 @@ if __name__ == "__main__":
     _scan = sr.read_scan(args.path, join_contiguous=True)
     for i in range(0, _scan.shape[1]-1):
         scan = _scan[:,i,:,:]
-        plt.imshow(new_arr)
-        plt.show()
-    x = 2
+
+        # Assuming scan is a 3D array with shape (Time, Y, X)
+        threshold = 1e-5
+
+        # Identify non-zero rows (across the X axis)
+        non_zero_rows = ~np.all(np.abs(scan) < threshold, axis=(0, 2))
+
+        # Identify non-zero columns (across the Y axis)
+        non_zero_cols = ~np.all(np.abs(scan) < threshold, axis=(0, 1))
+
+        # Slice the array to remove the zero or near-zero rows/columns
+        item_cleaned = scan[:, non_zero_rows, :]
+        item_cleaned = item_cleaned[:, :, non_zero_cols]
+
+        # # Visualize the cleaned scan for a specific time point
+        # plt.imshow(item_cleaned[1, ...], cmap='gray')
+        # plt.show()
+        # x = 2

@@ -9,22 +9,17 @@ add it as a private method here. 3. If it is not in every subclass, it should no
 """
 import itertools
 import re
-import typing
-from ctypes import ARRAY
-from typing import overload, Any
-
 import dask.array as da
+from scipy.signal import correlate
 import numpy as np
 import zarr
-from numpy import ndarray, dtype, floating, float_
-from numpy._typing import _64Bit
-from tifffile import TiffFile, tifffile
+from tifffile import TiffFile
 from tifffile.tifffile import matlabstr2py
 
-import scanreader.core
 from .utils import listify_index, check_index_is_in_bounds, check_index_type, fill_key, compute
 from .multiroi import ROI
 from .exceptions import FieldDimensionMismatch
+
 
 ARRAY_METADATA = ['dtype', 'shape', 'nbytes', 'size']
 
@@ -32,6 +27,158 @@ IJ_METADATA = ['axes', 'photometric', 'dtype', 'nbytes']
 
 def apply_slice_to_dask(array, channel_list, frame_list, yslice, xslice):
     return array[channel_list, frame_list, yslice, xslice]
+
+def return_scan_offset(image_in, dim):
+    """
+    Compute the scan offset correction between interleaved lines or columns in an image.
+
+    This function calculates the scan offset correction by analyzing the cross-correlation
+    between interleaved lines or columns of the input image. The cross-correlation peak
+    determines the amount of offset between the lines or columns, which is then used to
+    correct for any misalignment in the imaging process.
+
+    Parameters:
+    -----------
+    image_in : ndarray
+        Input image or volume. It can be 2D, 3D, or 4D. The dimensions represent
+        [height, width], [height, width, time], or [height, width, time, channel/plane],
+        respectively.
+    dim : int
+        Dimension along which to compute the scan offset correction.
+        1 for vertical (along height), 2 for horizontal (along width).
+
+    Returns:
+    --------
+    int
+        The computed correction value, based on the peak of the cross-correlation.
+
+    Examples:
+    ---------
+    >>> img = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+    >>> return_scan_offset(img, 1)
+
+    Notes:
+    ------
+    This function assumes that the input image contains interleaved lines or columns that
+    need to be analyzed for misalignment. The cross-correlation method is sensitive to
+    the similarity in pattern between the interleaved lines or columns. Hence, a strong
+    and clear peak in the cross-correlation result indicates a good alignment, and the
+    corresponding lag value indicates the amount of misalignment.
+    """
+
+    if len(image_in.shape) == 3:
+        image_in = np.mean(image_in, axis=2)
+    elif len(image_in.shape) == 4:
+        image_in = np.mean(np.mean(image_in, axis=3), axis=2)
+
+    n = 8
+
+    Iv1 = None
+    Iv2 = None
+    if dim == 0:
+        Iv1 = image_in[::2, :]
+        Iv2 = image_in[1::2, :]
+
+        min_len = min(Iv1.shape[0], Iv2.shape[0])
+        Iv1 = Iv1[:min_len, :]
+        Iv2 = Iv2[:min_len, :]
+
+        buffers = np.zeros((Iv1.shape[0], n))
+
+        Iv1 = np.hstack((buffers, Iv1, buffers))
+        Iv2 = np.hstack((buffers, Iv2, buffers))
+
+        Iv1 = Iv1.T.ravel(order="F")
+        Iv2 = Iv2.T.ravel(order="F")
+
+    elif dim == 1:
+        Iv1 = image_in[:, ::2]
+        Iv2 = image_in[:, 1::2]
+
+        min_len = min(Iv1.shape[1], Iv2.shape[1])
+        Iv1 = Iv1[:, :min_len]
+        Iv2 = Iv2[:, :min_len]
+
+        buffers = np.zeros((n, Iv1.shape[1]))
+
+        Iv1 = np.vstack((buffers, Iv1, buffers))
+        Iv2 = np.vstack((buffers, Iv2, buffers))
+
+        Iv1 = Iv1.ravel()
+        Iv2 = Iv2.ravel()
+
+    # Zero-center and clip negative values to zero
+    Iv1 = Iv1 - np.mean(Iv1)
+    Iv1[Iv1 < 0] = 0
+
+    Iv2 = Iv2 - np.mean(Iv2)
+    Iv2[Iv2 < 0] = 0
+
+    Iv1 = Iv1[:, np.newaxis]
+    Iv2 = Iv2[:, np.newaxis]
+
+    r_full = correlate(Iv1[:, 0], Iv2[:, 0], mode="full", method="auto")
+    unbiased_scale = len(Iv1) - np.abs(np.arange(-len(Iv1) + 1, len(Iv1)))
+    r = r_full / unbiased_scale
+
+    mid_point = len(r) // 2
+    lower_bound = mid_point - n
+    upper_bound = mid_point + n + 1
+    r = r[lower_bound:upper_bound]
+    lags = np.arange(-n, n + 1)
+
+    # Step 3: Find the correction value
+    correction_index = np.argmax(r)
+    return lags[correction_index]
+
+def fix_scan_phase(data_in, offset, dim):
+    """
+    Corrects the scan phase of the data based on a given offset along a specified dimension.
+
+    Parameters:
+    -----------
+    dataIn : ndarray
+        The input data of shape (sy, sx, sc, sz).
+    offset : int
+        The amount of offset to correct for.
+    dim : int
+        Dimension along which to apply the offset.
+        1 for vertical (along height/sy), 2 for horizontal (along width/sx).
+
+    Returns:
+    --------
+    ndarray
+        The data with corrected scan phase, of shape (sy, sx, sc, sz).
+    """
+    sy, sx, sc, sz = data_in.shape
+    data_out = None
+    if dim == 1:
+        if offset > 0:
+            data_out = np.zeros((sy, sx + offset, sc, sz))
+            data_out[0::2, :sx, :, :] = data_in[0::2, :, :, :]
+            data_out[1::2, offset : offset + sx, :, :] = data_in[1::2, :, :, :]
+        elif offset < 0:
+            offset = abs(offset)
+            data_out = np.zeros((sy, sx + offset, sc, sz))  # This initialization is key
+            data_out[0::2, offset : offset + sx, :, :] = data_in[0::2, :, :, :]
+            data_out[1::2, :sx, :, :] = data_in[1::2, :, :, :]
+        else:
+            half_offset = int(offset / 2)
+            data_out = np.zeros((sy, sx + 2 * half_offset, sc, sz))
+            data_out[:, half_offset : half_offset + sx, :, :] = data_in
+
+    elif dim == 2:
+        data_out = np.zeros(sy, sx, sc, sz)
+        if offset > 0:
+            data_out[:, 0::2, :, :] = data_in[:, 0::2, :, :]
+            data_out[offset : (offset + sy), 1::2, :, :] = data_in[:, 1::2, :, :]
+        elif offset < 0:
+            offset = abs(offset)
+            data_out[offset : (offset + sy), 0::2, :, :] = data_in[:, 0::2, :, :]
+            data_out[:, 1::2, :, :] = data_in[:, 1::2, :, :]
+        else:
+            data_out[int(offset / 2) : sy + int(offset / 2), :, :, :] = data_in
+    return data_out
 
 class BaseScan:
     """
@@ -729,23 +876,16 @@ class ScanMultiROI(NewerScan, BaseScan):
         return item
 
 class ScanLBM(ScanMultiROI, BaseScan):
-    def __init__(self, paths, metadata, join_contiguous=True, **kwargs):
-        self._trimx = None
-        self._trimy = None
-        self._slicey = None
-        self._slicex = None
+    def __init__(self, paths, metadata, fix_scan_phase=True, join_contiguous=True, **kwargs):
+        self._trimx = kwargs.get('trimx', (4,4))
+        # self._trimy = kwargs.get('trimy', (17,0))
+        self.fix_scan_phase = fix_scan_phase
+
         self._frame_slice = None
         self._channel_slice = None
         self._meta = None
 
         # store original dims
-        self.shape = None
-        self.dtype = None
-        self.axes = None
-        self.dims = None
-        self.dim_labels = None
-
-        # new dims as properties
         self.shape = None
         self.dtype = None
         self.axes = None
@@ -779,15 +919,39 @@ class ScanLBM(ScanMultiROI, BaseScan):
         if len(self.fields) > 1:
             raise NotImplementedError
 
-        ## Field Slices
-        self._xslices_out = self.fields[0].output_xslices
-        self._yslices_out = self.fields[0].output_yslices
+        # Track the total height_width of the *tiled* image
+        self._width = self.fields[0].width
+        self._height = self.fields[0].height
+
+        # Track where to slice the vertically stacked tiff
         self._xslices = self.fields[0].xslices
         self._yslices = self.fields[0].yslices
 
-    def __repr__(self):
-        return f'{self.get_new_dims()}'
+        # Track where these will be stored
+        self.xslices_out = self.fields[0].output_xslices
+        self.yslices_out = self.fields[0].output_yslices
 
+        self.frame_slice = slice(None)
+        self.channel_slice = slice(None)
+
+    def __repr__(self):
+        return f'Tiled: {(self.num_frames, self.num_channels, self._height, self._width)} [T,C,Y,X]'
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, value):
+        self._height = value
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        self._width = value
 
     @property
     def num_scanning_depths(self):
@@ -861,34 +1025,23 @@ class ScanLBM(ScanMultiROI, BaseScan):
         return self.metadata["si"]["SI.hScan2D.uniformSampling"]
 
     @property
-    def _num_fly_back_lines(self):
-        """ Lines/mirror cycles scanned from the start of one field to the start of the next. """
-        return int(self.si_metadata["SI.hScan2D.flytoTimePerScanfield"] / float(self.si_metadata["SI.hRoiManager.linePeriod"]))
-
-    @property
-    def _num_lines_between_fields(self):
-        """ Lines/mirror cycles scanned from the start of one field to the start of the
-        next. """
-        if self.is_slow_stack:
-            num_lines_between_fields = ((self._page_height + self._num_fly_back_lines) *
-                                        (self.num_frames * self._num_averaged_frames))
-        else:
-            num_lines_between_fields = self._page_height + self._num_fly_back_lines
-        return int(num_lines_between_fields)
-
-    def _degrees_to_microns(self, degrees):
-        return int(degrees * self.objective_resolution)
-
-    def _microns_to_degrees(self, microns):
-        return int(microns / self.objective_resolution)
-
-    @property
     def xslices_out(self):
         return self._xslices_out
 
     @xslices_out.setter
     def xslices_out(self, value):
-        self._xslices_out = value
+        # new_slice = [slice(v.start+self.trimx[0], v.stop-self.trimx[1]) for v in value]
+        new_slice = [slice(v.start, v.stop) for v in value]
+
+        adjusted_slices = []
+        previous_stop = 0
+        for s in new_slice:
+            length = s.stop - s.start
+            adjusted_slices.append(slice(previous_stop, previous_stop + length, None))
+            previous_stop += length
+
+        self._xslices_out = adjusted_slices
+        self.width = sum([(s.stop - s.start) for s in self._xslices_out])
 
     @property
     def yslices_out(self):
@@ -896,7 +1049,9 @@ class ScanLBM(ScanMultiROI, BaseScan):
 
     @yslices_out.setter
     def yslices_out(self, value):
-        self._yslices_out = value
+        # self._yslices_out = [slice(v.start+self.trimy[0], v.stop-self.trimy[1]) for v in value]
+        self._yslices_out = [slice(v.start, v.stop) for v in value]
+        self.height = self.yslices_out[0].stop - self._yslices_out[0].start
 
     @property
     def yslices(self):
@@ -904,7 +1059,8 @@ class ScanLBM(ScanMultiROI, BaseScan):
 
     @yslices.setter
     def yslices(self, value):
-        self._yslices = value
+        # self.yslices = [slice(v.start+self.trimy[0], v.stop-self.trimy[1]) for v in value]
+        self.yslices = [slice(v.start+self.trimy[0], v.stop-self.trimy[1]) for v in value]
 
     @property
     def xslices(self):
@@ -912,23 +1068,9 @@ class ScanLBM(ScanMultiROI, BaseScan):
 
     @xslices.setter
     def xslices(self, value):
+        self.xslices = [slice(v.start+self.trimx[0], v.stop-self.trimx[1]) for v in value]
         self._xslices = value
 
-    @property
-    def trimx(self):
-        return self._trimx
-
-    @trimx.setter
-    def trimx(self, value):
-        self._trimx = value
-
-    @property
-    def trimy(self):
-        return self._trimy
-
-    @trimy.setter
-    def trimy(self, value):
-        self._trimy = value
 
     @property
     def frame_slice(self):
@@ -960,6 +1102,7 @@ class ScanLBM(ScanMultiROI, BaseScan):
         return new_dims
 
     def __getitem__(self, key):
+        phase=0
 
         field = self.fields[0]
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
@@ -968,46 +1111,63 @@ class ScanLBM(ScanMultiROI, BaseScan):
 
         self.frame_slice = full_key[0]
         self.channel_slice = full_key[1]
-        self.xslice = full_key[-2]
-        self.yslice = full_key[-1]
+        x_in = full_key[2]
+        y_in = full_key[3]
 
         frame_list = listify_index(self.frame_slice, self.num_frames)
         channel_list = listify_index(self.channel_slice, self.num_channels)
-        y_lists = listify_index(self.yslice, field.height)
-        x_lists = listify_index(self.xslice, field.width)
+        y_list = listify_index(y_in, self.height)
+        x_list = listify_index(x_in, self.width)
 
-        if [] in [*y_lists, *x_lists, channel_list, frame_list]:
+        if [] in [*y_list, *x_list, channel_list, frame_list]:
             return np.empty(0)
-
-        # Over each field, read required pages and slice
-        # item = np.empty([len(y_lists), len(x_lists),
-        #                  len(channel_list), len(frame_list)], dtype=self.dtype)
 
         # cast to TCYX
         item = np.empty([
             len(frame_list),
             len(channel_list),
-            len(y_lists),
-            len(x_lists),
+            len(y_list),
+            len(x_list),
         ], dtype=self.dtype)
 
         # Over each subfield in field (only one for non-contiguous fields)
-        slices = zip(self.yslices, self.xslices, field.output_yslices, field.output_xslices)
+        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
+        prev_start, nx, end = 0, 0, 0
+        temp = None
         for yslice, xslice, output_yslice, output_xslice in slices:
             # Read the required pages (and slice out the subfield)
-            pages = self._read_pages([0], channel_list, frame_list,
-                                     yslice, xslice)
+            pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
 
             y_range = range(output_yslice.start, output_yslice.stop)
             x_range = range(output_xslice.start, output_xslice.stop)
-            ys = [[y - output_yslice.start] for y in y_lists if y in y_range]
-            xs = [x - output_xslice.start for x in x_lists if x in x_range]
-            output_ys = [[index] for index, y in enumerate(y_lists) if y in y_range]
-            output_xs = [index for index, x in enumerate(x_lists) if x in x_range]
+            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
+            xs = [x - output_xslice.start for x in x_list if x in x_range]
+            # output_ys = [[index] for index, y in enumerate(y_list) if y in y_range]
+            output_xs = [index for index, x in enumerate(x_list) if x in x_range]
+            if self.fix_scan_phase:
 
-            item[..., output_ys, output_xs] = pages[..., ys, xs]
+                phase = return_scan_offset(pages[...,ys,xs].squeeze().transpose((1, 2, 0)), 0)
+                new_page = fix_scan_phase(pages[...,ys,xs].transpose((2, 3, 1, 0)), phase, 1)
+                pages = new_page[17:, abs(phase)+2:len(output_xs)-(abs(phase)+2), ...].transpose((3,2,0,1))
+                nx = pages.shape[-1]
 
+                # Calculate the new slice index for the current strip
+                new_slice = slice(prev_start, prev_start + nx)
+                new_list = listify_index(new_slice, prev_start + nx)
+
+            item[..., 17:, new_list] = pages
+            prev_start = new_slice.stop
+
+            # item[..., output_ys, output_xs] = pages[..., ys, xs]
+            # item[..., 17:output_ys, output_xs] = new_page[17:, abs(phase):len(output_xs)-abs(phase)].transpose((3,2,0,1))
         item = np.squeeze(item)
+
+        # adjusted_slices = []
+        # previous_stop = 0
+        # for s in new_slice:
+        #     length = s.stop - s.start
+        #     adjusted_slices.append(slice(previous_stop, previous_stop + length, None))
+        #     previous_stop += length
         return item
 
     def _read_pages(self, slice_list, channel_list, frame_list, yslice=slice(None), xslice=slice(None)):
@@ -1101,39 +1261,45 @@ class ScanLBM(ScanMultiROI, BaseScan):
         new_shape = [len(frame_list), len(channel_list), out_height, out_width]
         return pages.reshape(new_shape)
 
-    def _create_fields(self):
-        """ Go over each slice depth and each roi generating the scanned fields. """
-        fields = []
-        previous_lines = 0
-        next_line_in_page = 0  # each slice is one tiff page
-        for roi_id, roi in enumerate(self.rois):
-            new_field = roi.get_field_at(0)
+    def trim_x(self, amounts_x: tuple):
+        """
+        amounts_x = Tuple containing the number of px to trim on the (left_edge, right_edge)
+        """
+        new_slice_x = [slice(s.start + amounts_x[0], s.stop - amounts_x[1]) for s in self.fields[0].output_xslices]
+        return [i for s in new_slice_x for i in range(s.start, s.stop)]
 
-            if new_field is not None:
-                if next_line_in_page + new_field.height > self._page_height:
-                    raise RuntimeError(f'Overestimated number of fly to lines ({self._num_fly_to_lines})')
+    def trim_y(self, amounts_y: tuple):
+        """
+        amounts_y = Tuple containing the number of px to trim on the (top_edge, bottom_edge)
+        """
+        new_slice_y = [slice(s.start + amounts_y[0], s.stop - amounts_y[1]) for s in self.fields[0].output_yslices]
+        self.output_xslices = [i for s in new_slice_y for i in range(s.start, s.stop)]
 
-                # Set xslice and yslice (from where in the page to cut it)
-                new_field.yslices = [slice(next_line_in_page, next_line_in_page + new_field.height)]
-                new_field.xslices = [slice(0, new_field.width)]
+    @property
+    def _num_fly_back_lines(self):
+        """ Lines/mirror cycles scanned from the start of one field to the start of the next. """
+        return int(
+            self.si_metadata["SI.hScan2D.flytoTimePerScanfield"] / float(self.si_metadata["SI.hRoiManager.linePeriod"]))
 
-                # Set output xslice and yslice (where to paste it in output)
-                new_field.output_yslices = [slice(0, new_field.height)]
-                new_field.output_xslices = [slice(0, new_field.width)]
 
-                # Set slice and roi id
-                new_field.roi_ids = [roi_id]
+    @property
+    def _num_lines_between_fields(self):
+        """ Lines/mirror cycles scanned from the start of one field to the start of the
+        next. """
+        if self.is_slow_stack:
+            num_lines_between_fields = ((self._page_height + self._num_fly_back_lines) *
+                                        (self.num_frames * self._num_averaged_frames))
+        else:
+            num_lines_between_fields = self._page_height + self._num_fly_back_lines
+        return int(num_lines_between_fields)
 
-                # Compute next starting y_center_coordinate
-                next_line_in_page += new_field.height + self._num_fly_to_lines
 
-                # Add field to fields
-                fields.append(new_field)
+    def _degrees_to_microns(self, degrees):
+        return int(degrees * self.objective_resolution)
 
-        # Accumulate overall number of scanned lines
-        previous_lines += self._num_lines_between_fields
 
-        return fields
+    def _microns_to_degrees(self, microns):
+        return int(microns / self.objective_resolution)
 
     def _create_rois(self):
         """Create scan rois from the configuration file. """
@@ -1179,16 +1345,65 @@ class ScanLBM(ScanMultiROI, BaseScan):
         """ Convert microns to scan angle degrees using the objective resolution."""
         return microns / self.objective_resolution
 
-    def _init_zarr(self, channel_list=slice(None), frame_list=slice(None), yslice=slice(None), xslice=slice(None), **kwargs):
-        return 2
-        # lazy_imread = delayed(tifffile.imread)
-        # lazy_arrays = [lazy_imread(self.zarr_store)]
-        # dask_arrays = [da.from_delayed(delayed_reader, shape=self.shape, dtype=self.dtype) for delayed_reader in lazy_arrays]
-        # arr = dask_arrays[0]
-        # ysl = self.fields[0].yslices
-        # xsl = self.fields[0].xslices
-        # slices = []
-        # for y,x in zip(ysl,xsl):
-        #     slices.append(arr[frame_list,channel_list,y,x])
-        # return da.block(slices).rechunk()
+    def _create_fields(self):
+        """ Go over each slice depth and each roi generating the scanned fields. """
+        fields = []
+        previous_lines = 0
+        next_line_in_page = 0  # each slice is one tiff page
+        for roi_id, roi in enumerate(self.rois):
+            new_field = roi.get_field_at(0)
 
+            if new_field is not None:
+                if next_line_in_page + new_field.height > self._page_height:
+                    raise RuntimeError(f'Overestimated number of fly to lines ({self._num_fly_to_lines})')
+
+                # Set xslice and yslice (from where in the page to cut it)
+                new_field.yslices = [slice(next_line_in_page, next_line_in_page + new_field.height)]
+                new_field.xslices = [slice(0, new_field.width)]
+
+                # Set output xslice and yslice (where to paste it in output)
+                new_field.output_yslices = [slice(0, new_field.height)]
+                new_field.output_xslices = [slice(0, new_field.width)]
+
+                # Set slice and roi id
+                new_field.roi_ids = [roi_id]
+
+                # Compute next starting y_center_coordinate
+                next_line_in_page += new_field.height + self._num_fly_to_lines
+
+                # Add field to fields
+                fields.append(new_field)
+
+        # Accumulate overall number of scanned lines
+        previous_lines += self._num_lines_between_fields
+
+        return fields
+
+    def _init_zarr(self, channel_list=slice(None), frame_list=slice(None), yslice=slice(None), xslice=slice(None), **kwargs):
+        pass
+
+# lazy_imread = delayed(tifffile.imread)
+# lazy_arrays = [lazy_imread(self.zarr_store)]
+# dask_arrays = [da.from_delayed(delayed_reader, shape=self.shape, dtype=self.dtype) for delayed_reader in lazy_arrays]
+# arr = dask_arrays[0]
+# ysl = self.fields[0].yslices
+# xsl = self.fields[0].xslices
+# slices = []
+# for y,x in zip(ysl,xsl):
+#     slices.append(arr[frame_list,channel_list,y,x])
+# return da.block(slices).rechunk()
+# @property
+# def trimx(self):
+#     return self._trimx
+#
+# @trimx.setter
+# def trimx(self, value):
+#     self._trimx = value
+#
+# @property
+# def trimy(self):
+#     return self._trimy
+#
+# @trimy.setter
+# def trimy(self, value):
+#     self._trimy = value

@@ -16,7 +16,7 @@ import zarr
 from tifffile import TiffFile
 from tifffile.tifffile import matlabstr2py
 
-from .utils import listify_index, check_index_is_in_bounds, check_index_type, fill_key, compute
+from .utils import listify_index, check_index_is_in_bounds, check_index_type, fill_key
 from .multiroi import ROI
 from .exceptions import FieldDimensionMismatch
 

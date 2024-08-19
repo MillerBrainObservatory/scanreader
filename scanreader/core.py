@@ -14,11 +14,12 @@ import tifffile
 from . import scans
 from .exceptions import ScanImageVersionError, PathnameError
 
+
 def read_scan(
-    pathnames: os.PathLike | typing.Iterable[os.PathLike],
-    dtype=np.int16,
-    join_contiguous=True,
-    debug=False,
+        pathnames: os.PathLike | typing.Iterable[os.PathLike],
+        dtype=np.int16,
+        join_contiguous=True,
+        debug=False,
 ) -> scans.ScanLBM:
     """
     Reads a ScanImage scan.
@@ -79,9 +80,8 @@ def read_scan(
         filenames, image_info, join_contiguous=join_contiguous,
     )
 
-def get_files(
-    pathnames: os.PathLike | List[os.PathLike | str],
-) -> list[PathLike | str]:
+
+def get_files(pathnames: os.PathLike | List[os.PathLike | str],) -> list[PathLike | str]:
     """
     Expands a list of pathname patterns to form a sorted list of absolute filenames.
 
@@ -107,25 +107,6 @@ def get_files(
             out_files.append(str(pathnames))
     return sorted(out_files)
 
-def expand_wildcard(
-    wildcard: os.PathLike | str | list[os.PathLike | str],
-) -> list[PathLike[AnyStr]]:
-    """Expands a list of pathname patterns to form a sorted list of absolute filenames."""
-    # Check input type
-    wildcart = Path(wildcard)
-    wcl = [x for x in wildcard.glob(wildcard)]
-
-    # Expand wildcards
-    rel_filenames = [glob(wildcard) for wildcard in wcl]
-    rel_filenames = [
-        item for sublist in rel_filenames for item in sublist
-    ]  # flatten list
-
-    abs_filenames = [path.abspath(filename) for filename in rel_filenames]
-    sorted_filenames = sorted(abs_filenames, key=path.basename)
-    return sorted_filenames
-
-
 def get_scanimage_version(info):
     """Looks for the ScanImage version in the tiff file headers."""
     pattern = re.compile(r"SI.?\.VERSION_MAJOR = '?(?P<version>[^\s']*)'?")
@@ -145,19 +126,3 @@ def is_scan_multiROI(info):
     match = re.search(r"hRoiManager\.mroiEnable = (?P<is_multiROI>.)", info)
     is_multiROI = (match.group("is_multiROI") == "1") if match else None
     return is_multiROI
-
-def tiffs2zarr(filenames, zarrurl, chunksize, **kwargs):
-    """Write images from sequence of TIFF files as zarr."""
-
-    def imread(filename):
-        # return first image in TIFF file as numpy array
-        with open(filename, 'rb') as fh:
-            data = fh.read()
-        from imagecodecs.imagecodecs import imagecodecs
-        return imagecodecs.tiff_decode(data)
-
-    with tifffile.FileSequence(imread, filenames) as tifs:
-        with tifs.aszarr() as store:
-            da = dask.array.from_zarr(store)
-            chunks = (chunksize,) + da.shape[1:]
-            da.rechunk(chunks).to_zarr(zarrurl, **kwargs)

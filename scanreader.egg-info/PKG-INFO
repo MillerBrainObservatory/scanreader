@@ -3,6 +3,8 @@ Name: scanreader
 Version: 0.6.0
 Summary: Tiff reader for ScanImage BigTiff files.
 Home-page: https://github.com/MillerBrainObservtory/scanreader
+Author: Flynn OConnell
+Author-email: foconnell@rockefeller.edu
 License: MIT
 Project-URL: homepage, https://millerbrainobservatory.github.io/
 Project-URL: documentation, https://millerbrainobservatory.github.io/scanreader/index.html
@@ -25,8 +27,35 @@ Classifier: Operating System :: MacOS
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: numpy>=1.12.0
-Requires-Dist: tifffile>=2024.8
+Requires-Dist: tifffile
+Requires-Dist: numpy>=1.24.3
+Requires-Dist: scipy>=1.9.0
+Requires-Dist: dask
+Requires-Dist: zarr
+Requires-Dist: icecream
+Provides-Extra: docs
+Requires-Dist: sphinx>=6.1.3; extra == "docs"
+Requires-Dist: docutils>=0.19; extra == "docs"
+Requires-Dist: sphinxcontrib-apidoc; extra == "docs"
+Requires-Dist: sphinx_book_theme; extra == "docs"
+Requires-Dist: sphinx-prompt; extra == "docs"
+Requires-Dist: sphinx-autodoc-typehints; extra == "docs"
+Requires-Dist: sphinx_design; extra == "docs"
+Requires-Dist: sphinxcontrib-images; extra == "docs"
+Requires-Dist: sphinx-copybutton; extra == "docs"
+Requires-Dist: sphinx-togglebutton; extra == "docs"
+Requires-Dist: sphinx_gallery; extra == "docs"
+Requires-Dist: sphinx_autodoc2; extra == "docs"
+Requires-Dist: numpydoc; extra == "docs"
+Requires-Dist: nbspinx; extra == "docs"
+Requires-Dist: myst-nb; extra == "docs"
+Provides-Extra: io
+Requires-Dist: zarr; extra == "io"
+Provides-Extra: notebook
+Requires-Dist: jupyterlab; extra == "notebook"
+Provides-Extra: all
+Requires-Dist: jupyterlab; extra == "all"
+Requires-Dist: zarr; extra == "all"
 
 # scanreader
 

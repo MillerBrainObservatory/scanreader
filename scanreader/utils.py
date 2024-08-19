@@ -1,56 +1,5 @@
 """utils.py: general utilities"""
 import numpy as np
-from numpy import fft
-
-
-def compute(frames: np.ndarray) -> int:
-    """
-    Returns the bidirectional phase offset, the offset between lines that sometimes occurs in line scanning.
-
-    Parameters
-    ----------
-    frames : frames x Ly x Lx
-        random subsample of frames in binary (frames x Ly x Lx)
-
-    Returns
-    -------
-    bidiphase : int
-        bidirectional phase offset in pixels
-
-    """
-
-    _, Ly, Lx = frames.shape
-
-    # compute phase-correlation between lines in x-direction
-    d1 = fft.fft(frames[:, 1::2, :], axis=2)
-    d1 /= np.abs(d1) + 1e-5
-
-    d2 = np.conj(fft.fft(frames[:, ::2, :], axis=2))
-    d2 /= np.abs(d2) + 1e-5
-    d2 = d2[:, :d1.shape[1], :]
-
-    cc = np.real(fft.ifft(d1 * d2, axis=2))
-    cc = cc.mean(axis=1).mean(axis=0)
-    cc = fft.fftshift(cc)
-
-    bidiphase = -(np.argmax(cc[-10 + Lx // 2:11 + Lx // 2]) - 10)
-    return bidiphase
-
-
-def shift(frames: np.ndarray, bidiphase: int) -> None:
-    """
-    Shift last axis of "frames" by bidirectional phase offset in-place, bidiphase.
-
-    Parameters
-    ----------
-    frames : frames x Ly x Lx
-    bidiphase : int
-        bidirectional phase offset in pixels
-    """
-    if bidiphase > 0:
-        frames[:, 1::2, bidiphase:] = frames[:, 1::2, :-bidiphase]
-    else:
-        frames[:, 1::2, :bidiphase] = frames[:, 1::2, -bidiphase:]
 
 
 def fill_key(key, num_dimensions):
@@ -165,193 +114,6 @@ def listify_index(index, dim_size):
     return index_as_list
 
 
-def compute_raster_phase(image, temporal_fill_fraction):
-    """
-    Compute raster correction for bidirectional resonant scanners by estimating the phase shift
-    that best aligns even and odd rows of an image. This function assumes that the distortion
-    is primarily due to the resonant mirror returning before reaching the nominal turnaround point.
-
-    Parameters
-    ----------
-    image : np.array
-        The image to be corrected. This should be a 2D numpy array where rows correspond to
-        successive lines scanned by the resonant mirror.
-    temporal_fill_fraction : float
-        The fraction of the total line scan period during which the actual image acquisition occurs.
-        This is used to calculate the effective scan range in angles. It typically ranges from 0 to 1,
-        where 1 means the entire period is used for acquiring image data.
-
-    Returns
-    -------
-    float
-        An estimated phase shift angle (in radians) that indicates the discrepancy between the
-        expected and actual initial angles of the bidirectional scan. Positive values suggest that
-        even rows should be shifted to the right.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> image = np.random.rand(100, 100)  # Simulated image
-    >>> temporal_fill_fraction = 0.9
-    >>> angle_shift = compute_raster_phase(image, temporal_fill_fraction)
-    >>> print(f"Calculated angle shift: {angle_shift} radians")
-
-    Notes
-    -----
-    - The function uses linear interpolation for shifting the pixel rows and assumes that even rows
-      and odd rows should be symmetric around the central scan line.
-    - The phase shift is found using a greedy algorithm that iteratively refines the estimate.
-    - Artifacts near the edges of the image can significantly affect the accuracy of the phase
-      estimation, hence a default 5% of the rows and 10% of the columns are skipped during the
-      calculation.
-    - This function depends on `numpy` for numerical operations and `scipy.interpolate` for
-      interpolation of row data.
-
-    """
-    from scipy import interpolate as interp  # local import, this is a large dependency for this small package
-    # Make sure image has even number of rows (so number of even and odd rows is the same)
-    image = image[:-1] if image.shape[0] % 2 == 1 else image
-
-    # Get some params
-    image_height, image_width = image.shape
-    skip_rows = round(image_height * 0.05)  # rows near the top or bottom have artifacts
-    skip_cols = round(image_width * 0.10)  # so do columns
-
-    # Create images with even and odd rows
-    even_rows = image[::2][skip_rows:-skip_rows]
-    odd_rows = image[1::2][skip_rows:-skip_rows]
-
-    # Scan angle at which each pixel was recorded.
-    max_angle = (np.pi / 2) * temporal_fill_fraction
-    scan_angles = np.linspace(-max_angle, max_angle, image_width + 2)[1:-1]
-
-    # Greedy search for the best raster phase: starts at coarse estimates and refines them
-    even_interp = interp.interp1d(scan_angles, even_rows, fill_value="extrapolate")
-    odd_interp = interp.interp1d(scan_angles, odd_rows, fill_value="extrapolate")
-    angle_shift = 0
-    for scale in [1e-2, 1e-3, 1e-4, 1e-5, 1e-6]:
-        angle_shifts = angle_shift + scale * np.linspace(-9, 9, 19)
-        match_values = []
-        for new_angle_shift in angle_shifts:
-            shifted_evens = even_interp(scan_angles + new_angle_shift)
-            shifted_odds = odd_interp(scan_angles - new_angle_shift)
-            match_values.append(
-                np.sum(
-                    shifted_evens[:, skip_cols:-skip_cols]
-                    * shifted_odds[:, skip_cols:-skip_cols]
-                )
-            )
-        angle_shift = angle_shifts[np.argmax(match_values)]
-
-    return angle_shift
-
-
-def correct_raster(scan, raster_phase, temporal_fill_fraction, in_place=True):
-    """
-    Perform raster correction for resonant scans by adjusting even and odd lines based
-    on a specified phase shift. This function is designed to correct geometric distortions
-    in multi-photon images caused by the scanning mechanism's characteristics.
-
-    Parameters
-    ----------
-    scan : np.array
-        A numpy array representing the scan data, where the first two dimensions correspond to
-        image height and width, respectively. The array can have additional dimensions,
-        typically representing different frames or slices.
-    raster_phase : float
-        The phase shift angle (in radians) to be applied for correction. Positive values shift
-        even lines to the left and odd lines to the right, while negative values shift even lines
-        to the right and odd lines to the left.
-    temporal_fill_fraction : float
-        The ratio of the actual imaging time to the total time of one scan line. This parameter
-        helps in determining the effective scan range that needs correction.
-    in_place : bool, optional
-        If True (default), modifies the input `scan` array in-place. If False, a corrected copy
-        of the scan is returned, preserving the original data.
-
-    Returns
-    -------
-    np.array
-        The raster-corrected scan. The return type matches the input `scan` data type if it's a
-        subtype of np.float. Otherwise, it is converted to np.float32 for processing.
-
-    Raises
-    ------
-    PipelineException
-        If input validations fail such as non-matching dimensions, incorrect data types, or if
-        the `scan` does not have at least two dimensions.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> scan = np.random.rand(256, 256, 30)  # Simulate a 3D scan volume
-    >>> raster_phase = 0.01  # Small phase shift
-    >>> temporal_fill_fraction = 0.9
-    >>> corrected_scan = correct_raster(scan, raster_phase, temporal_fill_fraction, in_place=False)
-    >>> print(corrected_scan.shape)
-    (256, 256, 30)
-
-    Notes
-    -----
-    The raster correction is essential for improving the accuracy of image analyses and
-    quantification in studies involving resonant scanning microscopy. Adjusting the phase
-    shift accurately according to the resonant mirror's characteristics can significantly
-    enhance the image quality.
-
-    """
-    from scipy import interpolate as interp  # local import, this is a large dependency for this small package
-    # Basic checks
-    if not hasattr(scan, 'shape'):
-        raise TypeError("Scan needs to be np.array-like")
-    if scan.ndim < 2:
-        raise TypeError("Scan with less than 2 dimensions.")
-
-    # Assert scan is float
-    if not np.issubdtype(scan.dtype, np.floating):
-        print("Warning: Changing scan type from", str(scan.dtype), "to np.float32")
-        scan = scan.astype(np.float32, copy=(not in_place))
-    elif not in_place:
-        scan = scan.copy()  # copy it anyway preserving the original float dtype
-
-    # Get some dimensions
-    original_shape = scan.shape
-    image_height = original_shape[0]
-    image_width = original_shape[1]
-
-    # Scan angle at which each pixel was recorded.
-    max_angle = (np.pi / 2) * temporal_fill_fraction
-    scan_angles = np.linspace(-max_angle, max_angle, image_width + 2)[1:-1]
-
-    # We iterate over every image in the scan (first 2 dimensions). Same correction
-    # regardless of what channel, slice or frame they belong to.
-    reshaped_scan = np.reshape(scan, (image_height, image_width, -1))
-    num_images = reshaped_scan.shape[-1]
-    for i in range(num_images):
-        # Get current image
-        image = reshaped_scan[:, :, i]
-
-        # Correct even rows of the image (0, 2, ...)
-        interp_function = interp.interp1d(
-            scan_angles,
-            image[::2, :],
-            bounds_error=False,
-            fill_value=0,
-            copy=(not in_place),
-        )
-        reshaped_scan[::2, :, i] = interp_function(scan_angles + raster_phase)
-
-        # Correct odd rows of the image (1, 3, ...)
-        interp_function = interp.interp1d(
-            scan_angles,
-            image[1::2, :],
-            bounds_error=False,
-            fill_value=0,
-            copy=(not in_place),
-        )
-        reshaped_scan[1::2, :, i] = interp_function(scan_angles - raster_phase)
-    return np.reshape(reshaped_scan, original_shape)
-
-
 def return_scan_offset(image_in, dim, n_corr=3):
     """
     Compute the scan offset correction between interleaved lines or columns in an image.
@@ -445,7 +207,7 @@ def return_scan_offset(image_in, dim, n_corr=3):
     return lags[correction_index]
 
 
-def fix_scan_phase(data_in, offset, dim):
+def fix_scan_phase(data_in, offset):
     """
     Corrects the scan phase of the data based on a given offset along a specified dimension.
 
@@ -455,9 +217,6 @@ def fix_scan_phase(data_in, offset, dim):
         The input data of shape (sy, sx, sc, sz).
     offset : int
         The amount of offset to correct for.
-    dim : int
-        Dimension along which to apply the offset.
-        1 for vertical (along height/sy), 2 for horizontal (along width/sx).
 
     Returns
     -------

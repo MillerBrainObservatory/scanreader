@@ -72,7 +72,6 @@ def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
 
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
 
     args = parse_args()
     _scan = sr.read_scan(args.path, join_contiguous=True)
@@ -91,8 +90,3 @@ if __name__ == "__main__":
         # Slice the array to remove the zero or near-zero rows/columns
         item_cleaned = scan[:, non_zero_rows, :]
         item_cleaned = item_cleaned[:, :, non_zero_cols]
-
-        # # Visualize the cleaned scan for a specific time point
-        # plt.imshow(item_cleaned[1, ...], cmap='gray')
-        # plt.show()
-        # x = 2

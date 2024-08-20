@@ -1,5 +1,6 @@
 import itertools
 import os
+from pathlib import Path
 
 from scipy.signal import correlate
 import numpy as np
@@ -7,15 +8,18 @@ import tifffile
 
 from .utils import listify_index, check_index_type, fill_key
 from .multiroi import ROI
+try:
+    import dask.array as da
+    has_dask = True
+except:
+    has_dask=False
 
 ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
 
 IJ_METADATA = ["axes", "photometric", "dtype", "nbytes"]
 
-
 def apply_slice_to_dask(array, channel_list, frame_list, yslice, xslice):
     return array[channel_list, frame_list, yslice, xslice]
-
 
 def return_scan_offset(image_in, num_values: int):
     """
@@ -227,6 +231,21 @@ class ScanLBM:
         self.frame_slice = slice(None)
         self.channel_slice = slice(None)
 
+    def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
+        savedir = Path(savedir)
+        if not metadata:
+            metadata = {}
+        if isinstance(self.channel_slice, slice):
+            channels = list(range(self.num_channels))[self.channel_slice]
+        elif isinstance(self.channel_slice, int):
+            channels = [self.channel_slice]
+        else:
+            raise ValueError(f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
+        for idx, num in enumerate(channels):
+            filename = savedir / f'{prepend_str}_plane_{num}.tif'
+            data = self[:,channels,:,:]
+            tifffile.imwrite(filename,data,bigtiff=True,metadata=metadata)
+
     def __repr__(self):
         return f"Tiled: {(self.num_frames, self.num_channels, self._height, self._width)} [T,C,Y,X]"
 
@@ -275,7 +294,12 @@ class ScanLBM:
 
             item[..., output_ys, output_xs] = pages[..., ys, xs]
 
-        return item.squeeze()
+        item = item.squeeze()
+        if has_dask:
+            item = da.from_array(item)
+            return item
+        else:
+            return item.squeeze()
 
     @property
     def height(self):
@@ -346,7 +370,6 @@ class ScanLBM:
     @channel_slice.setter
     def channel_slice(self, value):
         self._channel_slice = value
-
 
     def _read_pages(
         self,

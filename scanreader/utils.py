@@ -1,4 +1,6 @@
 """utils.py: general utilities"""
+import types
+
 import numpy as np
 
 
@@ -52,6 +54,8 @@ def _index_has_valid_type(index):
         return True
     if isinstance(index, slice):  # slice
         return True
+    if isinstance(index, types.EllipsisType):
+        return True
     if (isinstance(index, (list, tuple)) and
             all(np.issubdtype(type(x), np.signedinteger) for x in index)):  # list or tuple
         return True
@@ -99,7 +103,9 @@ def _is_index_in_bounds(index, dim_size):
 
 def listify_index(index, dim_size):
     """ Generates the list representation of an index for the given dim_size."""
-    if np.issubdtype(type(index), np.signedinteger):
+    if isinstance(index, types.EllipsisType):
+        index_as_list = listify_index(slice(None, None, None), dim_size)
+    elif np.issubdtype(type(index), np.signedinteger):
         index_as_list = [index] if index >= 0 else [dim_size + index]
     elif isinstance(index, (list, tuple, np.ndarray)):
         index_as_list = [x if x >= 0 else (dim_size + x) for x in index]

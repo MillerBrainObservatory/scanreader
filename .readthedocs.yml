@@ -18,7 +18,12 @@ sphinx:
   # Fail on all warnings to avoid broken references
   # fail_on_warning: true
 
-# Optionally build your docs in additional formats such as PDF and ePub
+build:
+  os: "ubuntu-24.04"
+  tools:
+    python: 3.9
+
+# Optionally build your docs in additional formats such as PDF
 # formats:
 #   - pdf
 #   - epub

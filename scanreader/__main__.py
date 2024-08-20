@@ -7,8 +7,43 @@ from pathlib import Path
 import argparse
 
 import dask
+import click
 
 import scanreader as sr
+
+
+@click.command()
+@click.argument("path", type=click.Path(exists=True, file_okay=True, dir_okay=True))
+frames_help = ''
+@click.option(
+    "-f", "--frames", type=str, default=":", help="Frames to read. Syntactically  (i.e. 1:50)"
+)
+@click.option(
+    "-z", "--zslice", type=str, default=":", help="Z-Planes to read (i.e. 1:50)"
+)
+@click.option(
+    "-x", "--xslice", type=str, default=":", help="X-pixels to read (i.e. 1:50)"
+)
+@click.option(
+    "-y", "--yslice", type=str, default=":", help="Y-pixels to read (i.e. 1:50)"
+)
+@click.option(
+    "-d", "--debug", type=click.BOOL, default=False, help="Enable debug logs to the terminal."
+)
+def main(path, timepoints, zslice, xslice, yslice, debug):
+    if path is None:
+        path = Path.home() / "caiman_data"
+        if not path.is_dir():
+            path.mkdir()
+        else:
+            tiff_files = [str(x) for x in path.glob("*.tif*")]
+            print(f"Files found in {path}: \n{tiff_files}")
+
+    # Process slices
+    timepoints = process_slice_str(timepoints)
+    zslice = process_slice_str(zslice)
+    xslice = process_slice_str(xslice)
+    yslice = process_slice_str(yslice)
 
 
 def parse_args():
@@ -60,25 +95,28 @@ def process_slice_str(slice_str):
 def process_slice_objects(slice_str):
     return tuple(map(process_slice_str, slice_str.split(",")))
 
+
 # entrypoint to napari
 def imread(path, slice_objects: typing.Iterable) -> dask.core.Any:
     __scan = sr.read_scan(path, debug=True)
     return __scan[slice_objects]
+
 
 def quickplot(array):
     import matplotlib.pyplot as plt
     plt.imshow(array, cmap='gray')
     plt.show()
 
+
 if __name__ == "__main__":
     import napari
 
     args = parse_args()
-    _scan = sr.read_scan(args.path,)
-    _scan.trim_x = (8,8)
-    temp = _scan[:,0,:,:]
+    _scan = sr.read_scan(args.path, )
+    _scan.trim_x = (8, 8)
+    temp = _scan[:, 0, :, :]
     viewer = napari.Viewer()
     viewer.add_image(temp, multiscale=False, colormap='gray')
     napari.run()
     # _scan.save_as_tiff(args.path)
-    x=2
+    x = 2

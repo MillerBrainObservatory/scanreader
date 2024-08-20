@@ -3,17 +3,16 @@
 Python based tiff reader for ScanImage recordings.
 Supports scans starting at ScanImage 2016 through the current version (2022).
 
-```{image} https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg
-:alt: Doi badge
+```{figure} https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg
 :target: https://doi.org/10.1038/s41592-021-01239-8
 ```
 
-```{image} https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg
+```{figure} https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg
 :alt: Publication Link
 :target: https://doi.org/10.1038/s41592-021-01239-8
 ```
 
-```{image} https://img.shields.io/badge/Repository-black?style=flat-square&logo=github&logoColor=white&link=https%3A%2F%2Fmillerbrainobservatory.github.io%2FLBM-CaImAn-MATLAB%2F
+```{figure} https://img.shields.io/badge/Repository-black?style=flat-square&logo=github&logoColor=white&link=https%3A%2F%2Fmillerbrainobservatory.github.io%2FLBM-CaImAn-MATLAB%2F
 :alt: Repo Link
 :target: https://github.com/MillerBrainObservatory/LBM-CaImAn-MATLAB
 ```
@@ -129,7 +128,9 @@ It should act like a numpy 5-d array---no boolean indexing, though.
 :maxdepth: 2
 :caption: Contents
 
-apidocs/index.rst
+Guide <guide.md>
+api/index.md
+
 ```
 
 ## Developer Note

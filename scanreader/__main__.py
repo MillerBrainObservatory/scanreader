@@ -71,10 +71,14 @@ def quickplot(array):
     plt.show()
 
 if __name__ == "__main__":
+    import napari
 
     args = parse_args()
     _scan = sr.read_scan(args.path,)
     _scan.trim_x = (8,8)
-    quickplot(_scan[2,0,:,:])
-    _scan.save_as_tiff(args.path)
+    temp = _scan[:,0,:,:]
+    viewer = napari.Viewer()
+    viewer.add_image(temp, multiscale=False, colormap='gray')
+    napari.run()
+    # _scan.save_as_tiff(args.path)
     x=2

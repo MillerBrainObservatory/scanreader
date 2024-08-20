@@ -43,28 +43,17 @@ myst_enable_extensions = [
     "tasklist",
 ]
 
-# autodoc2_packages = [
-#     "../scanreader/",
-# ]
-
 source_suffix = {
     ".rst": "restructuredtext",
     ".myst": "myst-nb",
     ".ipynb": "myst-nb",
 }
-# autodoc2_docstring_parser_regexes = [
-#     # this will render all docstrings as Markdown
-#     # (r".*", "rst"),
-#     # this will render select docstrings as Markdown
-#     # (r"mypackage\.mymodule\..*", "myst"),
-# ]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "exclude"]
 extensions = [
     "sphinx.ext.autodoc",
-    # "autodoc2",
-    "sphinxcontrib.images",
+    # "sphinxcontrib.images",
     "sphinxcontrib.video",
     "myst_nb",
     "sphinx_copybutton",
@@ -92,13 +81,13 @@ html_css_files = ["custom.css"]
 html_favicon = "_static/mbo_icon_dark.ico"
 html_static_path = ["_static"]
 
-# sphinxcontrib.images config
-images_config = dict(
-    backend="LightBox2",
-    default_image_width="100%",
-    default_show_title="True",
-    default_group="default",
-)
+# # sphinxcontrib.images config
+# images_config = dict(
+#     backend="LightBox2",
+#     default_image_width="100%",
+#     default_show_title="True",
+#     default_group="default",
+# )
 
 html_context = {
     # "github_url": "https://github.com", # or your GitHub Enterprise interprise

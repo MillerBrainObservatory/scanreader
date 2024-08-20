@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 from pathlib import Path
 
@@ -157,6 +158,33 @@ def clear_zeros(_scan, rmz_threshold=1e-5):
     return cleaned[:, :, non_zero_cols]
 
 class ScanLBM:
+
+    @classmethod
+    def from_metadata(cls, metadata):
+        # Parse the reconstruction metadata
+        reconstruction_metadata = json.loads(metadata['reconstruction_metadata'])
+
+        # Instantiate the class using the stored metadata
+        instance = cls(
+            files=reconstruction_metadata['files'],
+            fix_scan_phase=reconstruction_metadata['fix_scan_phase'],
+            trim_roi_x=reconstruction_metadata['trim_x'],
+            trim_roi_y=reconstruction_metadata['trim_y']
+        )
+
+        # Restore other attributes
+        instance._channel_slice = reconstruction_metadata['channel_slice']
+        instance._frame_slice = reconstruction_metadata['frame_slice']
+        instance.metadata = reconstruction_metadata['metadata']
+        instance.axes = reconstruction_metadata['axes']
+        instance.dims = reconstruction_metadata['dims']
+        instance.dim_labels = reconstruction_metadata['dim_labels']
+        instance.roi_metadata = reconstruction_metadata['roi_metadata']
+        instance.si_metadata = reconstruction_metadata['si_metadata']
+        instance.ij_metadata = reconstruction_metadata['ij_metadata']
+        instance.arr_metadata = reconstruction_metadata['arr_metadata']
+
+        return instance
     def __init__(self, files: list[os.PathLike], fix_scan_phase: bool=True, **kwargs):
         self._frame_slice = None
         self._channel_slice = None
@@ -235,6 +263,12 @@ class ScanLBM:
         savedir = Path(savedir)
         if not metadata:
             metadata = {}
+
+        # Generate the reconstruction metadata
+        reconstruction_metadata = self._generate_reconstruction_metadata()
+
+        # Combine existing metadata with reconstruction metadata
+        combined_metadata = {**metadata, 'reconstruction_metadata': reconstruction_metadata}
         if isinstance(self.channel_slice, slice):
             channels = list(range(self.num_channels))[self.channel_slice]
         elif isinstance(self.channel_slice, int):
@@ -244,7 +278,7 @@ class ScanLBM:
         for idx, num in enumerate(channels):
             filename = savedir / f'{prepend_str}_plane_{num}.tif'
             data = self[:,channels,:,:]
-            tifffile.imwrite(filename,data,bigtiff=True,metadata=metadata)
+            tifffile.imwrite(filename,data,bigtiff=True,metadata=combined_metadata)
 
     def __repr__(self):
         return f"Tiled: {(self.num_frames, self.num_channels, self._height, self._width)} [T,C,Y,X]"
@@ -269,7 +303,7 @@ class ScanLBM:
             return np.empty(0)
 
         # cast to TCYX
-        item = np.empty(
+        item = da.empty(
             [
                 len(frame_list),
                 len(channel_list),
@@ -277,6 +311,7 @@ class ScanLBM:
                 len(x_list),
             ],
             dtype=self.dtype,
+            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
         )
 
         # Over each subfield in field (only one for non-contiguous fields)
@@ -289,17 +324,9 @@ class ScanLBM:
             x_range = range(output_xslice.start, output_xslice.stop)
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
-            output_ys = [[index] for index, y in enumerate(y_list) if y in y_range]
-            output_xs = [index for index, x in enumerate(x_list) if x in x_range]
 
-            item[..., output_ys, output_xs] = pages[..., ys, xs]
-
-        item = item.squeeze()
-        if has_dask:
-            item = da.from_array(item)
-            return item
-        else:
-            return item.squeeze()
+            item[ :, :, output_yslice, output_xslice] = pages[ :, :, ys, xs]
+        return item.squeeze()
 
     @property
     def height(self):
@@ -644,6 +671,31 @@ class ScanLBM:
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
         return self.metadata["si"]["SI.hScan2D.uniformSampling"]
+
+    def _generate_reconstruction_metadata(self):
+        # Convert the slices to a serializable format
+        channel_slice_repr = (self.channel_slice.start, self.channel_slice.stop, self.channel_slice.step) if isinstance(self.channel_slice, slice) else self.channel_slice
+        frame_slice_repr = (self.frame_slice.start, self.frame_slice.stop, self.frame_slice.step) if isinstance(self.frame_slice, slice) else self.frame_slice
+
+        # Build the reconstruction metadata
+        reconstruction_metadata = {
+            'files': [f.filename for f in self.tiff_files],
+            'trim_x': self._trim_x,
+            'trim_y': self._trim_y,
+            'height': self._height,
+            'width': self._width,
+            'channel_slice': channel_slice_repr,
+            'frame_slice': frame_slice_repr,
+            'axes': self.axes,
+            'dims': self.dims,
+            'dim_labels': self.dim_labels,
+            'roi_metadata': self.roi_metadata,
+            'si_metadata': self.si_metadata,
+        }
+
+        # Convert the dictionary to a JSON string for storage in TIFF metadata
+        return reconstruction_metadata
+
 
 # lazy_imread = delayed(tifffile.imread)
 # lazy_arrays = [lazy_imread(self.zarr_store)]

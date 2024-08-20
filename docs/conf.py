@@ -53,7 +53,6 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "exclude"]
 extensions = [
     "sphinx.ext.autodoc",
-    # "sphinxcontrib.images",
     "sphinxcontrib.video",
     "myst_nb",
     "sphinx_copybutton",
@@ -75,7 +74,7 @@ intersphinx_mapping = {
 
 html_logo = "_static/scanreader.svg"
 # html_short_title = "scanreader"
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_book_theme"
 html_title = "scanreader"
 html_css_files = ["custom.css"]
 html_favicon = "_static/mbo_icon_dark.ico"

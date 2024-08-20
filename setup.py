@@ -8,13 +8,23 @@ from setuptools import setup
 
 import setuptools
 
-install_deps = [
-    "tifffile",
-    "numpy>=1.24.3",
-    "scipy>=1.9.0",
-    "dask",
-    "zarr",
-    "icecream"
+install_deps = ["tifffile", "numpy>=1.24.3", "scipy>=1.9.0", "dask", "zarr", "icecream"]
+
+docs = [
+    "sphinx>=6.1.3",
+    "docutils>=0.19"
+    "nbsphinx"
+    "numpydoc"
+    "sphinx-autodoc2"
+    "sphinx_gallery"
+    "sphinx-togglebutton"
+    "sphinx-copybutton"
+    "sphinx_book_theme"
+    "pydata_sphinx_theme"
+    "sphinx_design"
+    "sphinxcontrib-images"
+    "sphinxcontrib-video"
+    "myst_nb",
 ]
 
 io_deps = [
@@ -25,7 +35,7 @@ io_deps = [
     # "xmltodict",
 ]
 
-notebook_deps = ['jupyterlab']
+notebook_deps = ["jupyterlab"]
 
 all_deps = notebook_deps + io_deps
 
@@ -33,43 +43,27 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name='scanreader',
-    version='0.4.12',
+    name="scanreader",
+    version="0.4.12",
     description="Reader for ScanImage 5 scans (including slow stacks and multiROI).",
     long_description=long_description,
     author="Flynn OConnell",
     author_email="foconnell@rockefeller.edu",
-    license='MIT',
-    url='https://github.com/MillerBrainObservtory/scanreader',
-    keywords='ScanImage scanreader multiROI 2019 tiff',
+    license="MIT",
+    url="https://github.com/MillerBrainObservtory/scanreader",
+    keywords="ScanImage scanreader multiROI 2019 tiff",
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Science/Research',
-        'Programming Language :: Python :: 3 :: Only',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English'
-        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "Programming Language :: Python :: 3 :: Only",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English"
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
     packages=setuptools.find_packages(),
     install_requires=install_deps,
     extras_require={
-        "docs": [
-            "sphinx>=6.1.3",
-            "docutils>=0.19",
-            "sphinxcontrib-apidoc",
-            "sphinx_book_theme",
-            "sphinx-prompt",
-            "sphinx-autodoc-typehints",
-            "sphinx_design",
-            "sphinxcontrib-images",
-            "sphinx-copybutton",
-            "sphinx-togglebutton",
-            "sphinx_gallery",
-            "sphinx_autodoc2",
-            "numpydoc",
-            "nbspinx",
-            "myst-nb",
-        ],
+        "docs": docs,
         "io": io_deps,
         "notebook": notebook_deps,
         "all": all_deps,

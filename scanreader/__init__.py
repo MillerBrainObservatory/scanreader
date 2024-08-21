@@ -46,6 +46,7 @@ def get_files(
         pathnames: os.PathLike | str | list[os.PathLike | str],
         ext: str = 'tif',
         exclude_pattern: str = '_plane_',
+        debug: bool = False,
 ) -> list[os.PathLike | str] | os.PathLike:
     """
     Expands a list of pathname patterns to form a sorted list of absolute filenames.
@@ -58,6 +59,8 @@ def get_files(
         Extention, string giving the filetype extention.
     exclude_pattern: str | list
         A string or list of strings that match to files marked as excluded from processing.
+    debug: bool
+        Flag to print found, excluded and all files.
 
     Returns
     -------
@@ -73,36 +76,27 @@ def get_files(
             if exclude_pattern not in str(fpath):
                 if Path(fpath).is_file():
                     out_files.extend([fpath])
-                    ic(out_files)
                 elif Path(fpath).is_dir():
                     fnames = [x for x in Path(fpath).expanduser().glob(f"*{ext}*")]
                     out_files.extend(fnames)
             else:
                 excl_files.extend(fnames)
-                ic('else_excl', out_files)
-
-        ic(out_files)
-        ic(excl_files)
         return sorted(out_files)
     if isinstance(pathnames, (os.PathLike, str)):
-        ic()
         pathnames = Path(pathnames).expanduser()
         if pathnames.is_dir():
             files_with_ext = [x for x in pathnames.glob(f"*{ext}*")]
-            excluded = [x for x in pathnames.glob(f"*{ext}*") if exclude_pattern in str(x)]
-            all_files = [x for x in pathnames.glob("*")]
-            ic(files_with_ext, excluded, all_files)
-            return sorted([x for x in files_with_ext if exclude_pattern not in str(x)])
+            if debug:
+                excluded_files = [x for x in pathnames.glob(f"*{ext}*") if exclude_pattern in str(x)]
+                all_files = [x for x in pathnames.glob("*")]
+                ic(excluded_files, all_files)
+            return sorted(files_with_ext)
         elif pathnames.is_file():
-            ic()
             if exclude_pattern not in str(pathnames):
-                ic()
                 return pathnames
             else:
-                ic()
                 raise FileNotFoundError(f"No {ext} files found in directory: {pathnames}")
     else:
-        ic()
         raise ValueError(
             f"Input path should be an iterable list/tuple or PathLike object (string, pathlib.Path), not {pathnames}")
 

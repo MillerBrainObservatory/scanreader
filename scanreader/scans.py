@@ -7,6 +7,7 @@ from icecream import ic
 
 import numpy as np
 import tifffile
+import zarr
 
 from .utils import listify_index, check_index_type, fill_key
 from .multiroi import ROI
@@ -20,7 +21,7 @@ ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
 
 IJ_METADATA = ["axes", "photometric", "dtype", "nbytes"]
 
-CHUNKS = {0: 'auto', 1: 'auto', 2: -1, 3: -1}
+CHUNKS = {0: 'auto', 1: -1, 2: -1}
 
 # https://brainglobe.info/documentation/brainglobe-atlasapi/adding-a-new-atlas.html
 BRAINGLOBE_STRUCTURE_TEMPLATE = {
@@ -31,6 +32,10 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     "rgb_triplet": [255, 255, 255],
     # default color for visualizing the region, feel free to leave white or randomize it
 }
+
+
+def imread(path):
+    return zarr.open(path)
 
 
 class ScanLBM:
@@ -65,38 +70,41 @@ class ScanLBM:
 
     def __init__(self, files: list[os.PathLike], **kwargs):
         ic()
+        self.files = files
         self.name = ''
         self._frame_slice = slice(None)
         self._channel_slice = slice(None)
-        self._meta = None
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
         self._trim_y = kwargs.get('trim_roi_y', (0, 0))
+        self._path = kwargs.get('save_path', Path(files[0]).parent)
 
-        with tifffile.TiffFile(files[0]) as tiff_file:
-            series = tiff_file.series[0]
-            scanimage_metadata = tiff_file.scanimage_metadata
-            roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
-            pages = tiff_file.pages
-            metadata = {
-                "roi_info": roi_group,
-                "photometric": "minisblack",
-                "image_height": pages[0].shape[0],
-                "image_width": pages[0].shape[1],
-                "num_pages": len(pages),
-                "dims": series.dims,
-                "ndim": series.ndim,
-                "axes": series.axes,
-                "dtype": series.dtype,
-                "is_multifile": series.is_multifile,
-                "nbytes": series.nbytes,
-                "shape": series.shape,
-                "size": series.size,
-                "dim_labels": series.sizes,
-                "num_rois": len(roi_group),
-                "si": scanimage_metadata["FrameData"],
-            }
         self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
 
+        # with tifffile.TiffFile(self.tiff_files[0]) as tiff_file:
+        tiff_file = self.tiff_files[0]
+        series = tiff_file.series[0]
+        scanimage_metadata = tiff_file.scanimage_metadata
+        roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+        pages = tiff_file.pages
+        metadata = {
+            "roi_info": roi_group,
+            "image_height": pages[0].shape[0],
+            "image_width": pages[0].shape[1],
+            "num_pages": len(pages),
+            "dims": series.dims,
+            "ndim": series.ndim,
+            "axes": series.axes,
+            "dtype": series.dtype,
+            "is_multifile": series.is_multifile,
+            "nbytes": series.nbytes,
+            "shape": series.shape,
+            "size": series.size,
+            "dim_labels": series.sizes,
+            "num_rois": len(roi_group),
+            "si": scanimage_metadata["FrameData"],
+        }
+
+        # Set Metadata -----
         self.metadata = metadata
 
         self.roi_metadata = metadata.pop("roi_info")
@@ -112,6 +120,7 @@ class ScanLBM:
         self._shape = self.metadata["shape"]
         self._dim_labels = self.metadata["dim_labels"]
 
+        # Create ROIs -----
         self.rois = self._create_rois()
         self.fields = self._create_fields()
         self._join_contiguous_fields()
@@ -119,7 +128,7 @@ class ScanLBM:
         if len(self.fields) > 1:
             raise NotImplementedError("Too many fields for an LBM recording.")
 
-        # These are needed to create a dask array from self
+        # Initialize dynamic variables -----
 
         # Adjust height/width for trimmings
         self._width = self.fields[0].width - sum(self.trim_x)
@@ -133,10 +142,7 @@ class ScanLBM:
         self._xslices_out = self.fields[0].output_xslices
         self._yslices_out = self.fields[0].output_yslices
 
-        # -----------------
-        # Image sizes can now be used
-
-        self._data = self.canvas()
+        self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
@@ -168,31 +174,27 @@ class ScanLBM:
         # Generate the reconstruction metadata
         # reconstruction_metadata = self._generate_reconstruction_metadata()
 
-        # # Combine existing metadata with reconstruction metadata
+        # Combine existing metadata with reconstruction metadata
         # combined_metadata = {**metadata, 'reconstruction_metadata': reconstruction_metadata}
-        if isinstance(self.channel_slice, slice):
-            channels = list(range(self.num_channels))[self.channel_slice]
-        elif isinstance(self.channel_slice, int):
-            channels = [self.channel_slice]
-        else:
-            raise ValueError(
-                f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
-        for idx in channels:
+        # if isinstance(self.channel_slice, slice):
+        #     channels = list(range(self.num_channels))[self.channel_slice]
+        # elif isinstance(self.channel_slice, int):
+        #     channels = [self.channel_slice]
+        # else:
+        #     raise ValueError(
+        #         f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
+        for idx in range(0, self.num_planes - 1):
             filename = savedir / f'{prepend_str}_plane_{idx + 1}.zarr'
-            data = self[:, idx, :, :]
-            da.to_zarr(data, filename)
+            da.to_zarr(self[:, idx, :, :], filename)
 
     def __repr__(self):
-        return self.data.__repr__()
+        return self.data
 
-    def canvas(self):
-        return da.empty((self.num_frames, self.num_planes, self.height, self.width), chunks=CHUNKS)
+    def data(self):
+        return self._data
 
     def __str__(self):
         return f"Tiled shape: {self.shape}"
-
-    def get_mean_images(self):
-        pass
 
     def __getitem__(self, key):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
@@ -213,7 +215,7 @@ class ScanLBM:
             return np.empty(0)
 
         # cast to TCYX
-        self.data = da.empty(
+        item = da.empty(
             [
                 len(frame_list),
                 len(channel_list),
@@ -234,17 +236,13 @@ class ScanLBM:
             x_range = range(output_xslice.start, output_xslice.stop)
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
-            self.data[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
+            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
         print(time.time() - start)
-        return self.data.squeeze()
+        return item
 
     @property
-    def data(self):
-        return self._data
-
-    @data.setter
-    def data(self, value):
-        self._data = value
+    def path(self):
+        return self._path
 
     @property
     def height(self):
@@ -330,7 +328,7 @@ class ScanLBM:
     @property
     def xslices(self):
         return [slice(v.start + self.trim_x[0], v.stop - self.trim_x[1]) for v in self._xslices]
-    
+
     @property
     def frame_slice(self):
         return self._frame_slice
@@ -646,7 +644,6 @@ class ScanLBM:
 
         # Convert the dictionary to a JSON string for storage in TIFF metadata
         return reconstruction_metadata
-
 
 # lazy_imread = delayed(tifffile.imread)
 # lazy_arrays = [lazy_imread(self.zarr_store)]

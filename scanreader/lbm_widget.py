@@ -1,13 +1,13 @@
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import napari
+from napari.types import LayerDataTuple
+import scanreader
 import pandas as pd
 import tifffile
-from brainglobe_atlasapi import BrainGlobeAtlas
-from brainglobe_atlasapi.list_atlases import get_downloaded_atlases
-from brainglobe_space import AnatomicalSpace
 from qtpy import QtCore
 from qtpy.QtWidgets import (
     QComboBox,
@@ -18,18 +18,58 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from brainglobe_utils.brainmapper.analysis import (
-    summarise_points_by_atlas_region,
-)
-from brainglobe_utils.brainmapper.export import export_points_to_brainrender
-from brainglobe_utils.brainreg.transform import (
-    transform_points_from_downsampled_to_atlas_space,
-)
-from brainglobe_utils.general.system import ensure_extension
-from brainglobe_utils.qtpy.dialog import display_info
-from brainglobe_utils.qtpy.interaction import add_button, add_combobox
-from brainglobe_utils.qtpy.logo import header_widget
-from brainglobe_utils.qtpy.table import DataFrameModel
+
+def reader_function(path: os.PathLike) -> List[LayerDataTuple]:
+    """
+    Readers are expected to return data as a list of tuples, where each tuple
+    is (data, [add_kwargs, [layer_type]]), "add_kwargs" and "layer_type" are
+    both optional.
+
+    Parameters
+    ----------
+    path : str or list of str
+        Path to file, or list of paths.
+
+    Returns
+    -------
+    layer_data : list of tuples
+        A list of LayerData tuples where each tuple in the list contains
+        (data, metadata, layer_type), where data is a numpy array, metadata is
+        a dict of keyword arguments for the corresponding viewer.add_* method
+        in napari, and layer_type is a lower-case string naming the type of
+        layer.
+
+        Both "meta", and "layer_type" are optional. napari will default to
+        layer_type=="image" if not provided
+    """
+
+    print("Loading LBM directory")
+    path = Path(os.path.abspath(path))
+    data = scanreader.read_scan(path)
+
+    layers: List[LayerDataTuple] = []
+
+    layers.append(
+        (
+            tifffile.imread(path / "downsampled.tiff"),
+            {"name": "Registered image", "metadata": metadata},
+            "image",
+        )
+    )
+    layers.append(
+        (
+            tifffile.imread(path / "boundaries.tiff"),
+            {
+                "name": "Boundaries",
+                "blending": "additive",
+                "opacity": 0.5,
+                "visible": False,
+            },
+            "image",
+        )
+    )
+
+    return layers
 
 
 class TransformPoints(QWidget):
@@ -43,12 +83,9 @@ class TransformPoints(QWidget):
             The napari viewer instance.
             This will be passed when opening the widget.
         """
-        super(TransformPoints, self).__init__()
+        super(self).__init__()
         self.viewer = viewer
         self.raw_data = None
-        self.points_layer = None
-        self.atlas = None
-        self.transformed_points = None
 
         self.image_layer_names = self._get_layer_names(
             layer_type=napari.layers.Image
@@ -86,7 +123,7 @@ class TransformPoints(QWidget):
 
     @staticmethod
     def _update_combobox_options(
-        combobox: QComboBox, options_list: List[str]
+            combobox: QComboBox, options_list: List[str]
     ) -> None:
         """
         Update the options in a QComboBox.
@@ -105,9 +142,9 @@ class TransformPoints(QWidget):
         combobox.setCurrentText(original_text)
 
     def _get_layer_names(
-        self,
-        layer_type: napari.layers.Layer,
-        default: str = "",
+            self,
+            layer_type: napari.layers.Layer,
+            default: str = "",
     ) -> List[str]:
         """
         Get list of layer names of a given layer type.
@@ -143,8 +180,6 @@ class TransformPoints(QWidget):
         self.layout.setContentsMargins(10, 10, 10, 10)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.layout.setSpacing(4)
-        self.add_header()
-        # self.add_points_combobox(row=1, column=0)
         # self.add_raw_data_combobox(row=2, column=0)
         # self.add_transform_button(row=3, column=0)
         # self.add_brainrender_export_button(row=3, column=1)
@@ -155,17 +190,11 @@ class TransformPoints(QWidget):
 
         self.setLayout(self.layout)
 
-    def add_header(self) -> None:
+    def load_data(self, path, **kwargs) -> None:
         """
-        Header including brainglobe logo and documentation links.
+        Load the BrainGlobe atlas used for the initial brainreg registration.
         """
-        header = header_widget(
-            package_name="brainmapper",
-            package_tagline="Transform points to atlas space",
-            github_repo_name="brainglobe-utils",
-            citation_doi="https://doi.org/10.1371/journal.pcbi.1009074",
-        )
-        self.layout.addWidget(header, 0, 0, 1, 2)
+        self.data = scanreader.read_scan(path, kwargs)
 
     def add_points_combobox(self, row: int, column: int) -> None:
         """
@@ -340,306 +369,6 @@ class TransformPoints(QWidget):
                 self.raw_data_choice.currentText()
             ]
 
-    def set_points_layer(self) -> None:
-        """
-        Set background layer from current background text box selection.
-        """
-        if self.points_layer_choice.currentText() != "":
-            self.points_layer = self.viewer.layers[
-                self.points_layer_choice.currentText()
-            ]
-
-    def transform_points_to_atlas_space(self) -> None:
-        """
-        Transform points layer to atlas space.
-        """
-        layers_in_place = self.check_layers()
-        if not layers_in_place:
-            return
-
-        self.status_label.setText("Loading brainreg data ...")
-        data_loaded = self.load_brainreg_directory()
-
-        if not data_loaded:
-            self.status_label.setText("Ready")
-            return
-
-        self.status_label.setText("Transforming points ...")
-
-        self.run_transform_points_to_downsampled_space()
-        self.run_transform_downsampled_points_to_atlas_space()
-
-        self.status_label.setText("Analysing point distribution ...")
-        self.analyse_points()
-        self.status_label.setText("Ready")
-
-    def check_layers(self) -> bool:
-        """
-        Check if the layers needed to begin the transformation
-        have been selected by the user.
-
-        Returns
-        -------
-        bool
-            True if both raw data and points layers are selected,
-            False otherwise.
-        """
-        if self.raw_data is None and self.points_layer is None:
-            display_info(
-                self,
-                "No layers selected",
-                "Please select the layers corresponding to the points "
-                "you would like to transform and the raw data (registered by "
-                "brainreg)",
-            )
-            return False
-
-        if self.raw_data is None:
-            display_info(
-                self,
-                "No raw data layer selected",
-                "Please select a layer that corresponds to the raw "
-                "data (registered by brainreg)",
-            )
-            return False
-
-        if self.points_layer is None:
-            display_info(
-                self,
-                "No points layer selected",
-                "Please select a points layer you would like to transform",
-            )
-            return False
-
-        return True
-
-    def load_brainreg_directory(self) -> bool:
-        """
-        Load the brainreg directory selected by the user.
-        Returns false if not selected, to abort analysis.
-
-        Returns
-        -------
-        bool
-            True if a directory was selected, False otherwise.
-        """
-        brainreg_directory = QFileDialog.getExistingDirectory(
-            self,
-            "Select brainreg directory",
-        )
-        if brainreg_directory == "":
-            return False
-        else:
-            self.brainreg_directory = Path(brainreg_directory)
-
-        self.initialise_brainreg_data()
-        self.status_label.setText("Ready")
-        return True
-
-    def initialise_brainreg_data(self) -> None:
-        """
-        Initialize brainreg data by defining the paths,
-        then loading the brainreg metadata, and then the atlas.
-        """
-        self.paths = Paths(self.brainreg_directory)
-        self.check_brainreg_directory()
-        self.metadata = Metadata(self.brainreg_metadata)
-        self.load_atlas()
-
-    def check_brainreg_directory(self) -> None:
-        """
-        Check if the selected directory is a valid brainreg directory
-        by checking for the existence of an "atlas" entry in the json
-        """
-        print("Skipping check_brainreg_dir, for now.")
-        pass
-        try:
-            with open(self.paths.brainreg_metadata_file) as json_file:
-                self.brainreg_metadata = json.load(json_file)
-
-                if "atlas" not in self.brainreg_metadata:
-                    self.display_brainreg_directory_warning()
-
-        except FileNotFoundError:
-            self.display_brainreg_directory_warning()
-
-    def display_brainreg_directory_warning(self) -> None:
-        """
-        Display a warning to the user if the selected directory
-        is not a valid brainreg directory.
-        """
-        display_info(
-            self,
-            "Not a brainreg directory",
-            "This directory does not appear to be a valid brainreg "
-            "directory. Please try loading another brainreg output directory.",
-        )
-
-    def load_atlas(self) -> None:
-        """
-        Load the BrainGlobe atlas used for the initial brainreg registration.
-        """
-        if not self.is_atlas_installed(self.metadata.atlas_string):
-            display_info(
-                self,
-                "Atlas not downloaded",
-                f"Atlas: {self.metadata.atlas_string} needs to be "
-                f"downloaded. This may take some time depending on "
-                f"the size of the atlas and your network speed.",
-            )
-        self.atlas = BrainGlobeAtlas(self.metadata.atlas_string)
-
-    def run_transform_points_to_downsampled_space(self) -> None:
-        """
-        Transform points fromm the raw data space (in which points
-        were detected) to the downsampled space defined by brainreg.
-        This space is the same as the raw data, but downsampled and realigned
-        to match the orientation and resolution of the atlas.
-        """
-        downsampled_space = self.get_downsampled_space()
-        raw_data_space = self.get_raw_data_space()
-        self.points_in_downsampled_space = raw_data_space.map_points_to(
-            downsampled_space, self.points_layer.data
-        )
-        self.viewer.add_points(
-            self.points_in_downsampled_space,
-            name="Points in downsampled space",
-            visible=False,
-        )
-
-    def run_transform_downsampled_points_to_atlas_space(self) -> None:
-        """
-        Transform points from the downsampled space to atlas space. Uses
-        the deformation fields output by NiftyReg (via brainreg) as a look up.
-        """
-        deformation_field_paths = [
-            self.paths.deformation_field_0,
-            self.paths.deformation_field_1,
-            self.paths.deformation_field_2,
-        ]
-        self.points_in_atlas_space, points_out_of_bounds = (
-            transform_points_from_downsampled_to_atlas_space(
-                self.points_in_downsampled_space,
-                self.atlas,
-                deformation_field_paths,
-                warn_out_of_bounds=False,
-            )
-        )
-        self.viewer.add_points(
-            self.points_in_atlas_space,
-            name="Points in atlas space",
-            visible=True,
-        )
-
-        if len(points_out_of_bounds) > 0:
-            display_info(
-                self,
-                "Points outside atlas",
-                f"{len(points_out_of_bounds)} "
-                f"points fell outside the atlas space",
-            )
-
-    def get_downsampled_space(self) -> AnatomicalSpace:
-        """
-        Get the anatomical space (as defined by brainglobe-space)
-        for the downsampled data.
-
-        Returns
-        -------
-        AnatomicalSpace
-            The downsampled anatomical space (as defined by brainglobe-space).
-        """
-        target_shape = tifffile.imread(self.paths.downsampled_image).shape
-
-        downsampled_space = AnatomicalSpace(
-            self.atlas.orientation,
-            shape=target_shape,
-            resolution=self.atlas.resolution,
-        )
-        return downsampled_space
-
-    def get_raw_data_space(self) -> AnatomicalSpace:
-        """
-        Get the anatomical space (as defined by brainglobe-space)
-        for the raw data.
-
-        Returns
-        -------
-        AnatomicalSpace
-            The raw data anatomical space (as defined by brainglobe-space).
-        """
-        raw_data_space = AnatomicalSpace(
-            self.metadata.orientation,
-            shape=self.raw_data.data.shape,
-            resolution=[float(i) for i in self.metadata.voxel_sizes],
-        )
-        return raw_data_space
-
-    def analyse_points(self) -> None:
-        """
-        Analyse the distribution of points in the space
-        of the BrainGlobe Atlas.
-        """
-        self.all_points_df, self.points_per_region_df = (
-            summarise_points_by_atlas_region(
-                self.points_layer.data,
-                self.points_in_atlas_space,
-                self.atlas,
-                self.paths.volume_csv_path,
-            )
-        )
-
-        self.populate_summary_table()
-        self.brainrender_export_button.setVisible(True)
-        self.save_all_points_button.setVisible(True)
-        self.save_points_summary_button.setVisible(True)
-
-        print("Analysing points")
-
-    def populate_summary_table(
-        self,
-        columns_to_keep: List[str] = [
-            "structure_name",
-            "left_cell_count",
-            "right_cell_count",
-        ],
-    ) -> None:
-        """
-        Populate the table with the summary of points per atlas region.
-
-        Parameters
-        ----------
-        columns_to_keep : List[str], optional
-            Columns to keep in the summary table.
-            Default columns are ["structure_name", "left_cell_count",
-            "right_cell_count"].
-        """
-        summary_df = self.points_per_region_df[columns_to_keep]
-        self.points_per_region_table_model = DataFrameModel(summary_df)
-        self.points_per_region_table.setModel(
-            self.points_per_region_table_model
-        )
-        self.points_per_region_table_title.setVisible(True)
-        self.points_per_region_table.setVisible(True)
-
-    def export_points_to_brainrender(self) -> None:
-        """
-        Export points in the format required for brainrender
-        N.B. assumes atlas is isotropic
-        """
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Choose filename",
-            "",
-            "NumPy Files (*.npy)",
-        )
-
-        if path:
-            path = ensure_extension(path, ".npy")
-        export_points_to_brainrender(
-            self.points_in_atlas_space, self.atlas.resolution[0], path
-        )
-
     def save_all_points_csv(self) -> None:
         """
         Save the coordinate and atlas region
@@ -681,27 +410,6 @@ class TransformPoints(QWidget):
         if path:
             path = ensure_extension(path, ".csv")
             df.to_csv(path, index=False)
-
-    @staticmethod
-    def is_atlas_installed(atlas: str) -> bool:
-        """
-        Check if the specified BrainGlobe atlas is installed.
-
-        Parameters
-        ----------
-        atlas : str
-            The atlas name to check.
-
-        Returns
-        -------
-        bool
-            True if the atlas is installed, False otherwise.
-        """
-        downloaded_atlases = get_downloaded_atlases()
-        if atlas in downloaded_atlases:
-            return True
-        else:
-            return False
 
 
 class Paths:
@@ -812,3 +520,72 @@ class Metadata:
         self.orientation: str = brainreg_metadata["orientation"]
         self.atlas_string: str = brainreg_metadata["atlas"]
         self.voxel_sizes: List[float] = brainreg_metadata["voxel_sizes"]
+
+# def run_transform_points_to_downsampled_space(self) -> None:
+#     """
+#     Transform points fromm the raw data space (in which points
+#     were detected) to the downsampled space defined by brainreg.
+#     This space is the same as the raw data, but downsampled and realigned
+#     to match the orientation and resolution of the atlas.
+#     """
+#     downsampled_space = self.get_downsampled_space()
+#     raw_data_space = self.get_raw_data_space()
+#     self.points_in_downsampled_space = raw_data_space.map_points_to(
+#         downsampled_space, self.points_layer.data
+#     )
+#     self.viewer.add_points(
+#         self.points_in_downsampled_space,
+#         name="Points in downsampled space",
+#         visible=False,
+#     )
+
+# def run_transform_downsampled_points_to_atlas_space(self) -> None:
+#     """
+#     Transform points from the downsampled space to atlas space. Uses
+#     the deformation fields output by NiftyReg (via brainreg) as a look up.
+#     """
+#     deformation_field_paths = [
+#         self.paths.deformation_field_0,
+#         self.paths.deformation_field_1,
+#         self.paths.deformation_field_2,
+#     ]
+#     self.points_in_atlas_space, points_out_of_bounds = (
+#         transform_points_from_downsampled_to_atlas_space(
+#             self.points_in_downsampled_space,
+#             self.atlas,
+#             deformation_field_paths,
+#             warn_out_of_bounds=False,
+#         )
+#     )
+#     self.viewer.add_points(
+#         self.points_in_atlas_space,
+#         name="Points in atlas space",
+#         visible=True,
+#     )
+
+#     if len(points_out_of_bounds) > 0:
+#         display_info(
+#             self,
+#             "Points outside atlas",
+#             f"{len(points_out_of_bounds)} "
+#             f"points fell outside the atlas space",
+#         )
+
+# def get_downsampled_space(self) -> AnatomicalSpace:
+#     """
+#     Get the anatomical space (as defined by brainglobe-space)
+#     for the downsampled data.
+
+#     Returns
+#     -------
+#     AnatomicalSpace
+#         The downsampled anatomical space (as defined by brainglobe-space).
+#     """
+#     target_shape = tifffile.imread(self.paths.downsampled_image).shape
+
+#     downsampled_space = AnatomicalSpace(
+#         self.atlas.orientation,
+#         shape=target_shape,
+#         resolution=self.atlas.resolution,
+#     )
+#     return downsampled_space

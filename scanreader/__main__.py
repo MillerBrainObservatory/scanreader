@@ -60,13 +60,11 @@ def main(path, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
         files,
         trim_roi_x=trim_x,
         trim_roi_y=trim_y,
-        debug=debug
+        debug=debug,
+        save_path=path / 'zarr',
     )
-    arr = scan[2, 0, :, :]
-    quickplot(arr)
-    return scan
-
     # return scan[frames, zplanes, yslice, xslice]
+    return scan
 
 
 def process_slice_str(slice_str):

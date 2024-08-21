@@ -2,163 +2,39 @@ import itertools
 import json
 import os
 from pathlib import Path
+from icecream import ic
 
-from scipy.signal import correlate
 import numpy as np
 import tifffile
 
 from .utils import listify_index, check_index_type, fill_key
 from .multiroi import ROI
-try:
-    import dask.array as da
-    has_dask = True
-except:
-    has_dask=False
+
+import dask.array as da
+
+if not os.environ.get("LBM_DEBUG", "False"):
+    ic.disable()
 
 ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
 
 IJ_METADATA = ["axes", "photometric", "dtype", "nbytes"]
 
-def apply_slice_to_dask(array, channel_list, frame_list, yslice, xslice):
-    return array[channel_list, frame_list, yslice, xslice]
+CHUNKS = {0: 'auto', 1: 'auto', 2: -1, 3: -1}
 
-def return_scan_offset(image_in, num_values: int):
-    """
-    Compute the scan offset correction between interleaved lines or columns in an image.
+# https://brainglobe.info/documentation/brainglobe-atlasapi/adding-a-new-atlas.html
+BRAINGLOBE_STRUCTURE_TEMPLATE = {
+    "acronym": "VIS",  # shortened name of the region
+    "id": 3,  # region id
+    "name": "visual cortex",  # full region name
+    "structure_id_path": [1, 2, 3],  # path to the structure in the structures hierarchy, up to current id
+    "rgb_triplet": [255, 255, 255],
+    # default color for visualizing the region, feel free to leave white or randomize it
+}
 
-    This function calculates the scan offset correction by analyzing the cross-correlation
-    between interleaved lines or columns of the input image. The cross-correlation peak
-    determines the amount of offset between the lines or columns, which is then used to
-    correct for any misalignment in the imaging process.
-
-    Parameters:
-    -----------
-    image_in : ndarray
-        2D [Y, X] input image.
-    num_values : int
-        The number of shifts to apply when comparing shift neighbors. Lower values will increase performance.
-
-    Returns:
-    --------
-    offset
-        The number of pixels to shift every other row (slow-galvo direction) to optimize the correlation between neighboring rows.
-
-    Examples:
-    ---------
-    >>> img = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
-    >>> return_scan_offset(img, 1)
-
-    Notes:
-    ------
-    This function assumes that the input image contains interleaved lines or columns that
-    need to be analyzed for misalignment. The cross-correlation method is sensitive to
-    the similarity in pattern between the interleaved lines or columns. Hence, a strong
-    and clear peak in the cross-correlation result indicates a good alignment, and the
-    corresponding lag value indicates the amount of misalignment.
-    """
-
-    if len(image_in.shape) != 2:
-        raise ValueError(f"Input image should be 2 dimensions, not {image_in.shape}")
-    if image_in.shape[0] < image_in.shape[1]:
-        raise Warning("Image is longer than it is wide. Ensure this image is in the shape [Y, X]")
-
-    num_values = 8
-
-    Iv1 = image_in[::2, :]
-    Iv2 = image_in[1::2, :]
-
-    min_len = min(Iv1.shape[0], Iv2.shape[0])
-    Iv1 = Iv1[:min_len, :]
-    Iv2 = Iv2[:min_len, :]
-
-    buffers = np.zeros((Iv1.shape[0], num_values))
-
-    Iv1 = np.hstack((buffers, Iv1, buffers))
-    Iv2 = np.hstack((buffers, Iv2, buffers))
-
-    Iv1 = Iv1.T.ravel(order="F")
-    Iv2 = Iv2.T.ravel(order="F")
-
-    # Zero-center and clip negative values to zero
-    Iv1 = Iv1 - np.mean(Iv1)
-    Iv1[Iv1 < 0] = 0
-
-    Iv2 = Iv2 - np.mean(Iv2)
-    Iv2[Iv2 < 0] = 0
-
-    Iv1 = Iv1[:, np.newaxis]
-    Iv2 = Iv2[:, np.newaxis]
-
-    r_full = correlate(Iv1[:, 0], Iv2[:, 0], mode="full", method="auto")
-    unbiased_scale = len(Iv1) - np.abs(np.arange(-len(Iv1) + 1, len(Iv1)))
-    r = r_full / unbiased_scale
-
-    mid_point = len(r) // 2
-    lower_bound = mid_point - num_values
-    upper_bound = mid_point + num_values + 1
-    r = r[lower_bound:upper_bound]
-    lags = np.arange(-num_values, num_values + 1)
-
-    correction_index = np.argmax(r)
-    return lags[correction_index]
-
-def fix_scan_phase(data_in, offset, dim):
-    """
-    Corrects the scan phase of the data based on a given offset along a specified dimension.
-
-    Parameters:
-    -----------
-    dataIn : ndarray
-        The input data of shape (sy, sx, sc, sz).
-    offset : int
-        The amount of offset to correct for.
-    dim : int
-        Dimension along which to apply the offset.
-        1 for vertical (along height/sy), 2 for horizontal (along width/sx).
-
-    Returns:
-    --------
-    ndarray
-        The data with corrected scan phase, of shape (sy, sx, sc, sz).
-    """
-    sy, sx, sc, sz = data_in.shape
-    data_out = None
-    if dim == 1:
-        if offset > 0:
-            data_out = np.zeros((sy, sx + offset, sc, sz))
-            data_out[0::2, :sx, :, :] = data_in[0::2, :, :, :]
-            data_out[1::2, offset : offset + sx, :, :] = data_in[1::2, :, :, :]
-        elif offset < 0:
-            offset = abs(offset)
-            data_out = np.zeros((sy, sx + offset, sc, sz))  # This initialization is key
-            data_out[0::2, offset : offset + sx, :, :] = data_in[0::2, :, :, :]
-            data_out[1::2, :sx, :, :] = data_in[1::2, :, :, :]
-        else:
-            half_offset = int(offset / 2)
-            data_out = np.zeros((sy, sx + 2 * half_offset, sc, sz))
-            data_out[:, half_offset : half_offset + sx, :, :] = data_in
-
-    elif dim == 2:
-        data_out = np.zeros(sy, sx, sc, sz)
-        if offset > 0:
-            data_out[:, 0::2, :, :] = data_in[:, 0::2, :, :]
-            data_out[offset : (offset + sy), 1::2, :, :] = data_in[:, 1::2, :, :]
-        elif offset < 0:
-            offset = abs(offset)
-            data_out[offset : (offset + sy), 0::2, :, :] = data_in[:, 0::2, :, :]
-            data_out[:, 1::2, :, :] = data_in[:, 1::2, :, :]
-        else:
-            data_out[int(offset / 2) : sy + int(offset / 2), :, :, :] = data_in
-    return data_out
-
-def clear_zeros(_scan, rmz_threshold=1e-5):
-    non_zero_rows = ~np.all(np.abs(_scan) < rmz_threshold, axis=(0, 2))
-    non_zero_cols = ~np.all(np.abs(_scan) < rmz_threshold, axis=(0, 1))
-    cleaned = _scan[:, non_zero_rows, :]
-    return cleaned[:, :, non_zero_cols]
 
 class ScanLBM:
 
+    # WIP FO 08/20/24
     @classmethod
     def from_metadata(cls, metadata):
         # Parse the reconstruction metadata
@@ -185,12 +61,15 @@ class ScanLBM:
         instance.arr_metadata = reconstruction_metadata['arr_metadata']
 
         return instance
-    def __init__(self, files: list[os.PathLike], fix_scan_phase: bool=True, **kwargs):
-        self._frame_slice = None
-        self._channel_slice = None
+
+    def __init__(self, files: list[os.PathLike], **kwargs):
+        ic()
+        self.name = ''
+        self._frame_slice = slice(None)
+        self._channel_slice = slice(None)
         self._meta = None
-        self._trim_x = kwargs.get("trim_roi_x", (0,0))
-        self._trim_y = kwargs.get('trim_roi_y', (0,0))
+        self._trim_x = kwargs.get("trim_roi_x", (0, 0))
+        self._trim_y = kwargs.get('trim_roi_y', (0, 0))
 
         with tifffile.TiffFile(files[0]) as tiff_file:
             series = tiff_file.series[0]
@@ -204,6 +83,7 @@ class ScanLBM:
                 "image_width": pages[0].shape[1],
                 "num_pages": len(pages),
                 "dims": series.dims,
+                "ndim": series.ndim,
                 "axes": series.axes,
                 "dtype": series.dtype,
                 "is_multifile": series.is_multifile,
@@ -217,25 +97,19 @@ class ScanLBM:
         self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
 
         self.metadata = metadata
-        self.fix_scan_phase = fix_scan_phase
-
-        self.shape = None
-        self.dtype = None
-        self.axes = None
-        self.dims = None
-        self.dim_labels = None
 
         self.roi_metadata = metadata.pop("roi_info")
         self.si_metadata = metadata.pop("si")
         self.ij_metadata = {k: v for k, v in metadata.items() if k in IJ_METADATA}
         self.arr_metadata = {k: v for k, v in metadata.items() if k in ARRAY_METADATA}
 
-        self.axes = self.metadata["axes"]
-        self.shape = self.metadata["shape"]
         self.raw_shape = self.metadata["shape"]
-        self.dims = self.metadata["dims"]
-        self.dtype = self.metadata["dtype"]
-        self.dim_labels = self.metadata["dim_labels"]
+        self._dim_labels = self.metadata["dim_labels"]
+        self._axes = self.metadata["axes"]
+        self._dims = self.metadata["dims"]
+        self._ndim = metadata['ndim']
+        self._shape = self.metadata["shape"]
+        self._dim_labels = self.metadata["dim_labels"]
 
         self.rois = self._create_rois()
         self.fields = self._create_fields()
@@ -244,9 +118,11 @@ class ScanLBM:
         if len(self.fields) > 1:
             raise NotImplementedError("Too many fields for an LBM recording.")
 
-        # Track the total height_width of the *tiled* image
+        # These are needed to create a dask array from self
+
+        # Adjust height/width for trimmings
         self._width = self.fields[0].width - sum(self.trim_x)
-        self._height = self.fields[0].height - sum(self.trim_x)
+        self._height = self.fields[0].height - sum(self.trim_y)
 
         # Track where to slice the vertically stacked tiff
         self._xslices = self.fields[0].xslices
@@ -256,8 +132,10 @@ class ScanLBM:
         self._xslices_out = self.fields[0].output_xslices
         self._yslices_out = self.fields[0].output_yslices
 
-        self.frame_slice = slice(None)
-        self.channel_slice = slice(None)
+        # -----------------
+        # Image sizes can now be used
+
+        self._data = self.canvas()
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
@@ -274,17 +152,26 @@ class ScanLBM:
         elif isinstance(self.channel_slice, int):
             channels = [self.channel_slice]
         else:
-            raise ValueError(f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
+            raise ValueError(
+                f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
         for idx, num in enumerate(channels):
             filename = savedir / f'{prepend_str}_plane_{num}.tif'
-            data = self[:,channels,:,:]
-            tifffile.imwrite(filename,data,bigtiff=True,metadata=combined_metadata)
+            data = self[:, channels, :, :]
+            tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
 
     def __repr__(self):
-        return f"Tiled: {(self.num_frames, self.num_channels, self._height, self._width)} [T,C,Y,X]"
+        return self.data.__repr__()
+
+    def canvas(self):
+        return da.empty((self.num_frames, self.num_planes, self.height, self.width), chunks=CHUNKS)
+
+    def __str__(self):
+        return f"Tiled shape: {self.shape}"
+
+    def get_mean_images(self):
+        pass
 
     def __getitem__(self, key):
-        ic()
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
         for i, index in enumerate(full_key):
             check_index_type(i, index)
@@ -298,6 +185,7 @@ class ScanLBM:
         channel_list = listify_index(self.channel_slice, self.num_channels)
         y_list = listify_index(y_in, self.height)
         x_list = listify_index(x_in, self.width)
+        ic(len(y_list))
 
         if [] in [*y_list, *x_list, channel_list, frame_list]:
             return np.empty(0)
@@ -325,18 +213,55 @@ class ScanLBM:
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
 
-            item[ :, :, output_yslice, output_xslice] = pages[ :, :, ys, xs]
-        return item.squeeze()
+            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
+
+        ic(item.shape)
+        ic(pages.shape)
+        self.data = item.squeeze()
+        return self.data
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data = value
 
     @property
     def height(self):
         """Height of the final tiled image."""
-        return self._height - (sum(self.trim_y)*4)
+        return self._height - sum(self.trim_y)
 
     @property
     def width(self):
         """Width of the final tiled image."""
-        return self._width - (sum(self.trim_x)*4)
+        return self._width - (sum(self.trim_x) * 4)
+
+    @property
+    def ndim(self):
+        """Shape of the final tiled image."""
+        return self._data.ndim
+
+    @property
+    def dtype(self):
+        """Datatype of the final tiled image."""
+        return self._data.dtype
+
+    @property
+    def dim_labels(self):
+        """Datatype of the final tiled image."""
+        return self._dim_labels
+
+    def init_shape(self):
+        frame_list = listify_index(self.frame_slice, self.num_frames)
+        channel_list = listify_index(self.channel_slice, self.num_channels)
+        return len(frame_list), len(channel_list), self.height, self.width
+
+    @property
+    def shape(self):
+        """Shape of the final tiled image."""
+        return self._data.shape
 
     @property
     def trim_x(self):
@@ -350,16 +275,21 @@ class ScanLBM:
         """
         Number of px to trim on the (left_edge, right_edge)
         """
-        assert(len(values) == 2)
+        assert (len(values) == 2)
         self._trim_x = values
 
     @property
     def trim_y(self):
         return self._trim_y
 
+    @trim_y.setter
+    def trim_y(self, values):
+        assert (len(values) == 2)
+        self._trim_y = values
+
     @property
     def xslices_out(self):
-        new_slice = [slice(v.start+self.trim_x[0], v.stop-self.trim_x[1]) for v in self._xslices_out]
+        new_slice = [slice(v.start + self.trim_x[0], v.stop - self.trim_x[1]) for v in self._xslices_out]
 
         adjusted_slices = []
         previous_stop = 0
@@ -372,7 +302,8 @@ class ScanLBM:
 
     @property
     def yslices_out(self):
-        return [slice(v.start+self.trim_y[0], v.stop+self.trim_y[1]) for v in self._yslices_out]
+        new_slice = [slice(v.start + self.trim_y[0], v.stop - self.trim_y[1]) for v in self._yslices_out]
+        return [slice(0, v.stop - v.start) for v in new_slice]
 
     @property
     def yslices(self):
@@ -381,7 +312,7 @@ class ScanLBM:
     @property
     def xslices(self):
         return [slice(v.start + self.trim_x[0], v.stop - self.trim_x[1]) for v in self._xslices]
-
+    
     @property
     def frame_slice(self):
         return self._frame_slice
@@ -399,12 +330,12 @@ class ScanLBM:
         self._channel_slice = value
 
     def _read_pages(
-        self,
-        slice_list,
-        channel_list,
-        frame_list,
-        yslice=slice(None),
-        xslice=slice(None),
+            self,
+            slice_list,
+            channel_list,
+            frame_list,
+            yslice=slice(None),
+            xslice=slice(None),
     ):
         """
         Reads the tiff pages with the content of each slice, channel, frame
@@ -512,8 +443,8 @@ class ScanLBM:
         next."""
         if self.is_slow_stack:
             num_lines_between_fields = (
-                self._page_height + self._num_fly_back_lines
-            ) * (self.num_frames * self._num_averaged_frames)
+                                               self._page_height + self._num_fly_back_lines
+                                       ) * (self.num_frames * self._num_averaged_frames)
         else:
             num_lines_between_fields = self._page_height + self._num_fly_back_lines
         return int(num_lines_between_fields)
@@ -674,8 +605,10 @@ class ScanLBM:
 
     def _generate_reconstruction_metadata(self):
         # Convert the slices to a serializable format
-        channel_slice_repr = (self.channel_slice.start, self.channel_slice.stop, self.channel_slice.step) if isinstance(self.channel_slice, slice) else self.channel_slice
-        frame_slice_repr = (self.frame_slice.start, self.frame_slice.stop, self.frame_slice.step) if isinstance(self.frame_slice, slice) else self.frame_slice
+        channel_slice_repr = (self.channel_slice.start, self.channel_slice.stop, self.channel_slice.step) if isinstance(
+            self.channel_slice, slice) else self.channel_slice
+        frame_slice_repr = (self.frame_slice.start, self.frame_slice.stop, self.frame_slice.step) if isinstance(
+            self.frame_slice, slice) else self.frame_slice
 
         # Build the reconstruction metadata
         reconstruction_metadata = {
@@ -701,23 +634,11 @@ class ScanLBM:
 # lazy_arrays = [lazy_imread(self.zarr_store)]
 # dask_arrays = [da.from_delayed(delayed_reader, shape=self.shape, dtype=self.dtype) for delayed_reader in lazy_arrays]
 # arr = dask_arrays[0]
-# ysl = self.fields[0].yslices
-# xsl = self.fields[0].xslices
+
 # slices = []
 # for y,x in zip(ysl,xsl):
 #     slices.append(arr[frame_list,channel_list,y,x])
 # return da.block(slices).rechunk()
-# @property
-# def trimx(self):
-#     return self._trimx
-#
-# @trimx.setter
-# def trimx(self, value):
-#     self._trimx = value
-#
-# @property
-# def trimy(self):
-#     return self._trimy
 #
 # @trimy.setter
 # def trimy(self, value):

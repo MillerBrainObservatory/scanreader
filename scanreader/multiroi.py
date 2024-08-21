@@ -344,9 +344,6 @@ class Field(Scanfield):
         offsets : list of float, optional
             Time offsets per pixel in seconds for each subfield.
 
-        .. note::
-            The `yslices`, `xslices`, `output_yslices`, `output_xslices`, `roi_ids`, and `offsets` attributes
-            are optional and can be set later.
         """
         super().__init__(
             height,

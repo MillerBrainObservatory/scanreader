@@ -16,6 +16,7 @@ if not LBM_DEBUG:
 if not os.environ.get("LBM_DEBUG", "False"):
     ic.disable()
 
+
 def parse_tifffile_metadata(tiff_file: tifffile.TiffFile):
     series = tiff_file.series[0]
     scanimage_metadata = tiff_file.scanimage_metadata
@@ -44,7 +45,7 @@ def parse_tifffile_metadata(tiff_file: tifffile.TiffFile):
 def get_files(
         pathnames: os.PathLike | str | list[os.PathLike | str],
         ext: str = 'tif',
-        exclude_pattern: str='_plane_',
+        exclude_pattern: str = '_plane_',
 ) -> list[os.PathLike | str] | os.PathLike:
     """
     Expands a list of pathname patterns to form a sorted list of absolute filenames.
@@ -72,19 +73,19 @@ def get_files(
             if exclude_pattern not in str(fpath):
                 if Path(fpath).is_file():
                     out_files.extend([fpath])
-                    ic(out_files)    
+                    ic(out_files)
                 elif Path(fpath).is_dir():
                     fnames = [x for x in Path(fpath).expanduser().glob(f"*{ext}*")]
                     out_files.extend(fnames)
             else:
                 excl_files.extend(fnames)
-                ic('else_excl',out_files)
-        
-        ic(out_files)    
-        ic(excl_files)    
+                ic('else_excl', out_files)
+
+        ic(out_files)
+        ic(excl_files)
         return sorted(out_files)
     if isinstance(pathnames, (os.PathLike, str)):
-        ic()    
+        ic()
         pathnames = Path(pathnames).expanduser()
         if pathnames.is_dir():
             files_with_ext = [x for x in pathnames.glob(f"*{ext}*")]
@@ -102,7 +103,9 @@ def get_files(
                 raise FileNotFoundError(f"No {ext} files found in directory: {pathnames}")
     else:
         ic()
-        raise ValueError(f"Input path should be an iterable list/tuple or PathLike object (string, pathlib.Path), not {pathnames}")
+        raise ValueError(
+            f"Input path should be an iterable list/tuple or PathLike object (string, pathlib.Path), not {pathnames}")
+
 
 def get_single_file(filepath, ext='tif'):
     return [x for x in Path(filepath).glob(f"*{ext}*")][0]
@@ -150,6 +153,7 @@ def read_scan(
         trim_roi_x=trim_roi_x,
         trim_roi_y=trim_roi_y
     )
+
 
 def quickplot(array):
     import matplotlib.pyplot as plt

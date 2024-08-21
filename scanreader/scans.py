@@ -2,6 +2,7 @@ import itertools
 import json
 import os
 from pathlib import Path
+import time
 from icecream import ic
 
 import numpy as np
@@ -159,6 +160,28 @@ class ScanLBM:
             data = self[:, channels, :, :]
             tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
 
+    def save_as_zarr(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
+        savedir = Path(savedir)
+        if not metadata:
+            metadata = self.arr_metadata
+
+        # Generate the reconstruction metadata
+        # reconstruction_metadata = self._generate_reconstruction_metadata()
+
+        # # Combine existing metadata with reconstruction metadata
+        # combined_metadata = {**metadata, 'reconstruction_metadata': reconstruction_metadata}
+        if isinstance(self.channel_slice, slice):
+            channels = list(range(self.num_channels))[self.channel_slice]
+        elif isinstance(self.channel_slice, int):
+            channels = [self.channel_slice]
+        else:
+            raise ValueError(
+                f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
+        for idx in channels:
+            filename = savedir / f'{prepend_str}_plane_{idx + 1}.zarr'
+            data = self[:, idx, :, :]
+            da.to_zarr(data, filename)
+
     def __repr__(self):
         return self.data.__repr__()
 
@@ -185,13 +208,12 @@ class ScanLBM:
         channel_list = listify_index(self.channel_slice, self.num_channels)
         y_list = listify_index(y_in, self.height)
         x_list = listify_index(x_in, self.width)
-        ic(len(y_list))
 
         if [] in [*y_list, *x_list, channel_list, frame_list]:
             return np.empty(0)
 
         # cast to TCYX
-        item = da.empty(
+        self.data = da.empty(
             [
                 len(frame_list),
                 len(channel_list),
@@ -202,23 +224,19 @@ class ScanLBM:
             chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
         )
 
+        start = time.time()
         # Over each subfield in field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
         for yslice, xslice, output_yslice, output_xslice in slices:
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
-
             y_range = range(output_yslice.start, output_yslice.stop)
             x_range = range(output_xslice.start, output_xslice.stop)
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
-
-            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
-
-        ic(item.shape)
-        ic(pages.shape)
-        self.data = item.squeeze()
-        return self.data
+            self.data[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
+        print(time.time() - start)
+        return self.data.squeeze()
 
     @property
     def data(self):

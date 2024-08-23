@@ -168,18 +168,22 @@ class ScanLBM:
             data = self[:, channels, :, :]
             tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
 
-    def save_as_zarr(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
+    def save_as_zarr(self, savedir: os.PathLike, planes=None, metadata=None, prepend_str='extracted'):
+        frame_chunks = self.data.chunks[0]
         savedir = Path(savedir)
         if not metadata:
             metadata = self.arr_metadata
+        if planes is None:
+            planes = list(range(0, self.num_planes))
 
-        for idx in range(0, self.num_planes - 1):
+        for idx in planes:
             filename = savedir / f'{prepend_str}_plane_{idx + 1}.zarr'
             da.to_zarr(self[:, idx, :, :], filename)
 
     def __repr__(self):
         return self.data
 
+    @property
     def data(self):
         return self._data
 

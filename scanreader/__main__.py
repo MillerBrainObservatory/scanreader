@@ -49,12 +49,14 @@ else:
     "-d", "--debug", type=click.BOOL, default=False,
     help="Enable debug logs to the terminal."
 )
-def main(path, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
+def main(datapath, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
+    if not datapath:
+        datapath = sr.lbm_home_dir
 
-    files = sr.get_files(path, ext='.tif')
+    files = sr.get_files(datapath, ext='.tif')
     if len(files) < 1:
         raise ValueError(
-            f"Input path given is a non-tiff file: {path}.\n"
+            f"Input path given is a non-tiff file: {datapath}.\n"
             f"scanreader is currently limited to scanimage .tiff files."
         )
 
@@ -68,7 +70,7 @@ def main(path, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
         trim_roi_x=trim_x,
         trim_roi_y=trim_y,
         debug=debug,
-        save_path=path / 'zarr',
+        save_path=datapath / 'zarr',
     )
     return scan
 
@@ -88,7 +90,10 @@ def process_slice_objects(slice_str):
 
 
 if __name__ == "__main__":
+    from pathlib import Path
     scan = sr.read_scan("~/caiman_data/high_res")
     scan.trim_x = (8,8)
     scan.trim_y = (17,0)
     arr = scan[2, 0, :, :]
+    path = Path().home() / 'caiman_data' / 'high_res'
+    # scan.save_as_zarr(path)

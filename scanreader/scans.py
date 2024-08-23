@@ -1,4 +1,5 @@
 import itertools
+import logging
 import json
 import os
 from pathlib import Path
@@ -14,8 +15,11 @@ from .multiroi import ROI
 
 import dask.array as da
 
+logger = logging.getLogger(__name__)
+
 if not os.environ.get("LBM_DEBUG", "False"):
-    ic.disable()
+    logger = logging.getLogger(__name__)
+    logger.setLevel("debug")
 
 ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
 
@@ -171,18 +175,6 @@ class ScanLBM:
         if not metadata:
             metadata = self.arr_metadata
 
-        # Generate the reconstruction metadata
-        # reconstruction_metadata = self._generate_reconstruction_metadata()
-
-        # Combine existing metadata with reconstruction metadata
-        # combined_metadata = {**metadata, 'reconstruction_metadata': reconstruction_metadata}
-        # if isinstance(self.channel_slice, slice):
-        #     channels = list(range(self.num_channels))[self.channel_slice]
-        # elif isinstance(self.channel_slice, int):
-        #     channels = [self.channel_slice]
-        # else:
-        #     raise ValueError(
-        #         f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
         for idx in range(0, self.num_planes - 1):
             filename = savedir / f'{prepend_str}_plane_{idx + 1}.zarr'
             da.to_zarr(self[:, idx, :, :], filename)

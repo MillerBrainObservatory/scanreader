@@ -1,20 +1,21 @@
+import logging
 import os
+import logging
 from pathlib import Path
 import tifffile
 from .multiroi import Field, ROI
 from .scans import ScanLBM
-from icecream import install, ic
 
-install()
-
-LBM_DEFAULT_DIR = Path.home() / "caiman_data"
-LBM_DEBUG = os.environ.get("LBM_DEBUG", 'False')
+logger = logging.getLogger(__name__)
 
 if not LBM_DEBUG:
-    ic.disable()
+    logger.setLevel('debug')
 
-if not os.environ.get("LBM_DEBUG", "False"):
-    ic.disable()
+lbm_home_dir = Path().home() / '.lbm'
+
+if not lbm_home_dir.is_dir():
+    lbm_home_dir.mkdir()
+    logger.info(f'Creating lbm home directory in {lbm_home_dir}')
 
 
 def parse_tifffile_metadata(tiff_file: tifffile.TiffFile):
@@ -80,7 +81,7 @@ def get_files(
                     fnames = [x for x in Path(fpath).expanduser().glob(f"*{ext}*")]
                     out_files.extend(fnames)
             else:
-                excl_files.extend(fnames)
+                excl_files.extend(fpath)
         return sorted(out_files)
     if isinstance(pathnames, (os.PathLike, str)):
         pathnames = Path(pathnames).expanduser()
@@ -89,7 +90,7 @@ def get_files(
             if debug:
                 excluded_files = [x for x in pathnames.glob(f"*{ext}*") if exclude_pattern in str(x)]
                 all_files = [x for x in pathnames.glob("*")]
-                ic(excluded_files, all_files)
+                logger.debug(excluded_files, all_files)
             return sorted(files_with_ext)
         elif pathnames.is_file():
             if exclude_pattern not in str(pathnames):
@@ -135,11 +136,9 @@ def read_scan(
     # Expand wildcards
     filenames = get_files(pathnames)
 
-    if debug:
-        ic.enable()
-
-    if len(filenames) == 0:
-        raise FileNotFoundError(f"Pathname(s) {filenames} do not match any files in disk.")
+    if isinstance(filenames, (list, tuple)):
+        if len(filenames) == 0:
+            raise FileNotFoundError(f"Pathname(s) {filenames} do not match any files in disk.")
 
     # Get metadata from first file
     return scans.ScanLBM(
@@ -147,12 +146,6 @@ def read_scan(
         trim_roi_x=trim_roi_x,
         trim_roi_y=trim_roi_y
     )
-
-
-def quickplot(array):
-    import matplotlib.pyplot as plt
-    plt.imshow(array, cmap='gray')
-    plt.show()
 
 
 __all__ = [
@@ -163,7 +156,5 @@ __all__ = [
     "ScanLBM",
     "Field",
     "ROI",
-    "LBM_DEFAULT_DIR",
     "LBM_DEBUG",
-    "quickplot"
 ]

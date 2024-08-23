@@ -2,12 +2,12 @@
 __main__.py: scanreader entrypoint.
 """
 
-import typing
-from pathlib import Path
 import click
-from icecream import ic
+import logging
 
 import scanreader as sr
+
+logger = logging.getLogger(__name__)
 
 
 @click.command()
@@ -41,8 +41,6 @@ import scanreader as sr
     help="Enable debug logs to the terminal."
 )
 def main(path, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
-    if debug:
-        ic.enable()
 
     files = sr.get_files(path, ext='.tif')
     if len(files) < 1:
@@ -63,7 +61,6 @@ def main(path, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
         debug=debug,
         save_path=path / 'zarr',
     )
-    # return scan[frames, zplanes, yslice, xslice]
     return scan
 
 
@@ -81,17 +78,8 @@ def process_slice_objects(slice_str):
     return tuple(map(process_slice_str, slice_str.split(",")))
 
 
-
-
 if __name__ == "__main__":
     scan = sr.read_scan("~/caiman_data/high_res")
     scan.trim_x = (8,8)
     scan.trim_y = (17,0)
-    # _scan = main()
     arr = scan[2, 0, :, :]
-
-    # viewer = napari.Viewer()
-    # viewer.add_image(temp, multiscale=False, colormap='gray')
-    # napari.run()
-    # _scan.save_as_tiff(args.path)
-    x = 2

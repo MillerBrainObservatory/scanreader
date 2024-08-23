@@ -71,8 +71,11 @@ class ScanLBM:
         return instance
 
     def __init__(self, files: list[os.PathLike], **kwargs):
-        ic()
+        logger.debug(f"Initializing scan with files: {[str(x) for x in files]}")
         self.files = files
+        if not self.files:
+            logger.info("No files given to reader. Returning.")
+            return
         self.name = ''
         self._frame_slice = slice(None)
         self._channel_slice = slice(None)
@@ -169,15 +172,16 @@ class ScanLBM:
             tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
 
     def save_as_zarr(self, savedir: os.PathLike, planes=None, metadata=None, prepend_str='extracted'):
-        frame_chunks = self.data.chunks[0]
         savedir = Path(savedir)
         if not metadata:
             metadata = self.arr_metadata
         if planes is None:
             planes = list(range(0, self.num_planes))
+        if not isinstance(planes, (list, tuple)):
+            planes = [planes]
 
         for idx in planes:
-            filename = savedir / f'{prepend_str}_plane_{idx + 1}.zarr'
+            filename = savedir / f'{prepend_str}_plane_{idx}.zarr'
             da.to_zarr(self[:, idx, :, :], filename)
 
     def __repr__(self):
@@ -673,8 +677,6 @@ class ScanLBM:
             'width': self._width,
             'channel_slice': channel_slice_repr,
             'frame_slice': frame_slice_repr,
-            'axes': self.axes,
-            'dims': self.dims,
             'dim_labels': self.dim_labels,
             'roi_metadata': self.roi_metadata,
             'si_metadata': self.si_metadata,
@@ -682,34 +684,3 @@ class ScanLBM:
 
         # Convert the dictionary to a JSON string for storage in TIFF metadata
         return reconstruction_metadata
-
-# lazy_imread = delayed(tifffile.imread)
-# lazy_arrays = [lazy_imread(self.zarr_store)]
-# dask_arrays = [da.from_delayed(delayed_reader, shape=self.shape, dtype=self.dtype) for delayed_reader in lazy_arrays]
-# arr = dask_arrays[0]
-
-# slices = []
-# for y,x in zip(ysl,xsl):
-#     slices.append(arr[frame_list,channel_list,y,x])
-# return da.block(slices).rechunk()
-#
-# @trimy.setter
-# def trimy(self, value):
-#     self._trimy = value
-#     def save(self, pages, yx, xs, output_ys, output_xs, prev_start):
-#         ic()
-#         if self.fix_scan_phase:
-#             phase = return_scan_offset(
-#                 pages[..., ys, xs].transpose((1, 2, 0)).squeeze(), 5
-#             )
-#             new_page = fix_scan_phase(
-#                 pages[..., ys, xs].transpose((2, 3, 1, 0)), phase, 1
-#             )
-#             pages = new_page[
-#                     17:, abs(phase) + 2: len(output_xs) - (abs(phase) + 2), ...
-#                     ].transpose((3, 2, 0, 1))
-#             nx = pages.shape[-1]
-#
-#             # Calculate the new slice index for the current strip
-#             new_slice = slice(prev_start, prev_start + nx)
-#             new_list = listify_index(new_slice, prev_start + nx)

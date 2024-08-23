@@ -15,11 +15,9 @@ from .multiroi import ROI
 
 import dask.array as da
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-if not os.environ.get("LBM_DEBUG", "False"):
-    logger = logging.getLogger(__name__)
-    logger.setLevel("debug")
+logger.setLevel(logging.DEBUG)
 
 ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
 
@@ -230,6 +228,50 @@ class ScanLBM:
             xs = [x - output_xslice.start for x in x_list if x in x_range]
             item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
         print(time.time() - start)
+        return item
+
+    def lazy_read(self, slices: tuple | list):
+
+        for i, index in enumerate(slices):
+            check_index_type(i, index)
+
+        self.frame_slice = slices[0]
+        self.channel_slice = slices[1]
+        x_in = slices[2]
+        y_in = slices[3]
+
+        frame_list = listify_index(self.frame_slice, self.num_frames)
+        channel_list = listify_index(self.channel_slice, self.num_channels)
+        y_list = listify_index(y_in, self.height)
+        x_list = listify_index(x_in, self.width)
+
+        if [] in [*y_list, *x_list, channel_list, frame_list]:
+            return np.empty(0)
+
+        # cast to TCYX
+        item = da.empty(
+            [
+                len(frame_list),
+                len(channel_list),
+                len(y_list),
+                len(x_list),
+            ],
+            dtype=self.dtype,
+            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
+        )
+
+        start = time.time()
+        # Over each subfield in field (only one for non-contiguous fields)
+        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
+        for yslice, xslice, output_yslice, output_xslice in slices:
+            # Read the required pages (and slice out the subfield)
+            pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
+            y_range = range(output_yslice.start, output_yslice.stop)
+            x_range = range(output_xslice.start, output_xslice.stop)
+            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
+            xs = [x - output_xslice.start for x in x_list if x in x_range]
+            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
+        logger.info(f'Time to read data: {np.round(time.time() - start, 1)} seconds')
         return item
 
     @property

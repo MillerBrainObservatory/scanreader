@@ -6,10 +6,15 @@ import tifffile
 from .multiroi import Field, ROI
 from .scans import ScanLBM
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
 
-if not LBM_DEBUG:
-    logger.setLevel('debug')
+LBM_DEBUG_FLAG = os.environ.get('LBM_DEBUG', 1)
+
+if LBM_DEBUG_FLAG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 lbm_home_dir = Path().home() / '.lbm'
 
@@ -110,7 +115,6 @@ def read_scan(
         pathnames: os.PathLike | str,
         trim_roi_x: list | tuple = (0, 0),
         trim_roi_y: list | tuple = (0, 0),
-        debug=False,
 ) -> scans.ScanLBM:
     """
     Reads a ScanImage scan.
@@ -156,5 +160,4 @@ __all__ = [
     "ScanLBM",
     "Field",
     "ROI",
-    "LBM_DEBUG",
 ]

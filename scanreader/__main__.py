@@ -2,12 +2,21 @@
 __main__.py: scanreader entrypoint.
 """
 
+import os
 import click
 import logging
 
 import scanreader as sr
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
+
+LBM_DEBUG_FLAG = os.environ.get('LBM_DEBUG', 1)
+
+if LBM_DEBUG_FLAG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 
 @click.command()

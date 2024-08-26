@@ -35,11 +35,6 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
-
-def imread(path):
-    return zarr.open(path)
-
-
 class ScanLBM:
 
     # WIP FO 08/20/24
@@ -118,12 +113,10 @@ class ScanLBM:
         self.arr_metadata = {k: v for k, v in metadata.items() if k in ARRAY_METADATA}
 
         self.raw_shape = self.metadata["shape"]
-        self._dim_labels = self.metadata["dim_labels"]
         self._axes = self.metadata["axes"]
         self._dims = self.metadata["dims"]
         self._ndim = metadata['ndim']
         self._shape = self.metadata["shape"]
-        self._dim_labels = self.metadata["dim_labels"]
 
         # Create ROIs -----
         self.rois = self._create_rois()
@@ -305,11 +298,6 @@ class ScanLBM:
     def dtype(self):
         """Datatype of the final tiled image."""
         return self._data.dtype
-
-    @property
-    def dim_labels(self):
-        """Datatype of the final tiled image."""
-        return self._dim_labels
 
     def init_shape(self):
         frame_list = listify_index(self.frame_slice, self.num_frames)
@@ -499,13 +487,7 @@ class ScanLBM:
     def _num_lines_between_fields(self):
         """Lines/mirror cycles scanned from the start of one field to the start of the
         next."""
-        if self.is_slow_stack:
-            num_lines_between_fields = (
-                                               self._page_height + self._num_fly_back_lines
-                                       ) * (self.num_frames * self._num_averaged_frames)
-        else:
-            num_lines_between_fields = self._page_height + self._num_fly_back_lines
-        return int(num_lines_between_fields)
+        return int(self._page_height + self._num_fly_back_lines)
 
     def _create_rois(self):
         """Create scan rois from the configuration file."""

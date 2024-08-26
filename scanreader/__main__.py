@@ -91,7 +91,7 @@ def process_slice_objects(slice_str):
 
 if __name__ == "__main__":
     from pathlib import Path
-    scan = sr.read_scan("~/caiman_data/high_res")
+    scan = sr.read_scan("~/caiman_data/mk717/")
     scan.trim_x = (8,8)
     scan.trim_y = (17,0)
     arr = scan[2, 0, :, :]

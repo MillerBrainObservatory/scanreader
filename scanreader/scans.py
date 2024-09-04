@@ -4,7 +4,6 @@ import json
 import os
 from pathlib import Path
 import time
-from icecream import ic
 
 import numpy as np
 import tifffile
@@ -178,7 +177,7 @@ class ScanLBM:
             da.to_zarr(self[:, idx, :, :], filename)
 
     def __repr__(self):
-        return self.data
+        return self.data.__repr__()
 
     @property
     def data(self):

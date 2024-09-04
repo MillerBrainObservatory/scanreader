@@ -33,24 +33,6 @@ Requires-Dist: scipy>=1.9.0
 Requires-Dist: dask
 Requires-Dist: zarr
 Requires-Dist: icecream
-Provides-Extra: docs
-Requires-Dist: sphinx>=6.1.3; extra == "docs"
-Requires-Dist: docutils>=0.19; extra == "docs"
-Requires-Dist: sphinxcontrib-apidoc; extra == "docs"
-Requires-Dist: sphinx_book_theme; extra == "docs"
-Requires-Dist: sphinx-prompt; extra == "docs"
-Requires-Dist: sphinx-autodoc-typehints; extra == "docs"
-Requires-Dist: sphinx_design; extra == "docs"
-Requires-Dist: sphinxcontrib-images; extra == "docs"
-Requires-Dist: sphinx-copybutton; extra == "docs"
-Requires-Dist: sphinx-togglebutton; extra == "docs"
-Requires-Dist: sphinx_gallery; extra == "docs"
-Requires-Dist: sphinx_autodoc2; extra == "docs"
-Requires-Dist: numpydoc; extra == "docs"
-Requires-Dist: nbspinx; extra == "docs"
-Requires-Dist: myst-nb; extra == "docs"
-Provides-Extra: io
-Requires-Dist: zarr; extra == "io"
 Provides-Extra: notebook
 Requires-Dist: jupyterlab; extra == "notebook"
 Provides-Extra: all
@@ -102,6 +84,13 @@ Scan object indexes can be:
 No boolean indexing is yet supported.
 
 ## Details on data loading (for future developers)
+
+### Preamble
+
+Matlab stores data column by column ("Fortran order"), while NumPy by default stores them row by row ("C order").
+This **doesn't affect indexing**, but **may affect performance**.
+For example, in Matlab efficient loop will be over columns (e.g. for n = 1:10 a(:, n) end),
+while in NumPy it's preferable to iterate over rows (e.g. for n in range(10): a[n, :] -- note n in the first position, not the last). 
 
 As of this version, `scanreader` relies on [`tifffile`](https://pypi.org/project/tifffile/) to read the underlying tiff files.
 

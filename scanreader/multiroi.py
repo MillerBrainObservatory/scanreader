@@ -61,7 +61,8 @@ class ROI:
             scanfield_infos = [scanfield_infos]  # make list if single scanfield
 
         # Get scanfield depths
-        scanfield_depths = self.roi_info["zs"]
+        # scanfield_depths = self.roi_info["zs"]
+        scanfield_depths = [0]
         if not isinstance(scanfield_depths, list):
             scanfield_depths = [scanfield_depths]
 

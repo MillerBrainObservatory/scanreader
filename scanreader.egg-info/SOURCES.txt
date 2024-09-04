@@ -4,8 +4,7 @@ pyproject.toml
 setup.py
 scanreader/__init__.py
 scanreader/__main__.py
-scanreader/core.py
-scanreader/exceptions.py
+scanreader/lbm_widget.py
 scanreader/multiroi.py
 scanreader/scans.py
 scanreader/utils.py

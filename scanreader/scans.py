@@ -35,6 +35,7 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
+
 class ScanLBM:
 
     # WIP FO 08/20/24
@@ -57,7 +58,6 @@ class ScanLBM:
         instance.metadata = reconstruction_metadata['metadata']
         instance.axes = reconstruction_metadata['axes']
         instance.dims = reconstruction_metadata['dims']
-        instance.dim_labels = reconstruction_metadata['dim_labels']
         instance.roi_metadata = reconstruction_metadata['roi_metadata']
         instance.si_metadata = reconstruction_metadata['si_metadata']
         instance.ij_metadata = reconstruction_metadata['ij_metadata']
@@ -581,17 +581,17 @@ class ScanLBM:
     @property
     def num_frames(self):
         """Number of timepoints in each 2D planar timeseries."""
-        return self.dim_labels.get("time", None)
+        return self.raw_shape[0]
 
     @property
     def num_channels(self):
         """Number of channels (planes) in this session."""
-        return self.dim_labels.get("channel", None)
+        return self.raw_shape[1]
 
     @property
     def num_planes(self):
         """Number of planes (channels) in this session. In multi-ROI sessions, plane is an alias for channel."""
-        return self.dim_labels.get("channel", None)
+        return self.raw_shape[0]
 
     @property
     def objective_resolution(self):
@@ -641,7 +641,7 @@ class ScanLBM:
     def uniform_sampling(self):
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
-        return self.metadata["si"]["SI.hScan2D.uniformSampling"]
+        return self.si_metadata["SI.hScan2D.uniformSampling"]
 
     def _generate_reconstruction_metadata(self):
         # Convert the slices to a serializable format
@@ -659,7 +659,6 @@ class ScanLBM:
             'width': self._width,
             'channel_slice': channel_slice_repr,
             'frame_slice': frame_slice_repr,
-            'dim_labels': self.dim_labels,
             'roi_metadata': self.roi_metadata,
             'si_metadata': self.si_metadata,
         }

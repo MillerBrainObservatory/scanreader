@@ -18,7 +18,7 @@ Examples of scanreader usage from a [jupyter notebook](https://jupyter.org/) and
 ## Libraries:
 
 - [tifffile](https://github.com/cgohlke/tifffile/blob/master/tifffile/tifffile.py) to read ScanImage BigTiff files.
-- [zarr](https://zarr.readthedocs.io/en/stable/) and [dask](https://www.dask.org/) for lazy-loading operations
+- [zarr](https://zarr.readthedocs.io/en/stable/) and [dask](https://www.dask.org/) for lazy-loading operations.
 
 ## Imports
 

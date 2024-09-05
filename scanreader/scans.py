@@ -9,7 +9,7 @@ import numpy as np
 import tifffile
 import zarr
 
-from .utils import listify_index, check_index_type, fill_key
+from .utils import listify_index, check_index_type, fill_key, fix_scan_phase, return_scan_offset
 from .multiroi import ROI
 
 import dask.array as da
@@ -186,7 +186,7 @@ class ScanLBM:
     def __str__(self):
         return f"Tiled shape: {self.shape}"
 
-    def __getitem__(self, key):
+    def __getitem__(self, key, corr_bidir_offset=False):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
         for i, index in enumerate(full_key):
             check_index_type(i, index)
@@ -222,11 +222,16 @@ class ScanLBM:
         for yslice, xslice, output_yslice, output_xslice in slices:
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
+            phase = return_scan_offset(pages, nvals=4)
+            pages = fix_scan_phase(pages, phase)
+
             y_range = range(output_yslice.start, output_yslice.stop)
-            x_range = range(output_xslice.start, output_xslice.stop)
+            x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
-            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
+
+            # item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
+            item[:, :, output_yslice, slice(output_xslice.start, output_xslice.stop-abs(phase))] = pages[:, :, ys, xs]
         print(time.time() - start)
         return item
 
@@ -349,6 +354,14 @@ class ScanLBM:
     def yslices_out(self):
         new_slice = [slice(v.start + self.trim_y[0], v.stop - self.trim_y[1]) for v in self._yslices_out]
         return [slice(0, v.stop - v.start) for v in new_slice]
+
+    @property
+    def yslices_pretrim(self):
+        return self._yslices
+
+    @property
+    def xslices_pretrim(self):
+        return self._xslices
 
     @property
     def yslices(self):

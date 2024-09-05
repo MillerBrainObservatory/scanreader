@@ -590,7 +590,7 @@ class ScanLBM:
     @property
     def num_planes(self):
         """Number of planes (channels) in this session. In multi-ROI sessions, plane is an alias for channel."""
-        return self.raw_shape[0]
+        return self.raw_shape[1]
 
     @property
     def objective_resolution(self):

@@ -91,9 +91,10 @@ def process_slice_objects(slice_str):
 
 if __name__ == "__main__":
     from pathlib import Path
-    scan = sr.read_scan("~/caiman_data/mk717/")
-    scan.trim_x = (8,8)
-    scan.trim_y = (17,0)
-    arr = scan[2, 0, :, :]
+
+    scan = sr.read_scan("~/caiman_data/animal_01/session_01/")
+    scan.trim_x = (5, 5)
+    scan.trim_y = (17, 0)
+    arr = scan[:, 0, :, :]
     path = Path().home() / 'caiman_data' / 'high_res'
     # scan.save_as_zarr(path)

@@ -186,7 +186,7 @@ class ScanLBM:
     def __str__(self):
         return f"Tiled shape: {self.shape}"
 
-    def __getitem__(self, key, corr_bidir_offset=False):
+    def __getitem__(self, key, corr_bidir_offset=True):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
         for i, index in enumerate(full_key):
             check_index_type(i, index)
@@ -225,14 +225,15 @@ class ScanLBM:
         for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
-            phase = return_scan_offset(pages, nvals=4)
-            logger.info(f'roi {idx} with optimal phase shift of {phase} px')
-
-            if phase != 0 and corr_bidir_offset is True:
-                pages = fix_scan_phase(pages, phase)
+            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
+            if corr_bidir_offset:
+                phase = return_scan_offset(pages, nvals=4)
+                logger.info(f'roi {idx} with optimal phase shift of {phase} px')
+                if phase != 0:
+                    pages = fix_scan_phase(pages, phase)
+                    x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
 
             y_range = range(output_yslice.start, output_yslice.stop)
-            x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
 
@@ -244,7 +245,7 @@ class ScanLBM:
             # Update `current_x_start` for the next iteration
             current_x_start += x_width
 
-        print(time.time() - start)
+        print(f'Roi data loaded in {time.time() - start} seconds')
 
         return item
 

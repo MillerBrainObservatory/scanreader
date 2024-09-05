@@ -217,22 +217,35 @@ class ScanLBM:
         )
 
         start = time.time()
-        # Over each subfield in field (only one for non-contiguous fields)
+        # Initialize the starting index for the next iteration
+        current_x_start = 0
+
+        # Over each subfield in the field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
-        for yslice, xslice, output_yslice, output_xslice in slices:
+        for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
             phase = return_scan_offset(pages, nvals=4)
-            pages = fix_scan_phase(pages, phase)
+            logger.info(f'roi {idx} with optimal phase shift of {phase} px')
+
+            if phase != 0 and corr_bidir_offset is True:
+                pages = fix_scan_phase(pages, phase)
 
             y_range = range(output_yslice.start, output_yslice.stop)
             x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
 
-            # item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
-            item[:, :, output_yslice, slice(output_xslice.start, output_xslice.stop-abs(phase))] = pages[:, :, ys, xs]
+            # Assign to the output item
+            # Instead of using `output_xslice` directly, use `current_x_start` and calculate the width
+            x_width = output_xslice.stop - output_xslice.start - abs(phase)
+            item[:, :, output_yslice, current_x_start:current_x_start + x_width] = pages[:, :, ys, xs]
+
+            # Update `current_x_start` for the next iteration
+            current_x_start += x_width
+
         print(time.time() - start)
+
         return item
 
     def lazy_read(self, slices: tuple | list):

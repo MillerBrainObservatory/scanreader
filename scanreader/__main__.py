@@ -95,6 +95,6 @@ if __name__ == "__main__":
     scan = sr.read_scan("~/caiman_data/animal_01/session_01/")
     scan.trim_x = (5, 5)
     scan.trim_y = (17, 0)
-    arr = scan[:, 0, :, :]
+    arr = scan[:, 0, 2:500, :]
     path = Path().home() / 'caiman_data' / 'high_res'
     # scan.save_as_zarr(path)

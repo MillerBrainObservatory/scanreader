@@ -73,6 +73,7 @@ class ScanLBM:
         self.name = ''
         self._frame_slice = slice(None)
         self._channel_slice = slice(None)
+        self._fix_scan_offset = kwargs.get("fix_scan_offset", False)
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
         self._trim_y = kwargs.get('trim_roi_y', (0, 0))
         self._path = kwargs.get('save_path', Path(files[0]).parent)
@@ -93,7 +94,7 @@ class ScanLBM:
             "dims": series.dims,
             "ndim": series.ndim,
             "axes": series.axes,
-            "dtype": series.dtype,
+            "dtype": 'uint16',
             "is_multifile": series.is_multifile,
             "nbytes": series.nbytes,
             "shape": series.shape,
@@ -140,6 +141,7 @@ class ScanLBM:
         self._yslices_out = self.fields[0].output_yslices
 
         self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
+        self.metadata['fps'] = self.fps
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
@@ -180,26 +182,38 @@ class ScanLBM:
         return self.data.__repr__()
 
     @property
+    def fix_scan_offset(self):
+        return self._fix_scan_offset
+
+    @fix_scan_offset.setter
+    def fix_scan_offset(self, value: bool):
+        assert isinstance(value, bool)
+        self._fix_scan_offset = value
+
+    @property
     def data(self):
         return self._data
 
     def __str__(self):
         return f"Tiled shape: {self.shape}"
 
-    def __getitem__(self, key, corr_bidir_offset=True):
+    def __getitem__(self, key):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
         for i, index in enumerate(full_key):
             check_index_type(i, index)
 
         self.frame_slice = full_key[0]
         self.channel_slice = full_key[1]
-        x_in = full_key[2]
-        y_in = full_key[3]
+        x_in, y_in = slice(None), slice(None)
+        image_slice_x = full_key[2]
+        image_slice_y = full_key[3]
 
         frame_list = listify_index(self.frame_slice, self.num_frames)
         channel_list = listify_index(self.channel_slice, self.num_channels)
         y_list = listify_index(y_in, self.height)
+        logger.debug(f'y_list: {y_list}')
         x_list = listify_index(x_in, self.width)
+        logger.debug(f'x_list: {x_list}')
 
         if [] in [*y_list, *x_list, channel_list, frame_list]:
             return np.empty(0)
@@ -217,7 +231,8 @@ class ScanLBM:
         )
 
         start = time.time()
-        # Initialize the starting index for the next iteration
+
+        # Initialize the starting index for the next iteration, only relevant for scan phase
         current_x_start = 0
 
         # Over each subfield in the field (only one for non-contiguous fields)
@@ -226,12 +241,14 @@ class ScanLBM:
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
             x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
-            if corr_bidir_offset:
+            if self.fix_scan_offset:
                 phase = return_scan_offset(pages, nvals=4)
                 logger.info(f'roi {idx} with optimal phase shift of {phase} px')
                 if phase != 0:
                     pages = fix_scan_phase(pages, phase)
                     x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
+            else:
+                phase = 0
 
             y_range = range(output_yslice.start, output_yslice.stop)
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
@@ -247,7 +264,7 @@ class ScanLBM:
 
         print(f'Roi data loaded in {time.time() - start} seconds')
 
-        return item
+        return item[..., image_slice_y, image_slice_x]
 
     def lazy_read(self, slices: tuple | list):
 

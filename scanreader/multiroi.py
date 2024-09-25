@@ -61,7 +61,8 @@ class ROI:
             scanfield_infos = [scanfield_infos]  # make list if single scanfield
 
         # Get scanfield depths
-        scanfield_depths = self.roi_info["zs"]
+        # scanfield_depths = self.roi_info["zs"]
+        scanfield_depths = [0]
         if not isinstance(scanfield_depths, list):
             scanfield_depths = [scanfield_depths]
 
@@ -344,9 +345,6 @@ class Field(Scanfield):
         offsets : list of float, optional
             Time offsets per pixel in seconds for each subfield.
 
-        .. note::
-            The `yslices`, `xslices`, `output_yslices`, `output_xslices`, `roi_ids`, and `offsets` attributes
-            are optional and can be set later.
         """
         super().__init__(
             height,

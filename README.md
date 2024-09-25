@@ -44,6 +44,13 @@ No boolean indexing is yet supported.
 
 ## Details on data loading (for future developers)
 
+### Preamble
+
+Matlab stores data column by column ("Fortran order"), while NumPy by default stores them row by row ("C order").
+This **doesn't affect indexing**, but **may affect performance**.
+For example, in Matlab efficient loop will be over columns (e.g. for n = 1:10 a(:, n) end),
+while in NumPy it's preferable to iterate over rows (e.g. for n in range(10): a[n, :] -- note n in the first position, not the last). 
+
 As of this version, `scanreader` relies on [`tifffile`](https://pypi.org/project/tifffile/) to read the underlying tiff files.
 
 Reading a scan happens in three stages:

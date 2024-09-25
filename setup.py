@@ -63,8 +63,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=install_deps,
     extras_require={
-        "docs": docs,
-        "io": io_deps,
+        # "docs": docs,
+        # "io": io_deps,
         "notebook": notebook_deps,
         "all": all_deps,
     },

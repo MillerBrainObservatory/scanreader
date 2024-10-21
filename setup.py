@@ -8,7 +8,7 @@ from setuptools import setup
 
 import setuptools
 
-install_deps = ["tifffile", "numpy>=1.24.3", "scipy>=1.9.0", "dask", "zarr", "icecream"]
+install_deps = ["tifffile", "numpy>=1.24.3", "scipy>=1.9.0", "dask", "zarr"]
 
 docs = [
     "sphinx>=6.1.3",
@@ -28,11 +28,8 @@ docs = [
 ]
 
 io_deps = [
-    # "paramiko", # ssh
-    # "h5py",
     # "opencv-python-headless",
     "zarr",
-    # "xmltodict",
 ]
 
 notebook_deps = ["jupyterlab"]

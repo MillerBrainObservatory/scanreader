@@ -26,6 +26,10 @@ else:
     help="Frames to read. Use slice notation like NumPy arrays (e.g., 1:50, 10:100:2)."
 )
 @click.option(
+    "-m", "--metadata", type=bool, default=False,
+    help="Print a dictionary of metadta."
+)
+@click.option(
     "-z", "--zplanes", type=str, default=":",
     help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2)."
 )
@@ -64,6 +68,8 @@ def main(datapath, frames, zplanes, xslice, yslice, trim_x, trim_y, debug):
     zplanes = process_slice_str(zplanes)
     xslice = process_slice_str(xslice)
     yslice = process_slice_str(yslice)
+    if metadata:
+        pass
 
     scan = sr.ScanLBM(
         files,

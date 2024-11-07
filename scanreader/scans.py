@@ -1,3 +1,4 @@
+from __future__ import annotations
 import itertools
 import logging
 import json
@@ -21,8 +22,6 @@ logger.setLevel(logging.DEBUG)
 
 ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
 
-IJ_METADATA = ["axes", "photometric", "dtype", "nbytes"]
-
 CHUNKS = {0: 'auto', 1: -1, 2: -1}
 
 # https://brainglobe.info/documentation/brainglobe-atlasapi/adding-a-new-atlas.html
@@ -34,6 +33,9 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     "rgb_triplet": [255, 255, 255],
     # default color for visualizing the region, feel free to leave white or randomize it
 }
+
+def get_metadata(files: os.PathLike | list[os.PathLike]):
+    pass
 
 
 class ScanLBM:
@@ -61,7 +63,6 @@ class ScanLBM:
             "num_pages": len(pages),
             "dims": series.dims,
             "ndim": series.ndim,
-            "axes": series.axes,
             "dtype": 'uint16',
             "is_multifile": series.is_multifile,
             "nbytes": series.nbytes,
@@ -77,11 +78,9 @@ class ScanLBM:
 
         self.roi_metadata = metadata.pop("roi_info")
         self.si_metadata = metadata.pop("si")
-        self.ij_metadata = {k: v for k, v in metadata.items() if k in IJ_METADATA}
         self.arr_metadata = {k: v for k, v in metadata.items() if k in ARRAY_METADATA}
 
         self.raw_shape = self.metadata["shape"]
-        self._axes = self.metadata["axes"]
         self._dims = self.metadata["dims"]
         self._ndim = metadata['ndim']
         self._shape = self.metadata["shape"]

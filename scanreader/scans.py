@@ -46,9 +46,12 @@ def get_metadata(file: os.PathLike):
     pages = tiff_file.pages
 
     # Extract ROI and imaging metadata
+
+    si = scanimage_metadata["FrameData"]
     roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+
     num_rois = len(roi_group)
-    num_planes = len(scanimage_metadata["FrameData"]["SI.hChannels.channelSave"])
+    num_planes = len(si["SI.hChannels.channelSave"])
     scanfields = roi_group[0]["scanfields"]  # assuming single ROI scanfield configuration
 
     # ROI metadata
@@ -58,8 +61,8 @@ def get_metadata(file: os.PathLike):
 
     # TIFF header-derived metadata
     sample_format = pages[0].dtype.name
-    objective_resolution = scanimage_metadata["FrameData"]["SI.objectiveResolution"]
-    frame_rate = scanimage_metadata["FrameData"]["SI.hRoiManager.scanFrameRate"]
+    objective_resolution = si["SI.objectiveResolution"]
+    frame_rate = si["SI.hRoiManager.scanFrameRate"]
 
     # Field-of-view calculations
     fov_x = round(objective_resolution * size_xy[0])  # adjusted for number of ROIs
@@ -69,32 +72,35 @@ def get_metadata(file: os.PathLike):
     # Pixel resolution calculation
     pixel_resolution = (fov_x / num_pixel_xy[0], fov_y / num_pixel_xy[1])
 
-
     # Assembling metadata
     metadata_out = {
+        "image_height": pages[0].shape[0],
+        "image_width": pages[0].shape[1],
+        "num_pages": len(pages),
+        "dims": series.dims,
+        "ndim": series.ndim,
+        "dtype": 'uint16',
+        "is_multifile": series.is_multifile,
+        "nbytes": series.nbytes,
+        "size": series.size,
+        "dim_labels": series.sizes,
+        "shape": series.shape,
         "num_planes": num_planes,
         "num_rois": num_rois,
         "num_frames": len(pages) / num_planes,
         "frame_rate": frame_rate,
         "fov": fov_xy,  # in microns
-        "pixel_resolution": pixel_resolution,
-        "sample_format": sample_format,
+        "pixel_resolution": np.round(pixel_resolution, 2),
         "roi_width_px": num_pixel_xy[0],
         "roi_height_px": num_pixel_xy[1],
-        "tiff_length": pages[0].shape[0],
-        "tiff_width": pages[0].shape[1],
-        "raw_filename": os.path.basename(file),
-        "raw_filepath": os.path.dirname(file),
-        "raw_fullfile": os.path.abspath(file),
-        # additional ScanImage data
-        "num_lines_between_scanfields": round(
-            scanimage_metadata["FrameData"]["SI.hScan2D.flytoTimePerScanfield"] / scanimage_metadata["FrameData"]["SI.hRoiManager.linePeriod"]),
+        "sample_format": sample_format,
+        "num_lines_between_scanfields": round(si["SI.hScan2D.flytoTimePerScanfield"] / si["SI.hRoiManager.linePeriod"]),
         "center_xy": center_xy,
-        "line_period": scanimage_metadata["FrameData"]["SI.hRoiManager.linePeriod"],
-        "scan_frame_period": scanimage_metadata["FrameData"]["SI.hRoiManager.scanFrameRate"],
+        "line_period": si["SI.hRoiManager.linePeriod"],
         "size_xy": size_xy,
         "objective_resolution": objective_resolution,
-        "dxy": np.round(pixel_resolution, 2)
+        "si": si,
+        "roi_info": roi_group
     }
 
     return metadata_out
@@ -109,7 +115,9 @@ def get_metadata_v2(file: os.PathLike):
     series = tiff_file.series[0]
     scanimage_metadata = tiff_file.scanimage_metadata
     roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+
     pages = tiff_file.pages
+
     return {
         "roi_info": roi_group,
         "image_height": pages[0].shape[0],
@@ -138,41 +146,20 @@ class ScanLBM:
         self._frame_slice = slice(None)
         self._channel_slice = slice(None)
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
-        self._trim_y = kwargs.get('trim_roi_y', (0, 0))
-        self.tiff_files = [tifffile.imread(fname, aszarr=True) for fname in files]
+        self._trim_y = kwargs.get("trim_roi_y", (0, 0))
+        self.metadata = kwargs.get("metadata", None)
+        self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
 
-        tiff_file = tifffile.TiffFile(files[0])
-        series = tiff_file.series[0]
-        scanimage_metadata = tiff_file.scanimage_metadata
-        roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
-        pages = tiff_file.pages
-        metadata = {
-            "roi_info": roi_group,
-            "image_height": pages[0].shape[0],
-            "image_width": pages[0].shape[1],
-            "num_pages": len(pages),
-            "dims": series.dims,
-            "ndim": series.ndim,
-            "dtype": 'uint16',
-            "is_multifile": series.is_multifile,
-            "nbytes": series.nbytes,
-            "shape": series.shape,
-            "size": series.size,
-            "dim_labels": series.sizes,
-            "num_rois": len(roi_group),
-            "si": scanimage_metadata["FrameData"],
-        }
+        if not self.metadata:
+            self.metadata = get_metadata(files[0])
 
-        # Set Metadata -----
-        self.metadata = metadata
-
-        self.roi_metadata = metadata.pop("roi_info")
-        self.si_metadata = metadata.pop("si")
-        self.arr_metadata = {k: v for k, v in metadata.items() if k in ARRAY_METADATA}
+        self.roi_metadata = self.metadata.pop("roi_info")
+        self.si_metadata = self.metadata.pop("si")
+        self.arr_metadata = {k: v for k, v in self.metadata.items() if k in ARRAY_METADATA}
 
         self.raw_shape = self.metadata["shape"]
         self._dims = self.metadata["dims"]
-        self._ndim = metadata['ndim']
+        self._ndim = self.metadata['ndim']
         self._shape = self.metadata["shape"]
 
         # Create ROIs -----
@@ -199,6 +186,7 @@ class ScanLBM:
 
         self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
         self.metadata['fps'] = self.fps
+        self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)

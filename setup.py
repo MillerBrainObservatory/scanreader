@@ -13,7 +13,9 @@ install_deps = [
         "numpy>=1.24.3",
         "scipy>=1.9.0",
         "dask",
-        "zarr"
+        "zarr",
+        "jupyterlab"
+
 ]
 
 docs = [
@@ -32,15 +34,6 @@ docs = [
     "sphinxcontrib-video"
     "myst_nb",
 ]
-
-io_deps = [
-    # "opencv-python-headless",
-    "zarr",
-]
-
-notebook_deps = ["jupyterlab"]
-
-all_deps = notebook_deps + io_deps
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -65,11 +58,11 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     install_requires=install_deps,
-    extras_require={
-        # "docs": docs,
-        # "io": io_deps,
-        "notebook": notebook_deps,
-        "all": all_deps,
-    },
+    extras_require={ "docs": docs, },
     include_package_data=True,
+    entry_points = {
+        "console_scripts": [
+            "scanreader = scanreader.__main__:main",
+        ]
+    },
 )

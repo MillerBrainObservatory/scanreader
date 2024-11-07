@@ -64,7 +64,7 @@ setup(
     include_package_data=True,
     entry_points = {
         "console_scripts": [
-            "scanreader = scanreader.__main__:main",
+            "sr = scanreader.__main__:main",
             ]
         },
     )

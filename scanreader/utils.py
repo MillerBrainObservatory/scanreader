@@ -102,7 +102,9 @@ def _is_index_in_bounds(index, dim_size):
 
 def listify_index(index, dim_size):
     """ Generates the list representation of an index for the given dim_size."""
-    if isinstance(index, types.EllipsisType):
+    import builtins
+    EllipsisType = type(builtins.Ellipsis)
+    if isinstance(index, EllipsisType):
         index_as_list = listify_index(slice(None, None, None), dim_size)
     elif np.issubdtype(type(index), np.signedinteger):
         index_as_list = [index] if index >= 0 else [dim_size + index]

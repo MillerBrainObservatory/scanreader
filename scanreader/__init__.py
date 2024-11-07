@@ -17,7 +17,7 @@ if LBM_DEBUG_FLAG:
 else:
     logger.setLevel(logging.INFO)
 
-lbm_home_dir = Path().home() / '.lbm'
+lbm_home_dir = Path().home() / 'lbm_data'
 
 if not lbm_home_dir.is_dir():
     lbm_home_dir.mkdir()

@@ -11,6 +11,7 @@ import numpy as np
 import tifffile
 import zarr
 
+import scanreader
 from .utils import listify_index, check_index_type, fill_key, fix_scan_phase, return_scan_offset
 from .multiroi import ROI
 
@@ -34,8 +35,97 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
-def get_metadata(files: os.PathLike | list[os.PathLike]):
-    pass
+
+def get_metadata(file: os.PathLike):
+    if not file:
+        return None
+
+    tiff_file = tifffile.TiffFile(file)
+    scanimage_metadata = tiff_file.scanimage_metadata
+    series = tiff_file.series[0]
+    pages = tiff_file.pages
+
+    # Extract ROI and imaging metadata
+    roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+    num_rois = len(roi_group)
+    num_planes = len(scanimage_metadata["FrameData"]["SI.hChannels.channelSave"])
+    scanfields = roi_group[0]["scanfields"]  # assuming single ROI scanfield configuration
+
+    # ROI metadata
+    center_xy = scanfields["centerXY"]
+    size_xy = scanfields["sizeXY"]
+    num_pixel_xy = scanfields["pixelResolutionXY"]
+
+    # TIFF header-derived metadata
+    sample_format = pages[0].dtype.name
+    objective_resolution = scanimage_metadata["FrameData"]["SI.objectiveResolution"]
+    frame_rate = scanimage_metadata["FrameData"]["SI.hRoiManager.scanFrameRate"]
+
+    # Field-of-view calculations
+    fov_x = round(objective_resolution * size_xy[0])  # adjusted for number of ROIs
+    fov_y = round(objective_resolution * size_xy[1])
+    fov_xy = (fov_x, fov_y)
+
+    # Pixel resolution calculation
+    pixel_resolution = (fov_x / num_pixel_xy[0], fov_y / num_pixel_xy[1])
+
+
+    # Assembling metadata
+    metadata_out = {
+        "num_planes": num_planes,
+        "num_rois": num_rois,
+        "num_frames": len(pages) / num_planes,
+        "frame_rate": frame_rate,
+        "fov": fov_xy,  # in microns
+        "pixel_resolution": pixel_resolution,
+        "sample_format": sample_format,
+        "roi_width_px": num_pixel_xy[0],
+        "roi_height_px": num_pixel_xy[1],
+        "tiff_length": pages[0].shape[0],
+        "tiff_width": pages[0].shape[1],
+        "raw_filename": os.path.basename(file),
+        "raw_filepath": os.path.dirname(file),
+        "raw_fullfile": os.path.abspath(file),
+        # additional ScanImage data
+        "num_lines_between_scanfields": round(
+            scanimage_metadata["FrameData"]["SI.hScan2D.flytoTimePerScanfield"] / scanimage_metadata["FrameData"]["SI.hRoiManager.linePeriod"]),
+        "center_xy": center_xy,
+        "line_period": scanimage_metadata["FrameData"]["SI.hRoiManager.linePeriod"],
+        "scan_frame_period": scanimage_metadata["FrameData"]["SI.hRoiManager.scanFrameRate"],
+        "size_xy": size_xy,
+        "objective_resolution": objective_resolution,
+        "dxy": np.round(pixel_resolution, 2)
+    }
+
+    return metadata_out
+
+
+def get_metadata_v2(file: os.PathLike):
+
+    if not file:
+        return
+    tiff_file = tifffile.TiffFile(file)
+
+    series = tiff_file.series[0]
+    scanimage_metadata = tiff_file.scanimage_metadata
+    roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+    pages = tiff_file.pages
+    return {
+        "roi_info": roi_group,
+        "image_height": pages[0].shape[0],
+        "image_width": pages[0].shape[1],
+        "num_pages": len(pages),
+        "dims": series.dims,
+        "ndim": series.ndim,
+        "dtype": 'uint16',
+        "is_multifile": series.is_multifile,
+        "nbytes": series.nbytes,
+        "shape": series.shape,
+        "size": series.size,
+        "dim_labels": series.sizes,
+        "num_rois": len(roi_group),
+        "si": scanimage_metadata["FrameData"],
+    }
 
 
 class ScanLBM:

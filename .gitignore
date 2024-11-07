@@ -7,3 +7,4 @@ _build/
 build/
 doctrees/
 *DS_Store*
+*egg*

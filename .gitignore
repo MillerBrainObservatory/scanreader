@@ -8,3 +8,4 @@ build/
 doctrees/
 *DS_Store*
 *egg*
+scanreader.egg-info

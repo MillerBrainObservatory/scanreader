@@ -77,6 +77,9 @@ def main():
         print_params({k: v for k, v in metadata.items() if k not in ['si', 'roi_info']})
 
     if args.extract:
+        savepath = Path(args.extract).expanduser()
+        print(f'Saving z-planes to {savepath}.')
+
         frames = process_slice_str(args.frames)
         zplanes = process_slice_str(args.zplanes)
 
@@ -90,17 +93,16 @@ def main():
         if args.volume:
             data = scan[:]
         elif args.roi:
-            for roi in scan.yslices:
-                data = scan[:, :, roi, :]
+            print(f'Separating z-planes by ROI.')
+            for plane in range(0, scan.num_planes):
+                for roi in scan.yslices:
+                    data = scan[:, plane, roi, :]
+                    name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
         else:
-            savepath = Path(args.extract).expanduser()
-            print(f'Saving z-planes to {savepath}.')
             for plane in range(0, scan.num_planes):
                 data = scan[:, plane, :, :]
                 name = savepath / f'assembled_plane_{plane + 1}.tif'
                 tifffile.imwrite(name, data)
-
-
         return scan
     else:
         return metadata

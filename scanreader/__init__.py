@@ -1,9 +1,11 @@
+from __future__ import annotations
 import os
 import logging
 from pathlib import Path
 import tifffile
 from .multiroi import Field, ROI
 from .scans import ScanLBM
+from . import scans
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)

@@ -8,7 +8,13 @@ from setuptools import setup
 
 import setuptools
 
-install_deps = ["tifffile", "numpy>=1.24.3", "scipy>=1.9.0", "dask", "zarr"]
+install_deps = [
+        "tifffile",
+        "numpy>=1.24.3",
+        "scipy>=1.9.0",
+        "dask",
+        "zarr"
+]
 
 docs = [
     "sphinx>=6.1.3",

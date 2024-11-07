@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import time
+from typing import re
 
 import numpy as np
 import tifffile
@@ -36,52 +37,19 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
 
 
 class ScanLBM:
-
-    # WIP FO 08/20/24
-    @classmethod
-    def from_metadata(cls, metadata):
-        # Parse the reconstruction metadata
-        reconstruction_metadata = json.loads(metadata['reconstruction_metadata'])
-
-        # Instantiate the class using the stored metadata
-        instance = cls(
-            files=reconstruction_metadata['files'],
-            fix_scan_phase=reconstruction_metadata['fix_scan_phase'],
-            trim_roi_x=reconstruction_metadata['trim_x'],
-            trim_roi_y=reconstruction_metadata['trim_y']
-        )
-
-        # Restore other attributes
-        instance._channel_slice = reconstruction_metadata['channel_slice']
-        instance._frame_slice = reconstruction_metadata['frame_slice']
-        instance.metadata = reconstruction_metadata['metadata']
-        instance.axes = reconstruction_metadata['axes']
-        instance.dims = reconstruction_metadata['dims']
-        instance.roi_metadata = reconstruction_metadata['roi_metadata']
-        instance.si_metadata = reconstruction_metadata['si_metadata']
-        instance.ij_metadata = reconstruction_metadata['ij_metadata']
-        instance.arr_metadata = reconstruction_metadata['arr_metadata']
-
-        return instance
-
     def __init__(self, files: list[os.PathLike], **kwargs):
         logger.debug(f"Initializing scan with files: {[str(x) for x in files]}")
         self.files = files
         if not self.files:
             logger.info("No files given to reader. Returning.")
             return
-        self.name = ''
         self._frame_slice = slice(None)
         self._channel_slice = slice(None)
-        self._fix_scan_offset = kwargs.get("fix_scan_offset", False)
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
         self._trim_y = kwargs.get('trim_roi_y', (0, 0))
-        self._path = kwargs.get('save_path', Path(files[0]).parent)
+        self.tiff_files = [tifffile.imread(fname, aszarr=True) for fname in files]
 
-        self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
-
-        # with tifffile.TiffFile(self.tiff_files[0]) as tiff_file:
-        tiff_file = self.tiff_files[0]
+        tiff_file = tifffile.TiffFile(files[0])
         series = tiff_file.series[0]
         scanimage_metadata = tiff_file.scanimage_metadata
         roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
@@ -123,8 +91,8 @@ class ScanLBM:
         self.fields = self._create_fields()
         self._join_contiguous_fields()
 
-        if len(self.fields) > 1:
-            raise NotImplementedError("Too many fields for an LBM recording.")
+        # if len(self.fields) > 1:
+        #     raise NotImplementedError("Too many fields for an LBM recording.")
 
         # Initialize dynamic variables -----
 
@@ -266,54 +234,6 @@ class ScanLBM:
 
         return item[..., image_slice_y, image_slice_x]
 
-    def lazy_read(self, slices: tuple | list):
-
-        for i, index in enumerate(slices):
-            check_index_type(i, index)
-
-        self.frame_slice = slices[0]
-        self.channel_slice = slices[1]
-        x_in = slices[2]
-        y_in = slices[3]
-
-        frame_list = listify_index(self.frame_slice, self.num_frames)
-        channel_list = listify_index(self.channel_slice, self.num_channels)
-        y_list = listify_index(y_in, self.height)
-        x_list = listify_index(x_in, self.width)
-
-        if [] in [*y_list, *x_list, channel_list, frame_list]:
-            return np.empty(0)
-
-        # cast to TCYX
-        item = da.empty(
-            [
-                len(frame_list),
-                len(channel_list),
-                len(y_list),
-                len(x_list),
-            ],
-            dtype=self.dtype,
-            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
-        )
-
-        start = time.time()
-        # Over each subfield in field (only one for non-contiguous fields)
-        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
-        for yslice, xslice, output_yslice, output_xslice in slices:
-            # Read the required pages (and slice out the subfield)
-            pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
-            y_range = range(output_yslice.start, output_yslice.stop)
-            x_range = range(output_xslice.start, output_xslice.stop)
-            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
-            xs = [x - output_xslice.start for x in x_list if x in x_range]
-            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
-        logger.info(f'Time to read data: {np.round(time.time() - start, 1)} seconds')
-        return item
-
-    @property
-    def path(self):
-        return self._path
-
     @property
     def height(self):
         """Height of the final tiled image."""
@@ -333,11 +253,6 @@ class ScanLBM:
     def dtype(self):
         """Datatype of the final tiled image."""
         return self._data.dtype
-
-    def init_shape(self):
-        frame_list = listify_index(self.frame_slice, self.num_frames)
-        channel_list = listify_index(self.channel_slice, self.num_channels)
-        return len(frame_list), len(channel_list), self.height, self.width
 
     @property
     def shape(self):
@@ -385,14 +300,6 @@ class ScanLBM:
     def yslices_out(self):
         new_slice = [slice(v.start + self.trim_y[0], v.stop - self.trim_y[1]) for v in self._yslices_out]
         return [slice(0, v.stop - v.start) for v in new_slice]
-
-    @property
-    def yslices_pretrim(self):
-        return self._yslices
-
-    @property
-    def xslices_pretrim(self):
-        return self._xslices
 
     @property
     def yslices(self):
@@ -554,7 +461,7 @@ class ScanLBM:
 
     def _create_rois(self):
         """Create scan rois from the configuration file. """
-        roi_infos = self.tiff_files[0].scanimage_metadata['RoiGroups']['imagingRoiGroup']['rois']
+        roi_infos = self.roi_metadata
         roi_infos = roi_infos if isinstance(roi_infos, list) else [roi_infos]
         roi_infos = list(filter(lambda r: isinstance(r['zs'], (int, float, list)),
                                 roi_infos))  # discard empty/malformed ROIs
@@ -754,26 +661,3 @@ class ScanLBM:
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
         return self.si_metadata["SI.hScan2D.uniformSampling"]
-
-    def _generate_reconstruction_metadata(self):
-        # Convert the slices to a serializable format
-        channel_slice_repr = (self.channel_slice.start, self.channel_slice.stop, self.channel_slice.step) if isinstance(
-            self.channel_slice, slice) else self.channel_slice
-        frame_slice_repr = (self.frame_slice.start, self.frame_slice.stop, self.frame_slice.step) if isinstance(
-            self.frame_slice, slice) else self.frame_slice
-
-        # Build the reconstruction metadata
-        reconstruction_metadata = {
-            'files': [f.filename for f in self.tiff_files],
-            'trim_x': self._trim_x,
-            'trim_y': self._trim_y,
-            'height': self._height,
-            'width': self._width,
-            'channel_slice': channel_slice_repr,
-            'frame_slice': frame_slice_repr,
-            'roi_metadata': self.roi_metadata,
-            'si_metadata': self.si_metadata,
-        }
-
-        # Convert the dictionary to a JSON string for storage in TIFF metadata
-        return reconstruction_metadata

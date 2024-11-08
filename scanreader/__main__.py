@@ -9,6 +9,7 @@ from pathlib import Path
 import scanreader as sr
 from scanreader.scans import get_metadata
 from scanreader import get_files, get_single_file
+from tqdm import tqdm
 import tifffile
 
 logging.basicConfig()
@@ -92,17 +93,24 @@ def main():
         # --roi
         if args.volume:
             data = scan[:]
-        elif args.roi:
-            print(f'Separating z-planes by ROI.')
-            for plane in range(0, scan.num_planes):
-                for roi in scan.yslices:
+            from tqdm import tqdm
+
+            # check if roi-based processing is enabled
+        if args.roi:
+            print('Separating z-planes by ROI.')
+            # loop over planes with a progress bar
+            for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
+                # loop over ROIs with a progress bar
+                for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):
                     data = scan[:, plane, roi, :]
                     name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
+                    tifffile.imwrite(name, data, bigtiff=True)
         else:
-            for plane in range(0, scan.num_planes):
+            # loop over planes with a progress bar
+            for plane in tqdm(range(scan.num_planes), desc="Planes"):
                 data = scan[:, plane, :, :]
                 name = savepath / f'assembled_plane_{plane + 1}.tif'
-                tifffile.imwrite(name, data)
+                tifffile.imwrite(name, data, bigtiff=True)
         return scan
     else:
         return metadata

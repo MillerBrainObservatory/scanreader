@@ -5,6 +5,8 @@ __main__.py: scanreader entrypoint.
 import os
 import argparse
 import logging
+import warnings
+from functools import partial
 from pathlib import Path
 import scanreader as sr
 from scanreader.scans import get_metadata
@@ -12,16 +14,15 @@ from scanreader import get_files, get_single_file
 from tqdm import tqdm
 import tifffile
 
+# set logging to critical only
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 
-LBM_DEBUG_FLAG = os.environ.get('LBM_DEBUG', 1)
+# suppress warnings
+warnings.filterwarnings("ignore")
 
-if LBM_DEBUG_FLAG:
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.INFO)
-
+print = partial(print, flush=True)
 
 def print_params(params, indent=5):
     for k, v in params.items():
@@ -89,32 +90,28 @@ def main():
             trim_roi_x=args.trim_x,
             trim_roi_y=args.trim_y,
         )
-        # --volume
-        # --roi
+
         if args.volume:
             data = scan[:]
-            from tqdm import tqdm
 
-            # check if roi-based processing is enabled
+        # --volume
+        # --roi
         if args.roi:
             print('Separating z-planes by ROI.')
-            # loop over planes with a progress bar
             for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
-                # loop over ROIs with a progress bar
                 for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):
                     data = scan[:, plane, roi, :]
                     name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
                     tifffile.imwrite(name, data, bigtiff=True)
         else:
-            # loop over planes with a progress bar
             for plane in tqdm(range(scan.num_planes), desc="Planes"):
                 data = scan[:, plane, :, :]
                 name = savepath / f'assembled_plane_{plane + 1}.tif'
                 tifffile.imwrite(name, data, bigtiff=True)
+
         return scan
     else:
         return metadata
-
 
 
 def process_slice_str(slice_str):

@@ -7,3 +7,5 @@ _build/
 build/
 doctrees/
 *DS_Store*
+dist
+scanreader.egg-info

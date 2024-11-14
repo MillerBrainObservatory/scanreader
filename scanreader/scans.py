@@ -43,6 +43,7 @@ def get_metadata(file: os.PathLike):
     tiff_file = tifffile.TiffFile(file)
     meta = tiff_file.scanimage_metadata
     str_f = tiff_file.filename
+
     if 'plane_' in str_f and meta is None:
         raise ValueError(f"No metadata found in {str_f}. Files with 'plane_' in the name indicated previously "
                          f"extracted data. The called function operates on raw scanimage tiff files.")

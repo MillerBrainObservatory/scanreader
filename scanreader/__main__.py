@@ -91,23 +91,21 @@ def main():
             trim_roi_y=args.trim_y,
         )
 
-        if args.volume:
-            data = scan[:]
-
-        # --volume
-        # --roi
         if args.roi:
-            print('Separating z-planes by ROI.')
-            for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
-                for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):
-                    data = scan[:, plane, roi, :]
-                    name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
-                    tifffile.imwrite(name, data, bigtiff=True)
+            pass
         else:
-            for plane in tqdm(range(scan.num_planes), desc="Planes"):
-                data = scan[:, plane, :, :]
-                name = savepath / f'assembled_plane_{plane + 1}.tif'
-                tifffile.imwrite(name, data, bigtiff=True)
+            scan.save_as_zarr(savepath, frames=frames, planes=zplanes)
+        #     print('Separating z-planes by ROI.')
+        #     for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
+        #         for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):
+        #             data = scan[:, plane, roi, :]
+        #             name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
+        #             tifffile.imwrite(name, data, bigtiff=True)
+        # else:
+        #     for plane in tqdm(range(scan.num_planes), desc="Planes"):
+        #         data = scan[:, plane, :, :]
+        #         name = savepath / f'assembled_plane_{plane + 1}.tif'
+        #         tifffile.imwrite(name, data, bigtiff=True)
 
         return scan
     else:

@@ -32,8 +32,13 @@ extras_require = {
         "sphinxcontrib-video",
         "myst_nb",
     ],
-    "notebook": [
+    "gui": [
         "jupyterlab",
+        "matplotlib",
+        "ipywidgets",
+        "fastplotlib",
+        "scikit-image",
+        "qtpy"
     ]
 }
 

@@ -113,7 +113,6 @@ def get_metadata(file: os.PathLike):
     }
 
 
-
 class ScanLBM:
     def __init__(self, files: list[os.PathLike], **kwargs):
         logger.debug(f"Initializing scan with files: {[str(x) for x in files]}")
@@ -161,7 +160,6 @@ class ScanLBM:
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
-
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
         if isinstance(self.channel_slice, slice):
@@ -200,9 +198,8 @@ class ScanLBM:
             # Need to append .zarr to the array because CaImAn checks for this extension when loading a dataset
             store = zarr.DirectoryStore(savedir / f'plane_{p + 1}.zarr')
             root = zarr.group(store, overwrite=overwrite)
- 
-            for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
 
+            for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
                 print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
                 t_roi = time.time()
 
@@ -210,9 +207,9 @@ class ScanLBM:
                 ds = root.create_dataset(name=f'roi_{idx + 1}.zarr', data=pages, overwrite=True)
                 ds.attrs['metadata'] = roi.roi_info
                 # print the time and where the file was saved on a newline
-                print(f'Dataset saved. Elapsed time: {time.time() - t_roi:.2f} seconds \n Saved to: {savedir / f"plane_{p + 1}"}')
+                print(
+                    f'Dataset saved. Elapsed time: {time.time() - t_roi:.2f} seconds \n Saved to: {savedir / f"plane_{p + 1}"}')
             print(f'-- Plane {p + 1} saved --')
-
 
     def _save_by_roi(self, savedir, planes, frames, overwrite):
         print(f'Planes: {planes}')
@@ -227,10 +224,9 @@ class ScanLBM:
                 t1 = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-                ds = root.create_dataset(name=f'plane_{p + 1}', data=pages, overwrite=overwrite)
+                ds = root.create_dataset(name=f'plane_{p + 1}.zarr', data=pages, overwrite=overwrite)
                 ds.attrs['metadata'] = roi.roi_info
                 print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
-
 
     def __repr__(self):
         return self.data.__repr__()
@@ -531,7 +527,6 @@ class ScanLBM:
         roi_infos = roi_infos if isinstance(roi_infos, list) else [roi_infos]
         roi_infos = list(filter(lambda r: isinstance(r['zs'], (int, float, list)),
                                 roi_infos))  # discard empty/malformed ROIs
-
 
         rois = [ROI(roi_info) for roi_info in roi_infos]
         return rois

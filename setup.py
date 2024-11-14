@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-from setuptools import setup
+from setuptools import find_packages, setup
 
 #!/usr/bin/env python3
 # twine upload dist/rbo-lbm-x.x.x.tar.gz
@@ -8,41 +7,40 @@ from setuptools import setup
 
 import setuptools
 
-install_deps = ["tifffile", "numpy>=1.24.3", "scipy>=1.9.0", "dask", "zarr", "icecream"]
+install_deps = [
+        "tifffile",
+        "numpy>=1.24.3",
+        "scipy>=1.9.0",
+        "dask",
+        "zarr"
+        ]
 
-docs = [
-    "sphinx>=6.1.3",
-    "docutils>=0.19"
-    "nbsphinx"
-    "numpydoc"
-    "sphinx-autodoc2"
-    "sphinx_gallery"
-    "sphinx-togglebutton"
-    "sphinx-copybutton"
-    "sphinx_book_theme"
-    "pydata_sphinx_theme"
-    "sphinx_design"
-    "sphinxcontrib-images"
-    "sphinxcontrib-video"
-    "myst_nb",
-]
-
-io_deps = [
-    # "paramiko", # ssh
-    # "h5py",
-    # "opencv-python-headless",
-    "zarr",
-    # "xmltodict",
-]
-
-notebook_deps = ["jupyterlab"]
-
-all_deps = notebook_deps + io_deps
+extras_require = {
+    "docs": [
+        "sphinx>=6.1.3",
+        "docutils>=0.19",
+        "nbsphinx",
+        "numpydoc",
+        "sphinx-autodoc2",
+        "sphinx_gallery",
+        "sphinx-togglebutton",
+        "sphinx-copybutton",
+        "sphinx_book_theme",
+        "pydata_sphinx_theme",
+        "sphinx_design",
+        "sphinxcontrib-images",
+        "sphinxcontrib-video",
+        "myst_nb",
+    ],
+    "notebook": [
+        "jupyterlab",
+    ]
+}
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name="scanreader",
     version="0.4.12",
     description="Reader for ScanImage 5 scans (including slow stacks and multiROI).",
@@ -59,14 +57,14 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English"
         "Topic :: Scientific/Engineering :: Bio-Informatics",
-    ],
-    packages=setuptools.find_packages(),
+        ],
+    packages=find_packages(),
     install_requires=install_deps,
-    extras_require={
-        # "docs": docs,
-        # "io": io_deps,
-        "notebook": notebook_deps,
-        "all": all_deps,
-    },
+    extras_require=extras_require,
     include_package_data=True,
-)
+    entry_points = {
+        "console_scripts": [
+            "sr = scanreader.__main__:main",
+            ]
+        },
+    )

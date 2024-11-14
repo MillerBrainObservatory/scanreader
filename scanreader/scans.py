@@ -1,14 +1,17 @@
+from __future__ import annotations
 import itertools
 import logging
 import json
 import os
 from pathlib import Path
 import time
+from typing import re
 
 import numpy as np
 import tifffile
 import zarr
 
+import scanreader
 from .utils import listify_index, check_index_type, fill_key, fix_scan_phase, return_scan_offset
 from .multiroi import ROI
 
@@ -19,8 +22,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 ARRAY_METADATA = ["dtype", "shape", "nbytes", "size"]
-
-IJ_METADATA = ["axes", "photometric", "dtype", "nbytes"]
 
 CHUNKS = {0: 'auto', 1: -1, 2: -1}
 
@@ -35,87 +36,131 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
 }
 
 
+def get_metadata(file: os.PathLike):
+    if not file:
+        return None
+
+    tiff_file = tifffile.TiffFile(file)
+    meta = tiff_file.scanimage_metadata
+    si = meta.get('FrameData', {})
+    if not si:
+        print(f"No FrameData found in {file}.")
+        return None
+
+    series = tiff_file.series[0]
+    pages = tiff_file.pages
+
+    # Extract ROI and imaging metadata
+    roi_group = meta["RoiGroups"]["imagingRoiGroup"]["rois"]
+
+    num_rois = len(roi_group)
+    num_planes = len(si["SI.hChannels.channelSave"])
+    scanfields = roi_group[0]["scanfields"]  # assuming single ROI scanfield configuration
+
+    # ROI metadata
+    center_xy = scanfields["centerXY"]
+    size_xy = scanfields["sizeXY"]
+    num_pixel_xy = scanfields["pixelResolutionXY"]
+
+    # TIFF header-derived metadata
+    sample_format = pages[0].dtype.name
+    objective_resolution = si["SI.objectiveResolution"]
+    frame_rate = si["SI.hRoiManager.scanFrameRate"]
+
+    # Field-of-view calculations
+    fov_x = round(objective_resolution * size_xy[0])  # adjusted for number of ROIs
+    fov_y = round(objective_resolution * size_xy[1])
+    fov_xy = (fov_x, fov_y)
+
+    # Pixel resolution calculation
+    pixel_resolution = (fov_x / num_pixel_xy[0], fov_y / num_pixel_xy[1])
+
+    # Assembling metadata
+    return {
+        "image_height": pages[0].shape[0],
+        "image_width": pages[0].shape[1],
+        "num_pages": len(pages),
+        "dims": series.dims,
+        "ndim": series.ndim,
+        "dtype": 'uint16',
+        "is_multifile": series.is_multifile,
+        "nbytes": series.nbytes,
+        "size": series.size,
+        "dim_labels": series.sizes,
+        "shape": series.shape,
+        "num_planes": num_planes,
+        "num_rois": num_rois,
+        "num_frames": len(pages) / num_planes,
+        "frame_rate": frame_rate,
+        "fov": fov_xy,  # in microns
+        "pixel_resolution": np.round(pixel_resolution, 2),
+        "roi_width_px": num_pixel_xy[0],
+        "roi_height_px": num_pixel_xy[1],
+        "sample_format": sample_format,
+        "num_lines_between_scanfields": round(si["SI.hScan2D.flytoTimePerScanfield"] / si["SI.hRoiManager.linePeriod"]),
+        "center_xy": center_xy,
+        "line_period": si["SI.hRoiManager.linePeriod"],
+        "size_xy": size_xy,
+        "objective_resolution": objective_resolution,
+        "si": si,
+        "roi_info": roi_group
+    }
+
+
+def get_metadata_v2(file: os.PathLike):
+
+    if not file:
+        return
+    tiff_file = tifffile.TiffFile(file)
+
+    series = tiff_file.series[0]
+    scanimage_metadata = tiff_file.scanimage_metadata
+    roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+
+    pages = tiff_file.pages
+
+    return {
+        "roi_info": roi_group,
+        "image_height": pages[0].shape[0],
+        "image_width": pages[0].shape[1],
+        "num_pages": len(pages),
+        "dims": series.dims,
+        "ndim": series.ndim,
+        "dtype": 'uint16',
+        "is_multifile": series.is_multifile,
+        "nbytes": series.nbytes,
+        "shape": series.shape,
+        "size": series.size,
+        "dim_labels": series.sizes,
+        "num_rois": len(roi_group),
+        "si": scanimage_metadata["FrameData"],
+    }
+
+
 class ScanLBM:
-
-    # WIP FO 08/20/24
-    @classmethod
-    def from_metadata(cls, metadata):
-        # Parse the reconstruction metadata
-        reconstruction_metadata = json.loads(metadata['reconstruction_metadata'])
-
-        # Instantiate the class using the stored metadata
-        instance = cls(
-            files=reconstruction_metadata['files'],
-            fix_scan_phase=reconstruction_metadata['fix_scan_phase'],
-            trim_roi_x=reconstruction_metadata['trim_x'],
-            trim_roi_y=reconstruction_metadata['trim_y']
-        )
-
-        # Restore other attributes
-        instance._channel_slice = reconstruction_metadata['channel_slice']
-        instance._frame_slice = reconstruction_metadata['frame_slice']
-        instance.metadata = reconstruction_metadata['metadata']
-        instance.axes = reconstruction_metadata['axes']
-        instance.dims = reconstruction_metadata['dims']
-        instance.roi_metadata = reconstruction_metadata['roi_metadata']
-        instance.si_metadata = reconstruction_metadata['si_metadata']
-        instance.ij_metadata = reconstruction_metadata['ij_metadata']
-        instance.arr_metadata = reconstruction_metadata['arr_metadata']
-
-        return instance
-
     def __init__(self, files: list[os.PathLike], **kwargs):
         logger.debug(f"Initializing scan with files: {[str(x) for x in files]}")
         self.files = files
         if not self.files:
             logger.info("No files given to reader. Returning.")
             return
-        self.name = ''
         self._frame_slice = slice(None)
         self._channel_slice = slice(None)
-        self._fix_scan_offset = kwargs.get("fix_scan_offset", False)
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
-        self._trim_y = kwargs.get('trim_roi_y', (0, 0))
-        self._path = kwargs.get('save_path', Path(files[0]).parent)
-
+        self._trim_y = kwargs.get("trim_roi_y", (0, 0))
+        self.metadata = kwargs.get("metadata", None)
         self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
 
-        # with tifffile.TiffFile(self.tiff_files[0]) as tiff_file:
-        tiff_file = self.tiff_files[0]
-        series = tiff_file.series[0]
-        scanimage_metadata = tiff_file.scanimage_metadata
-        roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
-        pages = tiff_file.pages
-        metadata = {
-            "roi_info": roi_group,
-            "image_height": pages[0].shape[0],
-            "image_width": pages[0].shape[1],
-            "num_pages": len(pages),
-            "dims": series.dims,
-            "ndim": series.ndim,
-            "axes": series.axes,
-            "dtype": 'uint16',
-            "is_multifile": series.is_multifile,
-            "nbytes": series.nbytes,
-            "shape": series.shape,
-            "size": series.size,
-            "dim_labels": series.sizes,
-            "num_rois": len(roi_group),
-            "si": scanimage_metadata["FrameData"],
-        }
+        if not self.metadata:
+            self.metadata = get_metadata(files[0])
 
-        # Set Metadata -----
-        self.metadata = metadata
-
-        self.roi_metadata = metadata.pop("roi_info")
-        self.si_metadata = metadata.pop("si")
-        self.ij_metadata = {k: v for k, v in metadata.items() if k in IJ_METADATA}
-        self.arr_metadata = {k: v for k, v in metadata.items() if k in ARRAY_METADATA}
+        self.roi_metadata = self.metadata.pop("roi_info")
+        self.si_metadata = self.metadata.pop("si")
+        self.arr_metadata = {k: v for k, v in self.metadata.items() if k in ARRAY_METADATA}
 
         self.raw_shape = self.metadata["shape"]
-        self._axes = self.metadata["axes"]
         self._dims = self.metadata["dims"]
-        self._ndim = metadata['ndim']
+        self._ndim = self.metadata['ndim']
         self._shape = self.metadata["shape"]
 
         # Create ROIs -----
@@ -123,8 +168,8 @@ class ScanLBM:
         self.fields = self._create_fields()
         self._join_contiguous_fields()
 
-        if len(self.fields) > 1:
-            raise NotImplementedError("Too many fields for an LBM recording.")
+        # if len(self.fields) > 1:
+        #     raise NotImplementedError("Too many fields for an LBM recording.")
 
         # Initialize dynamic variables -----
 
@@ -142,6 +187,7 @@ class ScanLBM:
 
         self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
         self.metadata['fps'] = self.fps
+        self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
@@ -266,54 +312,6 @@ class ScanLBM:
 
         return item[..., image_slice_y, image_slice_x]
 
-    def lazy_read(self, slices: tuple | list):
-
-        for i, index in enumerate(slices):
-            check_index_type(i, index)
-
-        self.frame_slice = slices[0]
-        self.channel_slice = slices[1]
-        x_in = slices[2]
-        y_in = slices[3]
-
-        frame_list = listify_index(self.frame_slice, self.num_frames)
-        channel_list = listify_index(self.channel_slice, self.num_channels)
-        y_list = listify_index(y_in, self.height)
-        x_list = listify_index(x_in, self.width)
-
-        if [] in [*y_list, *x_list, channel_list, frame_list]:
-            return np.empty(0)
-
-        # cast to TCYX
-        item = da.empty(
-            [
-                len(frame_list),
-                len(channel_list),
-                len(y_list),
-                len(x_list),
-            ],
-            dtype=self.dtype,
-            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
-        )
-
-        start = time.time()
-        # Over each subfield in field (only one for non-contiguous fields)
-        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
-        for yslice, xslice, output_yslice, output_xslice in slices:
-            # Read the required pages (and slice out the subfield)
-            pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
-            y_range = range(output_yslice.start, output_yslice.stop)
-            x_range = range(output_xslice.start, output_xslice.stop)
-            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
-            xs = [x - output_xslice.start for x in x_list if x in x_range]
-            item[:, :, output_yslice, output_xslice] = pages[:, :, ys, xs]
-        logger.info(f'Time to read data: {np.round(time.time() - start, 1)} seconds')
-        return item
-
-    @property
-    def path(self):
-        return self._path
-
     @property
     def height(self):
         """Height of the final tiled image."""
@@ -333,11 +331,6 @@ class ScanLBM:
     def dtype(self):
         """Datatype of the final tiled image."""
         return self._data.dtype
-
-    def init_shape(self):
-        frame_list = listify_index(self.frame_slice, self.num_frames)
-        channel_list = listify_index(self.channel_slice, self.num_channels)
-        return len(frame_list), len(channel_list), self.height, self.width
 
     @property
     def shape(self):
@@ -385,14 +378,6 @@ class ScanLBM:
     def yslices_out(self):
         new_slice = [slice(v.start + self.trim_y[0], v.stop - self.trim_y[1]) for v in self._yslices_out]
         return [slice(0, v.stop - v.start) for v in new_slice]
-
-    @property
-    def yslices_pretrim(self):
-        return self._yslices
-
-    @property
-    def xslices_pretrim(self):
-        return self._xslices
 
     @property
     def yslices(self):
@@ -533,8 +518,13 @@ class ScanLBM:
         return int(self._page_height + self._num_fly_back_lines)
 
     def _create_rois(self):
-        """Create scan rois from the configuration file."""
+        """Create scan rois from the configuration file. """
         roi_infos = self.roi_metadata
+        roi_infos = roi_infos if isinstance(roi_infos, list) else [roi_infos]
+        roi_infos = list(filter(lambda r: isinstance(r['zs'], (int, float, list)),
+                                roi_infos))  # discard empty/malformed ROIs
+
+
         rois = [ROI(roi_info) for roi_info in roi_infos]
         return rois
 
@@ -685,26 +675,3 @@ class ScanLBM:
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
         return self.si_metadata["SI.hScan2D.uniformSampling"]
-
-    def _generate_reconstruction_metadata(self):
-        # Convert the slices to a serializable format
-        channel_slice_repr = (self.channel_slice.start, self.channel_slice.stop, self.channel_slice.step) if isinstance(
-            self.channel_slice, slice) else self.channel_slice
-        frame_slice_repr = (self.frame_slice.start, self.frame_slice.stop, self.frame_slice.step) if isinstance(
-            self.frame_slice, slice) else self.frame_slice
-
-        # Build the reconstruction metadata
-        reconstruction_metadata = {
-            'files': [f.filename for f in self.tiff_files],
-            'trim_x': self._trim_x,
-            'trim_y': self._trim_y,
-            'height': self._height,
-            'width': self._width,
-            'channel_slice': channel_slice_repr,
-            'frame_slice': frame_slice_repr,
-            'roi_metadata': self.roi_metadata,
-            'si_metadata': self.si_metadata,
-        }
-
-        # Convert the dictionary to a JSON string for storage in TIFF metadata
-        return reconstruction_metadata

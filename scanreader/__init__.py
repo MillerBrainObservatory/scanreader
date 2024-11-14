@@ -1,9 +1,11 @@
+from __future__ import annotations
 import os
 import logging
 from pathlib import Path
 import tifffile
 from .multiroi import Field, ROI
 from .scans import ScanLBM
+from . import scans
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -15,7 +17,7 @@ if LBM_DEBUG_FLAG:
 else:
     logger.setLevel(logging.INFO)
 
-lbm_home_dir = Path().home() / '.lbm'
+lbm_home_dir = Path().home() / 'lbm_data'
 
 if not lbm_home_dir.is_dir():
     lbm_home_dir.mkdir()

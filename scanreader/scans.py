@@ -41,14 +41,17 @@ def get_metadata(file: os.PathLike):
         return None
 
     tiff_file = tifffile.TiffFile(file)
-    scanimage_metadata = tiff_file.scanimage_metadata
+    meta = tiff_file.scanimage_metadata
+    si = meta.get('FrameData', {})
+    if not si:
+        print(f"No FrameData found in {file}.")
+        return None
+
     series = tiff_file.series[0]
     pages = tiff_file.pages
 
     # Extract ROI and imaging metadata
-
-    si = scanimage_metadata["FrameData"]
-    roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
+    roi_group = meta["RoiGroups"]["imagingRoiGroup"]["rois"]
 
     num_rois = len(roi_group)
     num_planes = len(si["SI.hChannels.channelSave"])
@@ -73,7 +76,7 @@ def get_metadata(file: os.PathLike):
     pixel_resolution = (fov_x / num_pixel_xy[0], fov_y / num_pixel_xy[1])
 
     # Assembling metadata
-    metadata_out = {
+    return {
         "image_height": pages[0].shape[0],
         "image_width": pages[0].shape[1],
         "num_pages": len(pages),
@@ -102,8 +105,6 @@ def get_metadata(file: os.PathLike):
         "si": si,
         "roi_info": roi_group
     }
-
-    return metadata_out
 
 
 def get_metadata_v2(file: os.PathLike):

@@ -107,35 +107,6 @@ def get_metadata(file: os.PathLike):
     }
 
 
-def get_metadata_v2(file: os.PathLike):
-
-    if not file:
-        return
-    tiff_file = tifffile.TiffFile(file)
-
-    series = tiff_file.series[0]
-    scanimage_metadata = tiff_file.scanimage_metadata
-    roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
-
-    pages = tiff_file.pages
-
-    return {
-        "roi_info": roi_group,
-        "image_height": pages[0].shape[0],
-        "image_width": pages[0].shape[1],
-        "num_pages": len(pages),
-        "dims": series.dims,
-        "ndim": series.ndim,
-        "dtype": 'uint16',
-        "is_multifile": series.is_multifile,
-        "nbytes": series.nbytes,
-        "shape": series.shape,
-        "size": series.size,
-        "dim_labels": series.sizes,
-        "num_rois": len(roi_group),
-        "si": scanimage_metadata["FrameData"],
-    }
-
 
 class ScanLBM:
     def __init__(self, files: list[os.PathLike], **kwargs):
@@ -168,11 +139,6 @@ class ScanLBM:
         self.fields = self._create_fields()
         self._join_contiguous_fields()
 
-        # if len(self.fields) > 1:
-        #     raise NotImplementedError("Too many fields for an LBM recording.")
-
-        # Initialize dynamic variables -----
-
         # Adjust height/width for trimmings
         self._width = self.fields[0].width - sum(self.trim_x)
         self._height = self.fields[0].height - sum(self.trim_y)
@@ -188,6 +154,7 @@ class ScanLBM:
         self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
+
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
@@ -211,18 +178,31 @@ class ScanLBM:
             data = self[:, channels, :, :]
             tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
 
-    def save_as_zarr(self, savedir: os.PathLike, planes=None, metadata=None, prepend_str='extracted'):
+    def save_as_zarr(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True):
         savedir = Path(savedir)
         if not metadata:
-            metadata = self.arr_metadata
+            metadata = self.metadata
         if planes is None:
             planes = list(range(0, self.num_planes))
+        if frames is None:
+            frames = list(range(0, self.num_frames))
         if not isinstance(planes, (list, tuple)):
             planes = [planes]
 
-        for idx in planes:
-            filename = savedir / f'{prepend_str}_plane_{idx}.zarr'
-            da.to_zarr(self[:, idx, :, :], filename)
+        for p in planes:
+            store = zarr.DirectoryStore(savedir / f'plane_{p + 1}')
+            root = zarr.group(store, overwrite=overwrite)
+ 
+            for idx, (slce_y, slce_x, roi) in enumerate(zip(scan.yslices, scan.xslices, scan.rois)):
+
+                print(f'-- Creating dataset: Plane {p + 1}, ROI {idx + 1} --')
+                t1 = time.time()
+
+                pages = self._read_pages([0], [p], frames, slce_y, slce_x)
+                ds = root.create_dataset(name=f'roi_{idx + 1}', data=pages, overwrite=True)
+                ds.attrs['metadata'] = roi.roi_info
+                print(f'Dataset saved. Elapsed time: {time.time() - t1}')
+
 
     def __repr__(self):
         return self.data.__repr__()

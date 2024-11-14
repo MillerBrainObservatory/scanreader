@@ -184,16 +184,16 @@ class ScanLBM:
             metadata = self.metadata
         if planes is None:
             planes = list(range(0, self.num_planes))
+        elif not isinstance(planes, (list, tuple)):
+            planes = [planes]
         if frames is None:
             frames = list(range(0, self.num_frames))
-        if not isinstance(planes, (list, tuple)):
-            planes = [planes]
 
         for p in planes:
             store = zarr.DirectoryStore(savedir / f'plane_{p + 1}')
             root = zarr.group(store, overwrite=overwrite)
  
-            for idx, (slce_y, slce_x, roi) in enumerate(zip(scan.yslices, scan.xslices, scan.rois)):
+            for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
 
                 print(f'-- Creating dataset: Plane {p + 1}, ROI {idx + 1} --')
                 t1 = time.time()

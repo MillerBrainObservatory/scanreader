@@ -174,7 +174,7 @@ class ScanLBM:
         for idx, num in enumerate(channels):
             filename = savedir / f'{prepend_str}_plane_{num}.tif'
             data = self[:, channels, :, :]
-            tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
+            tifffile.imwrite(filename, data, bigtiff=True, metadata=self.metadata)
 
     def save_as_zarr(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False):
         savedir = Path(savedir)
@@ -188,7 +188,6 @@ class ScanLBM:
             # append each item in the metadata dict to self.metadata
             for k, v in metadata.items():
                 self.metadata[k] = v
-
         if by_roi:
             self._save_by_roi(savedir, planes, frames, overwrite)
         else:
@@ -198,24 +197,29 @@ class ScanLBM:
         print(f'Planes: {planes}')
         for p in planes:
             print(f'-- Saving plane {p + 1} --')
-            store = zarr.DirectoryStore(savedir / f'plane_{p + 1}')
+            # Need to append .zarr to the array because CaImAn checks for this extension when loading a dataset
+            store = zarr.DirectoryStore(savedir / f'plane_{p + 1}.zarr')
             root = zarr.group(store, overwrite=overwrite)
  
             for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
 
                 print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
-                t1 = time.time()
+                t_roi = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-                ds = root.create_dataset(name=f'roi_{idx + 1}', data=pages, overwrite=True)
+                ds = root.create_dataset(name=f'roi_{idx + 1}.zarr', data=pages, overwrite=True)
                 ds.attrs['metadata'] = roi.roi_info
-                print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
+                # print the time and where the file was saved on a newline
+                print(f'Dataset saved. Elapsed time: {time.time() - t_roi:.2f} seconds \n Saved to: {savedir / f"plane_{p + 1}"}')
+            print(f'-- Plane {p + 1} saved --')
+
 
     def _save_by_roi(self, savedir, planes, frames, overwrite):
         print(f'Planes: {planes}')
         for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
             print(f'-- Saving ROI {idx + 1} --')
-            store = zarr.DirectoryStore(savedir / f'roi_{idx + 1}')
+
+            store = zarr.DirectoryStore(savedir / f'roi_{idx + 1}.zarr')
             root = zarr.group(store, overwrite=overwrite)
 
             for p in planes:
@@ -223,7 +227,7 @@ class ScanLBM:
                 t1 = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-                ds = root.create_dataset(name=f'plane_{p + 1}', data=pages, overwrite=True)
+                ds = root.create_dataset(name=f'plane_{p + 1}', data=pages, overwrite=overwrite)
                 ds.attrs['metadata'] = roi.roi_info
                 print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
 

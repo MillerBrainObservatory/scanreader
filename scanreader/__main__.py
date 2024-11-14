@@ -32,29 +32,43 @@ def print_params(params, indent=5):
 
 def main():
     parser = argparse.ArgumentParser(description="Scanreader CLI for processing ScanImage tiff files.")
-    parser.add_argument("path", type=str, nargs="?", default=None,
+
+    parser.add_argument("path",
+                        type=str,
+                        default=None,
                         help="Path to the file or directory to process.")
-    parser.add_argument("-t", "--frames", type=str, default=":",
-                        help="Frames to read. Use slice notation like NumPy arrays (e.g., 1:50, 10:100:2).")
-    parser.add_argument("-z", "--zplanes", type=str, default=":",
+    parser.add_argument("--frames",
+                        type=str,
+                        default=":", # all frames
+                        help="Frames to read. Use slice notation like NumPy arrays ("
+                             "e.g., 1:50 gives frames 1 to 50, 10:100:2 gives frames 10, 20, 30...)."
+                        )
+    parser.add_argument("--zplanes",
+                        type=str,
+                        default=":", # all planes
                         help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2).")
-    parser.add_argument("-x", "--trim_x", type=int, nargs=2, default=(0, 0),
-                        help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right edges).")
-    parser.add_argument("-y", "--trim_y", type=int, nargs=2, default=(0, 0),
+    parser.add_argument("--trim_x",
+                        type=int,
+                        nargs=2,
+                        default=(0, 0),
+                        help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right "
+                             "edges).")
+    parser.add_argument("--trim_y", type=int, nargs=2, default=(0, 0),
                         help="Number of y-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for top and bottom edges).")
     # Boolean Flags
-    parser.add_argument("-m", "--metadata", action="store_true",
-                        help="Print a dictionary of metadata.")
-    parser.add_argument("--volume",
-                        action='store_true',
-                        help="Save the data as a 3D volumetric recording"
-                        )
+    parser.add_argument( "--metadata", action="store_true",
+                        help="Print a dictionary of scanimage metadata for files at the given path.")
     parser.add_argument("--roi",
                         action='store_true',
-                        help="Save each ROI in its own folder"
+                        help="Save each ROI in its own folder, organized like 'zarr/roi_1/plane_1/, without this "
+                             "arguemnet it would save like 'zarr/plane_1/roi_1'."
                         )
+    parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
+
     # Commands
-    parser.add_argument("--extract", type=str, help="Extract data to designated filetype")
+    # nargs = '?' means the argument is optional, but must be a single value if provided
+    parser.add_argument("--save", type=str, nargs='?',help="Path to save data to. If not provided, metadata will be "
+                                                           "printed.")
 
     args = parser.parse_args()
 
@@ -75,12 +89,14 @@ def main():
         # filter out the verbose scanimage frame/roi metadata
         print_params({k: v for k, v in metadata.items() if k not in ['si', 'roi_info']})
 
-    if args.extract:
-        savepath = Path(args.extract).expanduser()
+    if args.save:
+        savepath = Path(args.save).expanduser()
         print(f'Saving z-planes to {savepath}.')
 
         frames = process_slice_str(args.frames)
         zplanes = process_slice_str(args.zplanes)
+        frames = None if frames == slice(None) else frames
+        zplanes = None if zplanes == slice(None) else zplanes
 
         scan = sr.ScanLBM(
             files,
@@ -88,13 +104,11 @@ def main():
             trim_roi_y=args.trim_y,
         )
 
-        if args.roi:
-            pass
-        else:
-            # convert slice(None) to None
-            frames = None if frames == slice(None) else frames
-            zplanes = None if zplanes == slice(None) else zplanes
-            scan.save_as_zarr(savepath, frames=frames, planes=zplanes)
+        scan.save_as_zarr(savepath, frames=frames, planes=zplanes, by_roi=args.roi, overwrite=args.overwrite)
+
+        # else:
+        #     # convert slice(None) to None
+        #     scan.save_as_zarr(savepath, frames=frames, planes=zplanes)
         #     print('Separating z-planes by ROI.')
         #     for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
         #         for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):

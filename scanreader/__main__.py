@@ -8,6 +8,7 @@ from functools import partial
 from pathlib import Path
 import scanreader as sr
 from scanreader.scans import get_metadata
+from scanreader.utils import listify_index
 
 # set logging to critical only
 logging.basicConfig()
@@ -64,7 +65,6 @@ def main():
                              "arguemnet it would save like 'zarr/plane_1/roi_1'."
                         )
     parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
-
     # Commands
     # nargs = '?' means the argument is optional, but must be a single value if provided
     parser.add_argument("--save", type=str, nargs='?',help="Path to save data to. If not provided, metadata will be "
@@ -93,16 +93,16 @@ def main():
         savepath = Path(args.save).expanduser()
         print(f'Saving z-planes to {savepath}.')
 
-        frames = process_slice_str(args.frames)
-        zplanes = process_slice_str(args.zplanes)
-        frames = None if frames == slice(None) else frames
-        zplanes = None if zplanes == slice(None) else zplanes
-
         scan = sr.ScanLBM(
             files,
             trim_roi_x=args.trim_x,
             trim_roi_y=args.trim_y,
         )
+
+        frames = listify_index(process_slice_str(args.frames), scan.num_frames)
+        zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
+        # frames = None if frames == slice(None) else frames
+        # zplanes = None if zplanes == slice(None) else zplanes
 
         scan.save_as_zarr(savepath, frames=frames, planes=zplanes, by_roi=args.roi, overwrite=args.overwrite)
 

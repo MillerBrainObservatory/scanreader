@@ -1,8 +1,6 @@
 """
 __main__.py: scanreader entrypoint.
 """
-
-import os
 import argparse
 import logging
 import warnings
@@ -10,9 +8,6 @@ from functools import partial
 from pathlib import Path
 import scanreader as sr
 from scanreader.scans import get_metadata
-from scanreader import get_files, get_single_file
-from tqdm import tqdm
-import tifffile
 
 # set logging to critical only
 logging.basicConfig()
@@ -24,6 +19,7 @@ warnings.filterwarnings("ignore")
 
 print = partial(print, flush=True)
 
+
 def print_params(params, indent=5):
     for k, v in params.items():
         # if value is a dictionary, recursively call the function
@@ -32,6 +28,7 @@ def print_params(params, indent=5):
             print_params(v, indent + 4)
         else:
             print(" " * indent + f"{k}: {v}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Scanreader CLI for processing ScanImage tiff files.")
@@ -48,14 +45,14 @@ def main():
     # Boolean Flags
     parser.add_argument("-m", "--metadata", action="store_true",
                         help="Print a dictionary of metadata.")
-    parser.add_argument( "--volume",
-                         action='store_true',
-                         help="Save the data as a 3D volumetric recording"
-                         )
-    parser.add_argument( "--roi",
-                         action='store_true',
-                         help="Save each ROI in its own folder"
-                         )
+    parser.add_argument("--volume",
+                        action='store_true',
+                        help="Save the data as a 3D volumetric recording"
+                        )
+    parser.add_argument("--roi",
+                        action='store_true',
+                        help="Save each ROI in its own folder"
+                        )
     # Commands
     parser.add_argument("--extract", type=str, help="Extract data to designated filetype")
 
@@ -94,6 +91,9 @@ def main():
         if args.roi:
             pass
         else:
+            # convert slice(None) to None
+            frames = None if frames == slice(None) else frames
+            zplanes = None if zplanes == slice(None) else zplanes
             scan.save_as_zarr(savepath, frames=frames, planes=zplanes)
         #     print('Separating z-planes by ROI.')
         #     for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):

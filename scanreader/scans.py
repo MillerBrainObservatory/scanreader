@@ -42,6 +42,11 @@ def get_metadata(file: os.PathLike):
 
     tiff_file = tifffile.TiffFile(file)
     meta = tiff_file.scanimage_metadata
+    str_f = tiff_file.filename
+    if 'plane_' in str_f and meta is None:
+        raise ValueError(f"No metadata found in {str_f}. Files with 'plane_' in the name indicated previously "
+                         f"extracted data. The called function operates on raw scanimage tiff files.")
+
     si = meta.get('FrameData', {})
     if not si:
         print(f"No FrameData found in {file}.")
@@ -158,14 +163,6 @@ class ScanLBM:
 
     def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
         savedir = Path(savedir)
-        if not metadata:
-            metadata = {}
-
-        # Generate the reconstruction metadata
-        reconstruction_metadata = self._generate_reconstruction_metadata()
-
-        # Combine existing metadata with reconstruction metadata
-        combined_metadata = {**metadata, 'reconstruction_metadata': reconstruction_metadata}
         if isinstance(self.channel_slice, slice):
             channels = list(range(self.num_channels))[self.channel_slice]
         elif isinstance(self.channel_slice, int):
@@ -178,30 +175,56 @@ class ScanLBM:
             data = self[:, channels, :, :]
             tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
 
-    def save_as_zarr(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True):
+    def save_as_zarr(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False):
         savedir = Path(savedir)
-        if not metadata:
-            metadata = self.metadata
         if planes is None:
             planes = list(range(0, self.num_planes))
         elif not isinstance(planes, (list, tuple)):
             planes = [planes]
         if frames is None:
             frames = list(range(0, self.num_frames))
+        if metadata:
+            # append each item in the metadata dict to self.metadata
+            for k, v in metadata.items():
+                self.metadata[k] = v
 
+        if by_roi:
+            self._save_by_roi(savedir, planes, frames, overwrite)
+        else:
+            self._save_by_plane(savedir, planes, frames, overwrite)
+
+    def _save_by_plane(self, savedir, planes, frames, overwrite):
+        print(f'Planes: {planes}')
         for p in planes:
+            print(f'-- Saving plane {p + 1} --')
             store = zarr.DirectoryStore(savedir / f'plane_{p + 1}')
             root = zarr.group(store, overwrite=overwrite)
  
             for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
 
-                print(f'-- Creating dataset: Plane {p + 1}, ROI {idx + 1} --')
+                print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
                 t1 = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
                 ds = root.create_dataset(name=f'roi_{idx + 1}', data=pages, overwrite=True)
                 ds.attrs['metadata'] = roi.roi_info
-                print(f'Dataset saved. Elapsed time: {time.time() - t1}')
+                print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
+
+    def _save_by_roi(self, savedir, planes, frames, overwrite):
+        print(f'Planes: {planes}')
+        for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
+            print(f'-- Saving ROI {idx + 1} --')
+            store = zarr.DirectoryStore(savedir / f'roi_{idx + 1}')
+            root = zarr.group(store, overwrite=overwrite)
+
+            for p in planes:
+                print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
+                t1 = time.time()
+
+                pages = self._read_pages([0], [p], frames, slce_y, slce_x)
+                ds = root.create_dataset(name=f'plane_{p + 1}', data=pages, overwrite=True)
+                ds.attrs['metadata'] = roi.roi_info
+                print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
 
 
     def __repr__(self):

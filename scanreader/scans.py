@@ -160,21 +160,8 @@ class ScanLBM:
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
-    def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
-        savedir = Path(savedir)
-        if isinstance(self.channel_slice, slice):
-            channels = list(range(self.num_channels))[self.channel_slice]
-        elif isinstance(self.channel_slice, int):
-            channels = [self.channel_slice]
-        else:
-            raise ValueError(
-                f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
-        for idx, num in enumerate(channels):
-            filename = savedir / f'{prepend_str}_plane_{num}.tif'
-            data = self[:, channels, :, :]
-            tifffile.imwrite(filename, data, bigtiff=True, metadata=self.metadata)
-
-    def save_as_zarr(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False):
+    def save_as(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False,
+                ext='.tiff'):
         savedir = Path(savedir)
         if planes is None:
             planes = list(range(0, self.num_planes))
@@ -187,46 +174,63 @@ class ScanLBM:
             for k, v in metadata.items():
                 self.metadata[k] = v
         if by_roi:
-            self._save_by_roi(savedir, planes, frames, overwrite)
+            self._save_by_roi(savedir, planes, frames, overwrite, ext=ext)
         else:
-            self._save_by_plane(savedir, planes, frames, overwrite)
+            self._save_by_plane(savedir, planes, frames, overwrite, ext=ext)
 
-    def _save_by_plane(self, savedir, planes, frames, overwrite):
+    def _save_by_plane(self, savedir, planes, frames, overwrite, ext='.zarr'):
+        root = None
         print(f'Planes: {planes}')
         for p in planes:
             print(f'-- Saving plane {p + 1} --')
             # Need to append .zarr to the array because CaImAn checks for this extension when loading a dataset
-            store = zarr.DirectoryStore(savedir / f'plane_{p + 1}.zarr')
-            root = zarr.group(store, overwrite=overwrite)
+            if ext == '.zarr':
+                store = zarr.DirectoryStore(savedir / f'plane_{p + 1}')
+                root = zarr.group(store, overwrite=overwrite)
+            else:
+                savename = savedir / f'plane_{p + 1}'
+                savename.mkdir(parents=True, exist_ok=True)
 
             for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
                 print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
                 t_roi = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-                ds = root.create_dataset(name=f'roi_{idx + 1}.zarr', data=pages, overwrite=True)
-                ds.attrs['metadata'] = roi.roi_info
+                if ext in ['.tif', '.tiff']:
+                    filename = savename / f'roi_{idx + 1}_plane_{p + 1}.tif'
+                    tifffile.imwrite(filename, pages, bigtiff=True)
+                elif ext == '.zarr':
+                    ds = root.create_dataset(name=f'roi_{idx + 1}', data=pages, overwrite=True)
+                    ds.attrs['metadata'] = roi.roi_info
                 # print the time and where the file was saved on a newline
                 print(
                     f'Dataset saved. Elapsed time: {time.time() - t_roi:.2f} seconds \n Saved to: {savedir / f"plane_{p + 1}"}')
             print(f'-- Plane {p + 1} saved --')
 
-    def _save_by_roi(self, savedir, planes, frames, overwrite):
+    def _save_by_roi(self, savedir, planes, frames, overwrite, ext='.zarr'):
+        root = None
+        savedir = Path(savedir)
         print(f'Planes: {planes}')
         for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
             print(f'-- Saving ROI {idx + 1} --')
-
-            store = zarr.DirectoryStore(savedir / f'roi_{idx + 1}.zarr')
-            root = zarr.group(store, overwrite=overwrite)
-
+            if ext == '.zarr':
+                store = zarr.DirectoryStore(savedir)
+                root = zarr.group(store, overwrite=overwrite)
+            elif ext in ['.tif', '.tiff']:
+                savename = savedir / f'roi_{idx + 1}'
+                savename.mkdir(parents=True, exist_ok=True)
             for p in planes:
                 print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
                 t1 = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-                ds = root.create_dataset(name=f'plane_{p + 1}.zarr', data=pages, overwrite=overwrite)
-                ds.attrs['metadata'] = roi.roi_info
-                print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
+                if ext in ['.tif', '.tiff']:
+                    filename = savename / f'roi_{idx + 1}_plane_{p + 1}.tif'
+                    tifffile.imwrite(filename, pages, bigtiff=True)
+                elif ext == '.zarr':
+                    ds = root.create_dataset(name=f'plane_{p + 1}', data=pages, overwrite=overwrite)
+                    ds.attrs['metadata'] = roi.roi_info
+                    print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
 
     def __repr__(self):
         return self.data.__repr__()

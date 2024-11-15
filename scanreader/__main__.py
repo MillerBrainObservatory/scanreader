@@ -64,11 +64,14 @@ def main():
                         help="Save each ROI in its own folder, organized like 'zarr/roi_1/plane_1/, without this "
                              "arguemnet it would save like 'zarr/plane_1/roi_1'."
                         )
-    parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
-    # Commands
-    # nargs = '?' means the argument is optional, but must be a single value if provided
+
     parser.add_argument("--save", type=str, nargs='?',help="Path to save data to. If not provided, metadata will be "
                                                            "printed.")
+    parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
+    parser.add_argument("--tiff",  action='store_false', help="Flag to save as .tiff. Default is True")
+    parser.add_argument("--zarr", action='store_true', help="Flag to save as .zarr. Default is False")
+
+    # Commands
 
     args = parser.parse_args()
 
@@ -104,8 +107,13 @@ def main():
         # frames = None if frames == slice(None) else frames
         # zplanes = None if zplanes == slice(None) else zplanes
 
-        scan.save_as_zarr(savepath, frames=frames, planes=zplanes, by_roi=args.roi, overwrite=args.overwrite)
-
+        if args.zarr:
+            ext = '.zarr'
+        elif args.tiff:
+            ext = '.tif'
+        else:
+            raise NotImplementedError("Only .zarr and .tif are supported file formats.")
+        scan.save_as(savepath, frames=frames, planes=zplanes, by_roi=args.roi, overwrite=args.overwrite, ext=ext)
         # else:
         #     # convert slice(None) to None
         #     scan.save_as_zarr(savepath, frames=frames, planes=zplanes)

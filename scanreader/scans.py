@@ -33,6 +33,18 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
+def make_json_serializable(obj):
+    """Convert metadata to JSON serializable format."""
+    if isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_serializable(v) for v in obj]
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.integer, np.floating)):
+        return obj.item()
+    else:
+        return obj
 
 def get_metadata(file: os.PathLike):
     if not file:
@@ -113,7 +125,7 @@ def get_metadata(file: os.PathLike):
 
 class ScanLBM:
     def __init__(self, files: list[os.PathLike], **kwargs):
-        logger.debug(f"Initializing scan with files: {[str(x) for x in files]}")
+        logger.info(f"Initializing scan with files: {[str(x) for x in files]}")
         self.files = files
         if not self.files:
             logger.info("No files given to reader. Returning.")
@@ -177,8 +189,17 @@ class ScanLBM:
     #     else:
     #         self._save_by_plane(savedir, planes, frames, overwrite, ext=ext)
 
-    def save_as(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False,
-                ext='.tiff'):
+    def save_as(
+        self,
+        savedir: os.PathLike,
+        planes=None,
+        frames=None,
+        metadata=None,
+        overwrite=True,
+        by_roi=False,
+        ext='.tiff',
+        assemble=False
+    ):
         savedir = Path(savedir)
         if planes is None:
             planes = list(range(self.num_planes))
@@ -189,23 +210,88 @@ class ScanLBM:
         if metadata:
             self.metadata.update(metadata)
 
-        self._save_data(savedir, planes, frames, overwrite, ext, by_roi)
+        self.metadata = make_json_serializable(self.metadata)
+        if not savedir.exists():
+            logger.debug(f"Creating directory: {savedir}")
+            savedir.mkdir(parents=True)
+        if assemble:
+            self._save_assembled(savedir, planes, frames, overwrite, ext=ext, by_roi=by_roi)
+        else:
+            self._save_data(savedir, planes, frames, overwrite, ext, by_roi)
+
+    def _save_assembled(self, path, planes, frames, overwrite, ext, by_roi=False):
+        if by_roi:
+            raise NotImplementedError("Cannot assemble ROI's and save by ROI.")
+
+        x_in, y_in = slice(None), slice(None)
+
+        y_list = listify_index(y_in, self.height)
+        x_list = listify_index(x_in, self.width)
+
+        if [] in [*y_list, *x_list, planes, frames]:
+            return np.empty(0)
+
+        # cast to TCYX
+        item = da.empty(
+            [
+                len(frames),
+                len(planes),
+                len(y_list),
+                len(x_list),
+            ],
+            dtype=self.dtype,
+            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
+        )
+
+        # Initialize the starting index for the next iteration, only relevant for scan phase
+        current_x_start = 0
+
+        # Over each subfield in the field (only one for non-contiguous fields)
+        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
+        for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
+            # Read the required pages (and slice out the subfield)
+            pages = self._read_pages([0], planes, frames, yslice, xslice)
+
+            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
+            y_range = range(output_yslice.start, output_yslice.stop)
+
+            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
+            xs = [x - output_xslice.start for x in x_list if x in x_range]
+
+            # Assign to the output item
+            # Instead of using `output_xslice` directly, use `current_x_start` and calculate the width
+            x_width = output_xslice.stop - output_xslice.start
+            item[:, :, output_yslice, current_x_start:current_x_start + x_width] = pages[:, :, ys, xs]
+
+            # Update `current_x_start` for the next iteration
+            current_x_start += x_width
+        if ext in ['.tif', '.tiff']:
+            for p in range(item.shape[1]):
+                self._write_tiff(
+                    path,
+                   f'assembled_plane_{p + 1}',
+                    item[:, p, ...].compute(),
+                    metadata=self.metadata,
+                    overwrite=overwrite
+                )
 
     def _save_data(self, path, planes, frames, overwrite, ext, by_roi):
+        p = None
+
         path.mkdir(parents=True, exist_ok=True)
         print(f'Planes: {planes}')
 
         file_writer = self._get_file_writer(ext, overwrite)
-        yslices_xslices_rois = list(zip(self.yslices, self.xslices, self.rois))
+        roi_slices = list(zip(self.yslices, self.xslices, self.rois))
 
         if by_roi:
-            outer_iter = enumerate(yslices_xslices_rois)
-            inner_iter = planes
+            # When saving by ROI
+            outer_iter = enumerate(roi_slices)
             outer_label = 'ROI'
             inner_label = 'Plane'
         else:
+            # When saving by Plane
             outer_iter = enumerate(planes)
-            inner_iter = enumerate(yslices_xslices_rois)
             outer_label = 'Plane'
             inner_label = 'ROI'
 
@@ -213,23 +299,25 @@ class ScanLBM:
             print(f'-- Saving {outer_label} {outer_idx + 1} --')
 
             if by_roi:
+                # Outer loop over ROIs
                 slce_y, slce_x, roi = outer_val
                 subdir = path / f'roi_{outer_idx + 1}'
+                inner_iter = planes  # Inner loop over planes
             else:
+                # Outer loop over planes
                 p = outer_val
                 subdir = path / f'plane_{p + 1}'
+                inner_iter = roi_slices  # Inner loop over ROIs
 
             subdir.mkdir(parents=True, exist_ok=True)
-            if not by_roi:
-                current_inner_iter = yslices_xslices_rois
-            else:
-                current_inner_iter = inner_iter
 
-            for inner_idx, inner_val in enumerate(current_inner_iter):
+            for inner_idx, inner_val in enumerate(inner_iter):
                 if by_roi:
+                    # Inner loop over planes
                     p = inner_val
                     name = f'plane_{p + 1}'
                 else:
+                    # Inner loop over ROIs
                     slce_y, slce_x, roi = inner_val
                     name = f'roi_{inner_idx + 1}'
 
@@ -239,7 +327,6 @@ class ScanLBM:
                 # Read pages
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
 
-                # Save data
                 file_writer(subdir, name, pages, roi.roi_info if roi else None)
                 print(f'Dataset saved. Elapsed time: {time.time() - t_start:.2f} seconds')
 
@@ -252,72 +339,17 @@ class ScanLBM:
             raise ValueError(f'Unsupported file extension: {ext}')
 
     def _write_tiff(self, path, name, data, metadata=None, overwrite=True):
-        filename = Path(path / f'{name}.tif')
+        filename = Path(path / f'{name}.tiff')
         if filename.exists() and not overwrite:
             raise FileExistsError(f'File already exists: {filename}')
         tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata)
 
     def _write_zarr(self, path, name, data, metadata=None, overwrite=True):
-        store = zarr.DirectoryStore(path / name)
+        store = zarr.DirectoryStore(path)
         root = zarr.group(store, overwrite=overwrite)
         ds = root.create_dataset(name=name, data=data, overwrite=True)
         if metadata:
             ds.attrs['metadata'] = metadata
-
-    def _save_by_plane(self, savedir, planes, frames, overwrite, ext='.zarr'):
-        root = None
-        print(f'Planes: {planes}')
-        for p in planes:
-            print(f'-- Saving plane {p + 1} --')
-            # Need to append .zarr to the array because CaImAn checks for this extension when loading a dataset
-            if ext == '.zarr':
-                store = zarr.DirectoryStore(savedir / f'plane_{p + 1}')
-                root = zarr.group(store, overwrite=overwrite)
-            else:
-                savename = savedir / f'plane_{p + 1}'
-                savename.mkdir(parents=True, exist_ok=True)
-
-            for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
-                print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
-                t_roi = time.time()
-
-                pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-                if ext in ['.tif', '.tiff']:
-                    filename = savename / f'roi_{idx + 1}_plane_{p + 1}.tif'
-                    tifffile.imwrite(filename, pages, bigtiff=True)
-                elif ext == '.zarr':
-                    ds = root.create_dataset(name=f'roi_{idx + 1}', data=pages, overwrite=True)
-                    ds.attrs['metadata'] = roi.roi_info
-                # print the time and where the file was saved on a newline
-                print(
-                    f'Dataset saved. Elapsed time: {time.time() - t_roi:.2f} seconds \n Saved to: {savedir / f"plane_{p + 1}"}')
-            print(f'-- Plane {p + 1} saved --')
-
-    def _save_by_roi(self, savedir, planes, frames, overwrite, ext='.zarr'):
-        root = None
-        savedir = Path(savedir)
-        print(f'Planes: {planes}')
-        for idx, (slce_y, slce_x, roi) in enumerate(zip(self.yslices, self.xslices, self.rois)):
-            print(f'-- Saving ROI {idx + 1} --')
-            if ext == '.zarr':
-                store = zarr.DirectoryStore(savedir)
-                root = zarr.group(store, overwrite=overwrite)
-            elif ext in ['.tif', '.tiff']:
-                savename = savedir / f'roi_{idx + 1}'
-                savename.mkdir(parents=True, exist_ok=True)
-            for p in planes:
-                print(f'-- Creating dataset: ROI {idx + 1}, Plane {p + 1} --')
-                t1 = time.time()
-
-                pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-
-                if ext in ['.tif', '.tiff']:
-                    filename = savename / f'roi_{idx + 1}_plane_{p + 1}.tif'
-                    tifffile.imwrite(filename, pages, bigtiff=True)
-                elif ext == '.zarr':
-                    ds = root.create_dataset(name=f'plane_{p + 1}', data=pages, overwrite=overwrite)
-                    ds.attrs['metadata'] = roi.roi_info
-                    print(f'Dataset saved. Elapsed time: {time.time() - t1:.2f} seconds')
 
     def __repr__(self):
         return self.data.__repr__()
@@ -352,9 +384,7 @@ class ScanLBM:
         frame_list = listify_index(self.frame_slice, self.num_frames)
         channel_list = listify_index(self.channel_slice, self.num_channels)
         y_list = listify_index(y_in, self.height)
-        logger.debug(f'y_list: {y_list}')
         x_list = listify_index(x_in, self.width)
-        logger.debug(f'x_list: {x_list}')
 
         if [] in [*y_list, *x_list, channel_list, frame_list]:
             return np.empty(0)
@@ -371,40 +401,29 @@ class ScanLBM:
             chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
         )
 
-        start = time.time()
-
         # Initialize the starting index for the next iteration, only relevant for scan phase
         current_x_start = 0
 
         # Over each subfield in the field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
         for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
+
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
-            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
-            if self.fix_scan_offset:
-                phase = return_scan_offset(pages, nvals=4)
-                logger.info(f'roi {idx} with optimal phase shift of {phase} px')
-                if phase != 0:
-                    pages = fix_scan_phase(pages, phase)
-                    x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
-            else:
-                phase = 0
 
+            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
             y_range = range(output_yslice.start, output_yslice.stop)
+
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
 
             # Assign to the output item
             # Instead of using `output_xslice` directly, use `current_x_start` and calculate the width
-            x_width = output_xslice.stop - output_xslice.start - abs(phase)
+            x_width = output_xslice.stop - output_xslice.start
             item[:, :, output_yslice, current_x_start:current_x_start + x_width] = pages[:, :, ys, xs]
 
             # Update `current_x_start` for the next iteration
             current_x_start += x_width
-
-        print(f'Roi data loaded in {time.time() - start} seconds')
-
         return item[..., image_slice_y, image_slice_x]
 
     @property

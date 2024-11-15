@@ -70,6 +70,7 @@ def main():
     parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
     parser.add_argument("--tiff",  action='store_false', help="Flag to save as .tiff. Default is True")
     parser.add_argument("--zarr", action='store_true', help="Flag to save as .zarr. Default is False")
+    parser.add_argument("--assemble", action='store_true', help="Flag to assemble the each ROI into a single image.")
 
     # Commands
 
@@ -111,7 +112,15 @@ def main():
             ext = '.tiff'
         else:
             raise NotImplementedError("Only .zarr and .tif are supported file formats.")
-        scan.save_as(savepath, frames=frames, planes=zplanes, by_roi=args.roi, overwrite=args.overwrite, ext=ext)
+        scan.save_as(
+            savepath,
+            frames=frames,
+            planes=zplanes,
+            by_roi=args.roi,
+            overwrite=args.overwrite,
+            ext=ext,
+            assemble=args.assemble
+        )
 
         return scan
     else:

@@ -78,7 +78,7 @@ def main():
     if not args.path:
         args.path = sr.lbm_home_dir
 
-    files = sr.get_files(args.path, ext='.tif')
+    files = sr.get_files(args.path, ext='.tiff')
     if len(files) < 1:
         raise ValueError(
             f"Input path given is a non-tiff file: {args.path}.\n"
@@ -104,30 +104,14 @@ def main():
 
         frames = listify_index(process_slice_str(args.frames), scan.num_frames)
         zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
-        # frames = None if frames == slice(None) else frames
-        # zplanes = None if zplanes == slice(None) else zplanes
 
         if args.zarr:
             ext = '.zarr'
         elif args.tiff:
-            ext = '.tif'
+            ext = '.tiff'
         else:
             raise NotImplementedError("Only .zarr and .tif are supported file formats.")
         scan.save_as(savepath, frames=frames, planes=zplanes, by_roi=args.roi, overwrite=args.overwrite, ext=ext)
-        # else:
-        #     # convert slice(None) to None
-        #     scan.save_as_zarr(savepath, frames=frames, planes=zplanes)
-        #     print('Separating z-planes by ROI.')
-        #     for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
-        #         for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):
-        #             data = scan[:, plane, roi, :]
-        #             name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
-        #             tifffile.imwrite(name, data, bigtiff=True)
-        # else:
-        #     for plane in tqdm(range(scan.num_planes), desc="Planes"):
-        #         data = scan[:, plane, :, :]
-        #         name = savepath / f'assembled_plane_{plane + 1}.tif'
-        #         tifffile.imwrite(name, data, bigtiff=True)
 
         return scan
     else:

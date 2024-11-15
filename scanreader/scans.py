@@ -1,12 +1,10 @@
 from __future__ import annotations
 import itertools
+import functools
 import logging
-import json
 import os
 from pathlib import Path
 import time
-from typing import re
-
 import numpy as np
 import tifffile
 import zarr
@@ -125,7 +123,8 @@ class ScanLBM:
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
         self._trim_y = kwargs.get("trim_roi_y", (0, 0))
         self.metadata = kwargs.get("metadata", None)
-        self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
+        tiffs = Path(files[0]).parent.glob("*.tif*")
+        self.tiff_files = [tifffile.TiffFile(fname) for fname in tiffs]
 
         if not self.metadata:
             self.metadata = get_metadata(files[0])
@@ -160,23 +159,110 @@ class ScanLBM:
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
+    # def save_as(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False,
+    #             ext='.tiff'):
+    #     savedir = Path(savedir)
+    #     if planes is None:
+    #         planes = list(range(0, self.num_planes))
+    #     elif not isinstance(planes, (list, tuple)):
+    #         planes = [planes]
+    #     if frames is None:
+    #         frames = list(range(0, self.num_frames))
+    #     if metadata:
+    #         # append each item in the metadata dict to self.metadata
+    #         for k, v in metadata.items():
+    #             self.metadata[k] = v
+    #     if by_roi:
+    #         self._save_by_roi(savedir, planes, frames, overwrite, ext=ext)
+    #     else:
+    #         self._save_by_plane(savedir, planes, frames, overwrite, ext=ext)
+
     def save_as(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False,
                 ext='.tiff'):
         savedir = Path(savedir)
         if planes is None:
-            planes = list(range(0, self.num_planes))
+            planes = list(range(self.num_planes))
         elif not isinstance(planes, (list, tuple)):
             planes = [planes]
         if frames is None:
-            frames = list(range(0, self.num_frames))
+            frames = list(range(self.num_frames))
         if metadata:
-            # append each item in the metadata dict to self.metadata
-            for k, v in metadata.items():
-                self.metadata[k] = v
+            self.metadata.update(metadata)
+
+        self._save_data(savedir, planes, frames, overwrite, ext, by_roi)
+
+    def _save_data(self, path, planes, frames, overwrite, ext, by_roi):
+        path.mkdir(parents=True, exist_ok=True)
+        print(f'Planes: {planes}')
+
+        file_writer = self._get_file_writer(ext, overwrite)
+        yslices_xslices_rois = list(zip(self.yslices, self.xslices, self.rois))
+
         if by_roi:
-            self._save_by_roi(savedir, planes, frames, overwrite, ext=ext)
+            outer_iter = enumerate(yslices_xslices_rois)
+            inner_iter = planes
+            outer_label = 'ROI'
+            inner_label = 'Plane'
         else:
-            self._save_by_plane(savedir, planes, frames, overwrite, ext=ext)
+            outer_iter = enumerate(planes)
+            inner_iter = enumerate(yslices_xslices_rois)
+            outer_label = 'Plane'
+            inner_label = 'ROI'
+
+        for outer_idx, outer_val in outer_iter:
+            print(f'-- Saving {outer_label} {outer_idx + 1} --')
+
+            if by_roi:
+                slce_y, slce_x, roi = outer_val
+                subdir = path / f'roi_{outer_idx + 1}'
+            else:
+                p = outer_val
+                subdir = path / f'plane_{p + 1}'
+
+            subdir.mkdir(parents=True, exist_ok=True)
+            if not by_roi:
+                current_inner_iter = yslices_xslices_rois
+            else:
+                current_inner_iter = inner_iter
+
+            for inner_idx, inner_val in enumerate(current_inner_iter):
+                if by_roi:
+                    p = inner_val
+                    name = f'plane_{p + 1}'
+                else:
+                    slce_y, slce_x, roi = inner_val
+                    name = f'roi_{inner_idx + 1}'
+
+                print(f'-- Creating dataset: {outer_label} {outer_idx + 1}, {inner_label} {inner_idx + 1} --')
+                t_start = time.time()
+
+                # Read pages
+                pages = self._read_pages([0], [p], frames, slce_y, slce_x)
+
+                # Save data
+                file_writer(subdir, name, pages, roi.roi_info if roi else None)
+                print(f'Dataset saved. Elapsed time: {time.time() - t_start:.2f} seconds')
+
+    def _get_file_writer(self, ext, overwrite):
+        if ext in ['.tif', '.tiff']:
+            return functools.partial(self._write_tiff, overwrite=overwrite)
+        elif ext == '.zarr':
+            return functools.partial(self._write_zarr, overwrite=overwrite)
+        else:
+            raise ValueError(f'Unsupported file extension: {ext}')
+
+    def _write_tiff(self, path, name, data, metadata=None, overwrite=True):
+        filename = Path(path / f'{name}.tif')
+        if filename.exists() and not overwrite:
+            raise FileExistsError(f'File already exists: {filename}')
+        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata)
+
+    def _write_zarr(self, path, name, data, metadata=None, overwrite=True):
+        store = zarr.DirectoryStore(path / name)
+        root = zarr.group(store, overwrite=overwrite)
+        ds = root.create_dataset(name=name, data=data, overwrite=True)
+        if metadata:
+            ds.attrs['metadata'] = metadata
 
     def _save_by_plane(self, savedir, planes, frames, overwrite, ext='.zarr'):
         root = None
@@ -224,6 +310,7 @@ class ScanLBM:
                 t1 = time.time()
 
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
+
                 if ext in ['.tif', '.tiff']:
                     filename = savename / f'roi_{idx + 1}_plane_{p + 1}.tif'
                     tifffile.imwrite(filename, pages, bigtiff=True)

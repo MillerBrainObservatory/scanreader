@@ -1,12 +1,10 @@
 from __future__ import annotations
 import itertools
+import functools
 import logging
-import json
 import os
 from pathlib import Path
 import time
-from typing import re
-
 import numpy as np
 import tifffile
 import zarr
@@ -35,6 +33,18 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
+def make_json_serializable(obj):
+    """Convert metadata to JSON serializable format."""
+    if isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_serializable(v) for v in obj]
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.integer, np.floating)):
+        return obj.item()
+    else:
+        return obj
 
 def get_metadata(file: os.PathLike):
     if not file:
@@ -42,6 +52,12 @@ def get_metadata(file: os.PathLike):
 
     tiff_file = tifffile.TiffFile(file)
     meta = tiff_file.scanimage_metadata
+    str_f = tiff_file.filename
+
+    if 'plane_' in str_f and meta is None:
+        raise ValueError(f"No metadata found in {str_f}. Files with 'plane_' in the name indicated previously "
+                         f"extracted data. The called function operates on raw scanimage tiff files.")
+
     si = meta.get('FrameData', {})
     if not si:
         print(f"No FrameData found in {file}.")
@@ -107,39 +123,9 @@ def get_metadata(file: os.PathLike):
     }
 
 
-def get_metadata_v2(file: os.PathLike):
-
-    if not file:
-        return
-    tiff_file = tifffile.TiffFile(file)
-
-    series = tiff_file.series[0]
-    scanimage_metadata = tiff_file.scanimage_metadata
-    roi_group = scanimage_metadata["RoiGroups"]["imagingRoiGroup"]["rois"]
-
-    pages = tiff_file.pages
-
-    return {
-        "roi_info": roi_group,
-        "image_height": pages[0].shape[0],
-        "image_width": pages[0].shape[1],
-        "num_pages": len(pages),
-        "dims": series.dims,
-        "ndim": series.ndim,
-        "dtype": 'uint16',
-        "is_multifile": series.is_multifile,
-        "nbytes": series.nbytes,
-        "shape": series.shape,
-        "size": series.size,
-        "dim_labels": series.sizes,
-        "num_rois": len(roi_group),
-        "si": scanimage_metadata["FrameData"],
-    }
-
-
 class ScanLBM:
     def __init__(self, files: list[os.PathLike], **kwargs):
-        logger.debug(f"Initializing scan with files: {[str(x) for x in files]}")
+        logger.info(f"Initializing scan with files: {[str(x) for x in files]}")
         self.files = files
         if not self.files:
             logger.info("No files given to reader. Returning.")
@@ -149,7 +135,8 @@ class ScanLBM:
         self._trim_x = kwargs.get("trim_roi_x", (0, 0))
         self._trim_y = kwargs.get("trim_roi_y", (0, 0))
         self.metadata = kwargs.get("metadata", None)
-        self.tiff_files = [tifffile.TiffFile(fname) for fname in files]
+        tiffs = Path(files[0]).parent.glob("*.tif*")
+        self.tiff_files = [tifffile.TiffFile(fname) for fname in tiffs]
 
         if not self.metadata:
             self.metadata = get_metadata(files[0])
@@ -168,11 +155,6 @@ class ScanLBM:
         self.fields = self._create_fields()
         self._join_contiguous_fields()
 
-        # if len(self.fields) > 1:
-        #     raise NotImplementedError("Too many fields for an LBM recording.")
-
-        # Initialize dynamic variables -----
-
         # Adjust height/width for trimmings
         self._width = self.fields[0].width - sum(self.trim_x)
         self._height = self.fields[0].height - sum(self.trim_y)
@@ -189,40 +171,167 @@ class ScanLBM:
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
-    def save_as_tiff(self, savedir: os.PathLike, metadata=None, prepend_str='extracted'):
+    def save_as(
+        self,
+        savedir: os.PathLike,
+        planes=None,
+        frames=None,
+        metadata=None,
+        overwrite=True,
+        by_roi=False,
+        ext='.tiff',
+        assemble=False
+    ):
         savedir = Path(savedir)
-        if not metadata:
-            metadata = {}
-
-        # Generate the reconstruction metadata
-        reconstruction_metadata = self._generate_reconstruction_metadata()
-
-        # Combine existing metadata with reconstruction metadata
-        combined_metadata = {**metadata, 'reconstruction_metadata': reconstruction_metadata}
-        if isinstance(self.channel_slice, slice):
-            channels = list(range(self.num_channels))[self.channel_slice]
-        elif isinstance(self.channel_slice, int):
-            channels = [self.channel_slice]
-        else:
-            raise ValueError(
-                f"ScanLBM.channel_size should be an integer or slice object, not {type(self.channel_slice)}.")
-        for idx, num in enumerate(channels):
-            filename = savedir / f'{prepend_str}_plane_{num}.tif'
-            data = self[:, channels, :, :]
-            tifffile.imwrite(filename, data, bigtiff=True, metadata=combined_metadata)
-
-    def save_as_zarr(self, savedir: os.PathLike, planes=None, metadata=None, prepend_str='extracted'):
-        savedir = Path(savedir)
-        if not metadata:
-            metadata = self.arr_metadata
         if planes is None:
-            planes = list(range(0, self.num_planes))
-        if not isinstance(planes, (list, tuple)):
+            planes = list(range(self.num_planes))
+        elif not isinstance(planes, (list, tuple)):
             planes = [planes]
+        if frames is None:
+            frames = list(range(self.num_frames))
+        if metadata:
+            self.metadata.update(metadata)
 
-        for idx in planes:
-            filename = savedir / f'{prepend_str}_plane_{idx}.zarr'
-            da.to_zarr(self[:, idx, :, :], filename)
+        self.metadata = make_json_serializable(self.metadata)
+        if not savedir.exists():
+            logger.debug(f"Creating directory: {savedir}")
+            savedir.mkdir(parents=True)
+        if assemble:
+            self._save_assembled(savedir, planes, frames, overwrite, ext=ext, by_roi=by_roi)
+        else:
+            self._save_data(savedir, planes, frames, overwrite, ext, by_roi)
+
+    def _save_assembled(self, path, planes, frames, overwrite, ext, by_roi=False):
+        if by_roi:
+            raise NotImplementedError("Cannot assemble ROI's and save by ROI.")
+
+        x_in, y_in = slice(None), slice(None)
+
+        y_list = listify_index(y_in, self.height)
+        x_list = listify_index(x_in, self.width)
+
+        if [] in [*y_list, *x_list, planes, frames]:
+            return np.empty(0)
+
+        # cast to TCYX
+        item = da.empty(
+            [
+                len(frames),
+                len(planes),
+                len(y_list),
+                len(x_list),
+            ],
+            dtype=self.dtype,
+            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
+        )
+
+        # Initialize the starting index for the next iteration, only relevant for scan phase
+        current_x_start = 0
+
+        # Over each subfield in the field (only one for non-contiguous fields)
+        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
+        for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
+            # Read the required pages (and slice out the subfield)
+            pages = self._read_pages([0], planes, frames, yslice, xslice)
+
+            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
+            y_range = range(output_yslice.start, output_yslice.stop)
+
+            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
+            xs = [x - output_xslice.start for x in x_list if x in x_range]
+
+            # Assign to the output item
+            # Instead of using `output_xslice` directly, use `current_x_start` and calculate the width
+            x_width = output_xslice.stop - output_xslice.start
+            item[:, :, output_yslice, current_x_start:current_x_start + x_width] = pages[:, :, ys, xs]
+
+            # Update `current_x_start` for the next iteration
+            current_x_start += x_width
+        if ext in ['.tif', '.tiff']:
+            for p in range(item.shape[1]):
+                self._write_tiff(
+                    path,
+                   f'assembled_plane_{p + 1}',
+                    item[:, p, ...].compute(),
+                    metadata=self.metadata,
+                    overwrite=overwrite
+                )
+
+    def _save_data(self, path, planes, frames, overwrite, ext, by_roi):
+        p = None
+
+        path.mkdir(parents=True, exist_ok=True)
+        print(f'Planes: {planes}')
+
+        file_writer = self._get_file_writer(ext, overwrite)
+        roi_slices = list(zip(self.yslices, self.xslices, self.rois))
+
+        if by_roi:
+            # When saving by ROI
+            outer_iter = enumerate(roi_slices)
+            outer_label = 'ROI'
+            inner_label = 'Plane'
+        else:
+            # When saving by Plane
+            outer_iter = enumerate(planes)
+            outer_label = 'Plane'
+            inner_label = 'ROI'
+
+        for outer_idx, outer_val in outer_iter:
+            print(f'-- Saving {outer_label} {outer_idx + 1} --')
+
+            if by_roi:
+                # Outer loop over ROIs
+                slce_y, slce_x, roi = outer_val
+                subdir = path / f'roi_{outer_idx + 1}'
+                inner_iter = planes  # Inner loop over planes
+            else:
+                # Outer loop over planes
+                p = outer_val
+                subdir = path / f'plane_{p + 1}'
+                inner_iter = roi_slices  # Inner loop over ROIs
+
+            subdir.mkdir(parents=True, exist_ok=True)
+
+            for inner_idx, inner_val in enumerate(inner_iter):
+                if by_roi:
+                    # Inner loop over planes
+                    p = inner_val
+                    name = f'plane_{p + 1}'
+                else:
+                    # Inner loop over ROIs
+                    slce_y, slce_x, roi = inner_val
+                    name = f'roi_{inner_idx + 1}'
+
+                print(f'-- Creating dataset: {outer_label} {outer_idx + 1}, {inner_label} {inner_idx + 1} --')
+                t_start = time.time()
+
+                # Read pages
+                pages = self._read_pages([0], [p], frames, slce_y, slce_x)
+
+                file_writer(subdir, name, pages, roi.roi_info if roi else None)
+                print(f'Dataset saved. Elapsed time: {time.time() - t_start:.2f} seconds')
+
+    def _get_file_writer(self, ext, overwrite):
+        if ext in ['.tif', '.tiff']:
+            return functools.partial(self._write_tiff, overwrite=overwrite)
+        elif ext == '.zarr':
+            return functools.partial(self._write_zarr, overwrite=overwrite)
+        else:
+            raise ValueError(f'Unsupported file extension: {ext}')
+
+    def _write_tiff(self, path, name, data, metadata=None, overwrite=True):
+        filename = Path(path / f'{name}.tiff')
+        if filename.exists() and not overwrite:
+            raise FileExistsError(f'File already exists: {filename}')
+        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata)
+
+    def _write_zarr(self, path, name, data, metadata=None, overwrite=True):
+        store = zarr.DirectoryStore(path)
+        root = zarr.group(store, overwrite=overwrite)
+        ds = root.create_dataset(name=name, data=data, overwrite=True)
+        if metadata:
+            ds.attrs['metadata'] = metadata
 
     def __repr__(self):
         return self.data.__repr__()
@@ -257,9 +366,7 @@ class ScanLBM:
         frame_list = listify_index(self.frame_slice, self.num_frames)
         channel_list = listify_index(self.channel_slice, self.num_channels)
         y_list = listify_index(y_in, self.height)
-        logger.debug(f'y_list: {y_list}')
         x_list = listify_index(x_in, self.width)
-        logger.debug(f'x_list: {x_list}')
 
         if [] in [*y_list, *x_list, channel_list, frame_list]:
             return np.empty(0)
@@ -276,40 +383,29 @@ class ScanLBM:
             chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
         )
 
-        start = time.time()
-
         # Initialize the starting index for the next iteration, only relevant for scan phase
         current_x_start = 0
 
         # Over each subfield in the field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
         for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
+
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
-            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
-            if self.fix_scan_offset:
-                phase = return_scan_offset(pages, nvals=4)
-                logger.info(f'roi {idx} with optimal phase shift of {phase} px')
-                if phase != 0:
-                    pages = fix_scan_phase(pages, phase)
-                    x_range = range(output_xslice.start, output_xslice.stop - abs(phase))  # adjust for offset
-            else:
-                phase = 0
 
+            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
             y_range = range(output_yslice.start, output_yslice.stop)
+
             ys = [[y - output_yslice.start] for y in y_list if y in y_range]
             xs = [x - output_xslice.start for x in x_list if x in x_range]
 
             # Assign to the output item
             # Instead of using `output_xslice` directly, use `current_x_start` and calculate the width
-            x_width = output_xslice.stop - output_xslice.start - abs(phase)
+            x_width = output_xslice.stop - output_xslice.start
             item[:, :, output_yslice, current_x_start:current_x_start + x_width] = pages[:, :, ys, xs]
 
             # Update `current_x_start` for the next iteration
             current_x_start += x_width
-
-        print(f'Roi data loaded in {time.time() - start} seconds')
-
         return item[..., image_slice_y, image_slice_x]
 
     @property
@@ -523,7 +619,6 @@ class ScanLBM:
         roi_infos = roi_infos if isinstance(roi_infos, list) else [roi_infos]
         roi_infos = list(filter(lambda r: isinstance(r['zs'], (int, float, list)),
                                 roi_infos))  # discard empty/malformed ROIs
-
 
         rois = [ROI(roi_info) for roi_info in roi_infos]
         return rois

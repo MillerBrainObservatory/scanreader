@@ -1,8 +1,6 @@
 """
 __main__.py: scanreader entrypoint.
 """
-
-import os
 import argparse
 import logging
 import warnings
@@ -10,9 +8,7 @@ from functools import partial
 from pathlib import Path
 import scanreader as sr
 from scanreader.scans import get_metadata
-from scanreader import get_files, get_single_file
-from tqdm import tqdm
-import tifffile
+from scanreader.utils import listify_index
 
 # set logging to critical only
 logging.basicConfig()
@@ -24,6 +20,7 @@ warnings.filterwarnings("ignore")
 
 print = partial(print, flush=True)
 
+
 def print_params(params, indent=5):
     for k, v in params.items():
         # if value is a dictionary, recursively call the function
@@ -33,38 +30,56 @@ def print_params(params, indent=5):
         else:
             print(" " * indent + f"{k}: {v}")
 
+
 def main():
     parser = argparse.ArgumentParser(description="Scanreader CLI for processing ScanImage tiff files.")
-    parser.add_argument("path", type=str, nargs="?", default=None,
+
+    parser.add_argument("path",
+                        type=str,
+                        default=None,
                         help="Path to the file or directory to process.")
-    parser.add_argument("-t", "--frames", type=str, default=":",
-                        help="Frames to read. Use slice notation like NumPy arrays (e.g., 1:50, 10:100:2).")
-    parser.add_argument("-z", "--zplanes", type=str, default=":",
+    parser.add_argument("--frames",
+                        type=str,
+                        default=":", # all frames
+                        help="Frames to read. Use slice notation like NumPy arrays ("
+                             "e.g., 1:50 gives frames 1 to 50, 10:100:2 gives frames 10, 20, 30...)."
+                        )
+    parser.add_argument("--zplanes",
+                        type=str,
+                        default=":", # all planes
                         help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2).")
-    parser.add_argument("-x", "--trim_x", type=int, nargs=2, default=(0, 0),
-                        help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right edges).")
-    parser.add_argument("-y", "--trim_y", type=int, nargs=2, default=(0, 0),
+    parser.add_argument("--trim_x",
+                        type=int,
+                        nargs=2,
+                        default=(0, 0),
+                        help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right "
+                             "edges).")
+    parser.add_argument("--trim_y", type=int, nargs=2, default=(0, 0),
                         help="Number of y-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for top and bottom edges).")
     # Boolean Flags
-    parser.add_argument("-m", "--metadata", action="store_true",
-                        help="Print a dictionary of metadata.")
-    parser.add_argument( "--volume",
-                         action='store_true',
-                         help="Save the data as a 3D volumetric recording"
-                         )
-    parser.add_argument( "--roi",
-                         action='store_true',
-                         help="Save each ROI in its own folder"
-                         )
+    parser.add_argument( "--metadata", action="store_true",
+                        help="Print a dictionary of scanimage metadata for files at the given path.")
+    parser.add_argument("--roi",
+                        action='store_true',
+                        help="Save each ROI in its own folder, organized like 'zarr/roi_1/plane_1/, without this "
+                             "arguemnet it would save like 'zarr/plane_1/roi_1'."
+                        )
+
+    parser.add_argument("--save", type=str, nargs='?',help="Path to save data to. If not provided, metadata will be "
+                                                           "printed.")
+    parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
+    parser.add_argument("--tiff",  action='store_false', help="Flag to save as .tiff. Default is True")
+    parser.add_argument("--zarr", action='store_true', help="Flag to save as .zarr. Default is False")
+    parser.add_argument("--assemble", action='store_true', help="Flag to assemble the each ROI into a single image.")
+
     # Commands
-    parser.add_argument("--extract", type=str, help="Extract data to designated filetype")
 
     args = parser.parse_args()
 
     if not args.path:
         args.path = sr.lbm_home_dir
 
-    files = sr.get_files(args.path, ext='.tif')
+    files = sr.get_files(args.path, ext='.tiff')
     if len(files) < 1:
         raise ValueError(
             f"Input path given is a non-tiff file: {args.path}.\n"
@@ -78,12 +93,9 @@ def main():
         # filter out the verbose scanimage frame/roi metadata
         print_params({k: v for k, v in metadata.items() if k not in ['si', 'roi_info']})
 
-    if args.extract:
-        savepath = Path(args.extract).expanduser()
+    if args.save:
+        savepath = Path(args.save).expanduser()
         print(f'Saving z-planes to {savepath}.')
-
-        frames = process_slice_str(args.frames)
-        zplanes = process_slice_str(args.zplanes)
 
         scan = sr.ScanLBM(
             files,
@@ -91,23 +103,24 @@ def main():
             trim_roi_y=args.trim_y,
         )
 
-        if args.volume:
-            data = scan[:]
+        frames = listify_index(process_slice_str(args.frames), scan.num_frames)
+        zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
 
-        # --volume
-        # --roi
-        if args.roi:
-            print('Separating z-planes by ROI.')
-            for plane in tqdm(range(scan.num_planes), desc="Planes", leave=True):
-                for roi in tqdm(scan.yslices, desc=f"ROIs for plane {plane + 1}", leave=False):
-                    data = scan[:, plane, roi, :]
-                    name = savepath / f'assembled_plane_{plane + 1}_roi_{roi}.tif'
-                    tifffile.imwrite(name, data, bigtiff=True)
+        if args.zarr:
+            ext = '.zarr'
+        elif args.tiff:
+            ext = '.tiff'
         else:
-            for plane in tqdm(range(scan.num_planes), desc="Planes"):
-                data = scan[:, plane, :, :]
-                name = savepath / f'assembled_plane_{plane + 1}.tif'
-                tifffile.imwrite(name, data, bigtiff=True)
+            raise NotImplementedError("Only .zarr and .tif are supported file formats.")
+        scan.save_as(
+            savepath,
+            frames=frames,
+            planes=zplanes,
+            by_roi=args.roi,
+            overwrite=args.overwrite,
+            ext=ext,
+            assemble=args.assemble
+        )
 
         return scan
     else:

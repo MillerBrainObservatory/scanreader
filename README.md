@@ -12,10 +12,10 @@ All fields have the same number of channels (or z-planes) and number of frames/t
 Install the latest version with `pip`
 
 ```shell
-pip3 install git+https://github.com/MillerBrainObservatory/scanreader.git
+pip install git+https://github.com/MillerBrainObservatory/scanreader.git
 ```
 
-## Usage
+## Python Usage
 
 ```python
 import scanreader
@@ -42,9 +42,103 @@ Scan object indexes can be:
 
 No boolean indexing is yet supported.
 
-## Details on data loading (for future developers)
+## Command Line Usage
 
-### Preamble
+`scanreader` is a command-line interface (CLI) tool for processing ScanImage TIFF files. It allows users to read, process, and save imaging data with options for selecting specific frames, planes, regions of interest (ROIs), and more.
+
+### Basic Usage
+
+```bash
+python scanreader.py [OPTIONS] PATH
+```
+
+- `PATH`: Path to the file or directory containing the ScanImage TIFF files to process.
+
+### Optional Arguments
+
+- `--frames FRAME_SLICE`: Frames to read. Use slice notation like NumPy arrays (e.g., `1:50` reads frames 1 to 49, `10:100:2` reads every second frame from 10 to 98). Default is `:` (all frames).
+
+- `--zplanes PLANE_SLICE`: Z-planes to read. Use slice notation (e.g., `1:50`, `5:15:2`). Default is `:` (all planes).
+
+- `--trim_x LEFT RIGHT`: Number of x-pixels to trim from each ROI. Provide two integers for left and right edges (e.g., `--trim_x 4 4`). Default is `0 0` (no trimming).
+
+- `--trim_y TOP BOTTOM`: Number of y-pixels to trim from each ROI. Provide two integers for top and bottom edges (e.g., `--trim_y 4 4`). Default is `0 0` (no trimming).
+
+- `--metadata`: Print a dictionary of ScanImage metadata for the files at the given path.
+
+- `--roi`: Save each ROI in its own folder, organized as `zarr/roi_1/plane_1/`. Without this argument, data is saved as `zarr/plane_1/roi_1`.
+
+- `--save [SAVE_PATH]`: Path to save processed data. If not provided, metadata will be printed instead of saving data.
+
+- `--overwrite`: Overwrite existing files when saving data.
+
+- `--tiff`: Save data in TIFF format. Default is `True`.
+
+- `--zarr`: Save data in Zarr format. Default is `False`.
+
+- `--assemble`: Assemble each ROI into a single image.
+
+### Examples
+
+#### Print Metadata
+
+To print metadata for the TIFF files in a directory:
+
+```bash
+python scanreader.py /path/to/data --metadata
+```
+
+#### Save All Planes and Frames as TIFF
+
+To save all planes and frames to a specified directory in TIFF format:
+
+```bash
+python scanreader.py /path/to/data --save /path/to/output --tiff
+```
+
+#### Save Specific Frames and Planes as Zarr
+
+To save frames 10 to 50 and planes 1 to 5 in Zarr format:
+
+```bash
+python scanreader.py /path/to/data --frames 10:51 --zplanes 1:6 --save /path/to/output --zarr
+```
+
+#### Save with Trimming and Overwrite Existing Files
+
+To trim 4 pixels from each edge, overwrite existing files, and save:
+
+```bash
+python scanreader.py /path/to/data --trim_x 4 4 --trim_y 4 4 --save /path/to/output --overwrite
+```
+
+#### Save Each ROI Separately
+
+To save each ROI in its own folder:
+
+```bash
+python scanreader.py /path/to/data --save /path/to/output --roi
+```
+
+### Notes
+
+- **Slice Notation**: When specifying frames or z-planes, use slice notation as you would in NumPy arrays. For example, `--frames 0:100:2` selects every second frame from 0 to 99.
+
+- **Default Behavior**: If `--save` is not provided, the program will print metadata by default.
+
+- **File Formats**: By default, data is saved in TIFF format unless `--zarr` is specified.
+
+- **Trimming**: The `--trim_x` and `--trim_y` options allow you to remove unwanted pixels from the edges of each ROI.
+
+### Help
+
+For more information on the available options, run:
+
+```bash
+python scanreader.py --help
+```
+
+### Details on data loading (for future developers)
 
 Matlab stores data column by column ("Fortran order"), while NumPy by default stores them row by row ("C order").
 This **doesn't affect indexing**, but **may affect performance**.

@@ -171,24 +171,6 @@ class ScanLBM:
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
-    # def save_as(self, savedir: os.PathLike, planes=None, frames=None, metadata=None, overwrite=True, by_roi=False,
-    #             ext='.tiff'):
-    #     savedir = Path(savedir)
-    #     if planes is None:
-    #         planes = list(range(0, self.num_planes))
-    #     elif not isinstance(planes, (list, tuple)):
-    #         planes = [planes]
-    #     if frames is None:
-    #         frames = list(range(0, self.num_frames))
-    #     if metadata:
-    #         # append each item in the metadata dict to self.metadata
-    #         for k, v in metadata.items():
-    #             self.metadata[k] = v
-    #     if by_roi:
-    #         self._save_by_roi(savedir, planes, frames, overwrite, ext=ext)
-    #     else:
-    #         self._save_by_plane(savedir, planes, frames, overwrite, ext=ext)
-
     def save_as(
         self,
         savedir: os.PathLike,

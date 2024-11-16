@@ -75,7 +75,7 @@ def get_files(
         List of absolute filenames.
     """
     if '.' in ext or 'tiff' in ext:
-        ext = 'tif'
+        ext = 'tif' #glob tiff and tif
     if isinstance(pathnames, (list, tuple)):
         out_files = []
         excl_files = []

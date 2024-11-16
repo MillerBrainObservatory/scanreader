@@ -33,6 +33,7 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
+
 def make_json_serializable(obj):
     """Convert metadata to JSON serializable format."""
     if isinstance(obj, dict):
@@ -45,6 +46,7 @@ def make_json_serializable(obj):
         return obj.item()
     else:
         return obj
+
 
 def get_metadata(file: os.PathLike):
     if not file:
@@ -167,20 +169,20 @@ class ScanLBM:
         self._xslices_out = self.fields[0].output_xslices
         self._yslices_out = self.fields[0].output_yslices
 
-        self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
+        self._data = da.empty((self.num_frames,self.num_channels,self.height, self.width), chunks=CHUNKS)
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
     def save_as(
-        self,
-        savedir: os.PathLike,
-        planes=None,
-        frames=None,
-        metadata=None,
-        overwrite=True,
-        by_roi=False,
-        ext='.tiff',
-        assemble=False
+            self,
+            savedir: os.PathLike,
+            planes=None,
+            frames=None,
+            metadata=None,
+            overwrite=True,
+            by_roi=False,
+            ext='.tiff',
+            assemble=False
     ):
         savedir = Path(savedir)
         if planes is None:
@@ -203,7 +205,9 @@ class ScanLBM:
 
     def _save_assembled(self, path, planes, frames, overwrite, ext, by_roi=False):
         if by_roi:
-            raise NotImplementedError("Cannot assemble ROI's and save by ROI.")
+            raise NotImplementedError("--assemble and --roi both given as arguments, Cannot assemble ROI's and save by ROI.")
+
+        logger.info(f"Saving assembled data to {path}")
 
         x_in, y_in = slice(None), slice(None)
 
@@ -231,6 +235,7 @@ class ScanLBM:
         # Over each subfield in the field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
         for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
+            logger.info(f"Processing subfield {idx + 1} of {len(self.yslices)}")
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], planes, frames, yslice, xslice)
 
@@ -247,12 +252,14 @@ class ScanLBM:
 
             # Update `current_x_start` for the next iteration
             current_x_start += x_width
+
+            logger.info(f"Subfield {idx + 1} processed.")
         if ext in ['.tif', '.tiff']:
             for p in range(item.shape[1]):
                 self._write_tiff(
                     path,
-                   f'assembled_plane_{p + 1}',
-                    item[:, p, ...].compute(),
+                    f'assembled_plane_{p + 1}',
+                    item[:, p, ...],
                     metadata=self.metadata,
                     overwrite=overwrite
                 )
@@ -350,7 +357,7 @@ class ScanLBM:
         return self._data
 
     def __str__(self):
-        return f"Tiled shape: {self.shape}"
+        return f"Tiled shape: {self.shape} with axes {self.dims} and dtype {self.dtype}."
 
     def __getitem__(self, key):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
@@ -389,7 +396,6 @@ class ScanLBM:
         # Over each subfield in the field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
         for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
-
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
 

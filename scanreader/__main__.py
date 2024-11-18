@@ -14,7 +14,7 @@ from scanreader.utils import listify_index
 # set logging to critical only
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.CRITICAL)
+logger.setLevel(logging.WARNING)
 
 # suppress warnings
 warnings.filterwarnings("ignore")
@@ -34,7 +34,6 @@ def print_params(params, indent=5):
 
 def main():
     parser = argparse.ArgumentParser(description="Scanreader CLI for processing ScanImage tiff files.")
-
     parser.add_argument("path",
                         type=str,
                         default=None,
@@ -73,13 +72,20 @@ def main():
     parser.add_argument("--tiff", action='store_false', help="Flag to save as .tiff. Default is True")
     parser.add_argument("--zarr", action='store_true', help="Flag to save as .zarr. Default is False")
     parser.add_argument("--assemble", action='store_true', help="Flag to assemble the each ROI into a single image.")
+    parser.add_argument("--debug", action='store_true', help="Output verbose debug information.")
 
     # Commands
     args = parser.parse_args()
     if not args.path:
-        args.path = sr.lbm_home_dir
+        logger.warning("No path provided. Exiting.")
+        return
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug mode enabled.")
 
     files = sr.get_files(args.path, ext='.tiff')
+    logger.debug(f"Files found: {files}")
     if len(files) < 1:
         raise ValueError(
             f"Input path given is a non-tiff file: {args.path}.\n"
@@ -96,9 +102,11 @@ def main():
         print(f"Metadata for {files[0]}:")
         # filter out the verbose scanimage frame/roi metadata
         print_params({k: v for k, v in metadata.items() if k not in ['si', 'roi_info']})
+
     if args.save:
+
         savepath = Path(args.save).expanduser()
-        print(f'Saving z-planes to {savepath}.')
+        logger.info(f"Saving data to {savepath}.")
 
         t_scan_init = time.time()
         scan = sr.ScanLBM(
@@ -107,15 +115,20 @@ def main():
             trim_roi_y=args.trim_y,
         )
         t_scan_init_end = time.time() - t_scan_init
-        print(f"Scan initialized in {t_scan_init_end:.2f} seconds.")
+        logger.info(f"--- Scan initialized in {t_scan_init_end:.2f} seconds.")
 
         frames = listify_index(process_slice_str(args.frames), scan.num_frames)
         zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
 
+        logger.debug(f"Frames: {len(frames)}")
+        logger.debug(f"Z-Planes: {len(zplanes)}")
+
         if args.zarr:
             ext = '.zarr'
+            logger.debug("Saving as .zarr.")
         elif args.tiff:
             ext = '.tiff'
+            logger.debug("Saving as .tiff.")
         else:
             raise NotImplementedError("Only .zarr and .tif are supported file formats.")
 
@@ -130,7 +143,7 @@ def main():
             assemble=args.assemble
         )
         t_save_end = time.time() - t_save
-        print(f"Data saved in {t_save_end:.2f} seconds.")
+        logger.info(f"--- Processing complete in {t_save_end:.2f} seconds. --")
         return scan
     else:
         print(args.path)

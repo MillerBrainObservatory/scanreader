@@ -220,7 +220,6 @@ class ScanLBM:
             return np.empty(0)
 
         save_start = time.time()
-
         for p in planes:
             p_start = time.time()
 
@@ -268,6 +267,7 @@ class ScanLBM:
             self._write_tiff(path, f'assembled_plane_{p + 1}', item, metadata=self.metadata, overwrite=overwrite)
             p_end = time.time() - p_start
             logger.debug(f"--- Plane {p + 1} processed in {p_end:.2f} seconds.")
+        logger.debug(f"--- Assembled data saved in {time.time() - save_start:.2f} seconds.")
 
     def _save_data(self, path, planes, frames, overwrite, ext, by_roi):
         p = None
@@ -338,7 +338,7 @@ class ScanLBM:
             return
         logger.info(f"Writing {filename}")
         t_write = time.time()
-        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata)
+        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata, photometric='minisblack',)
         t_write_end = time.time() - t_write
         logger.info(f"Data written in {t_write_end:.2f} seconds.")
 

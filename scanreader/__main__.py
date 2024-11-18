@@ -44,7 +44,7 @@ def main():
                         help="Frames to read. Use slice notation like NumPy arrays ("
                              "e.g., 1:50 gives frames 1 to 50, 10:100:2 gives frames 10, 20, 30...)."
                         )
-    parser.add_argument("--zplanes",
+    parser.add_argument("--planes",
                         type=str,
                         default=":",  # all planes
                         help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2).")

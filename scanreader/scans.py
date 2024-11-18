@@ -33,6 +33,7 @@ BRAINGLOBE_STRUCTURE_TEMPLATE = {
     # default color for visualizing the region, feel free to leave white or randomize it
 }
 
+
 def make_json_serializable(obj):
     """Convert metadata to JSON serializable format."""
     if isinstance(obj, dict):
@@ -46,6 +47,7 @@ def make_json_serializable(obj):
     else:
         return obj
 
+
 def get_metadata(file: os.PathLike):
     if not file:
         return None
@@ -55,8 +57,8 @@ def get_metadata(file: os.PathLike):
     str_f = tiff_file.filename
 
     if 'plane_' in str_f and meta is None:
-        raise ValueError(f"No metadata found in {str_f}. Files with 'plane_' in the name indicated previously "
-                         f"extracted data. The called function operates on raw scanimage tiff files.")
+        raise ValueError(f"No metadata found in {str_f}. This appears to be a processed file. "
+                         f"The called function operates only on raw scanimage tiff files.")
 
     si = meta.get('FrameData', {})
     if not si:
@@ -137,6 +139,7 @@ class ScanLBM:
         self.metadata = kwargs.get("metadata", None)
         tiffs = Path(files[0]).parent.glob("*.tif*")
         self.tiff_files = [tifffile.TiffFile(fname) for fname in tiffs]
+        self._dtype = np.uint16
 
         if not self.metadata:
             self.metadata = get_metadata(files[0])
@@ -167,20 +170,20 @@ class ScanLBM:
         self._xslices_out = self.fields[0].output_xslices
         self._yslices_out = self.fields[0].output_yslices
 
-        self._data = da.empty((self.num_frames, self.height, self.width), chunks=CHUNKS)
+        self._data = da.empty((self.num_frames, self.num_channels, self.height, self.width), chunks=CHUNKS)
         self.metadata['fps'] = self.fps
         self._fix_scan_offset = kwargs.get('fix_scan_offset', False)
 
     def save_as(
-        self,
-        savedir: os.PathLike,
-        planes=None,
-        frames=None,
-        metadata=None,
-        overwrite=True,
-        by_roi=False,
-        ext='.tiff',
-        assemble=False
+            self,
+            savedir: os.PathLike,
+            planes=None,
+            frames=None,
+            metadata=None,
+            overwrite=True,
+            by_roi=False,
+            ext='.tiff',
+            assemble=False
     ):
         savedir = Path(savedir)
         if planes is None:
@@ -203,7 +206,10 @@ class ScanLBM:
 
     def _save_assembled(self, path, planes, frames, overwrite, ext, by_roi=False):
         if by_roi:
-            raise NotImplementedError("Cannot assemble ROI's and save by ROI.")
+            raise NotImplementedError("--assemble and --roi both given as arguments, Cannot assemble ROI's and save "
+                                      "by ROI.")
+
+        logger.info(f"Saving assembled data to {path}")
 
         x_in, y_in = slice(None), slice(None)
 
@@ -213,49 +219,55 @@ class ScanLBM:
         if [] in [*y_list, *x_list, planes, frames]:
             return np.empty(0)
 
-        # cast to TCYX
-        item = da.empty(
-            [
-                len(frames),
-                len(planes),
-                len(y_list),
-                len(x_list),
-            ],
-            dtype=self.dtype,
-            chunks=({0: 'auto', 1: 'auto', 2: -1, 3: -1})
-        )
+        save_start = time.time()
 
-        # Initialize the starting index for the next iteration, only relevant for scan phase
-        current_x_start = 0
+        for p in planes:
+            p_start = time.time()
 
-        # Over each subfield in the field (only one for non-contiguous fields)
-        slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
-        for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
-            # Read the required pages (and slice out the subfield)
-            pages = self._read_pages([0], planes, frames, yslice, xslice)
+            # cast to TCYX
+            item = da.empty(
+                [
+                    len(frames),
+                    len(y_list),
+                    len(x_list),
+                ],
+                dtype=self.dtype,
+                chunks=({0: 'auto', 1: -1, 2: -1})  # chunk along time axis
+            )
+            logger.info(f"Processing plane {p + 1} of {len(planes)}")
 
-            x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
-            y_range = range(output_yslice.start, output_yslice.stop)
+            # Initialize the starting index for the next iteration, only relevant for scan phase
+            current_x_start = 0
 
-            ys = [[y - output_yslice.start] for y in y_list if y in y_range]
-            xs = [x - output_xslice.start for x in x_list if x in x_range]
+            # Over each subfield in the field (only one for non-contiguous fields)
+            slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
+            for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
+                field_start = time.time()
+                logger.info(f"Processing subfield {idx + 1} of {len(self.yslices)}")
 
-            # Assign to the output item
-            # Instead of using `output_xslice` directly, use `current_x_start` and calculate the width
-            x_width = output_xslice.stop - output_xslice.start
-            item[:, :, output_yslice, current_x_start:current_x_start + x_width] = pages[:, :, ys, xs]
+                # Read the required pages (and slice out the subfield)
+                pages = self._read_pages([0], [p], frames, yslice, xslice)
+                pages_read = time.time() - field_start
+                logger.debug(f"--- Pages read in {pages_read:.2f} seconds.")
 
-            # Update `current_x_start` for the next iteration
-            current_x_start += x_width
-        if ext in ['.tif', '.tiff']:
-            for p in range(item.shape[1]):
-                self._write_tiff(
-                    path,
-                   f'assembled_plane_{p + 1}',
-                    item[:, p, ...].compute(),
-                    metadata=self.metadata,
-                    overwrite=overwrite
-                )
+                x_range = range(output_xslice.start, output_xslice.stop)  # adjust for offset
+                y_range = range(output_yslice.start, output_yslice.stop)
+
+                ys = [[y - output_yslice.start] for y in y_list if y in y_range]
+                xs = [x - output_xslice.start for x in x_list if x in x_range]
+
+                x_width = output_xslice.stop - output_xslice.start
+                item_start = time.time()
+                item[:, output_yslice, current_x_start:current_x_start + x_width] = np.squeeze(pages[:, :, ys, xs])
+                item_appended = time.time() - item_start
+                logger.debug(f"--- ROI appended in {item_appended:.2f} seconds.")
+
+                current_x_start += x_width
+            field_end = time.time() - p_start
+            logger.debug(f"--- Field processed in {field_end:.2f} seconds.")
+            self._write_tiff(path, f'assembled_plane_{p + 1}', item, metadata=self.metadata, overwrite=overwrite)
+            p_end = time.time() - p_start
+            logger.debug(f"--- Plane {p + 1} processed in {p_end:.2f} seconds.")
 
     def _save_data(self, path, planes, frames, overwrite, ext, by_roi):
         p = None
@@ -303,14 +315,12 @@ class ScanLBM:
                     slce_y, slce_x, roi = inner_val
                     name = f'roi_{inner_idx + 1}'
 
-                print(f'-- Creating dataset: {outer_label} {outer_idx + 1}, {inner_label} {inner_idx + 1} --')
+                print(f'-- Reading pages: {outer_label} {outer_idx + 1}, {inner_label} {inner_idx + 1} --')
                 t_start = time.time()
-
-                # Read pages
                 pages = self._read_pages([0], [p], frames, slce_y, slce_x)
-
+                t_end = time.time() - t_start
+                logger.info(f"TiffFile pages read in {t_end:.2f} seconds.")
                 file_writer(subdir, name, pages, roi.roi_info if roi else None)
-                print(f'Dataset saved. Elapsed time: {time.time() - t_start:.2f} seconds')
 
     def _get_file_writer(self, ext, overwrite):
         if ext in ['.tif', '.tiff']:
@@ -323,8 +333,14 @@ class ScanLBM:
     def _write_tiff(self, path, name, data, metadata=None, overwrite=True):
         filename = Path(path / f'{name}.tiff')
         if filename.exists() and not overwrite:
-            raise FileExistsError(f'File already exists: {filename}')
+            logger.warning(
+                f'File already exists: {filename}. To overwrite, set overwrite=True (--overwrite in command line)')
+            return
+        logger.info(f"Writing {filename}")
+        t_write = time.time()
         tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata)
+        t_write_end = time.time() - t_write
+        logger.info(f"Data written in {t_write_end:.2f} seconds.")
 
     def _write_zarr(self, path, name, data, metadata=None, overwrite=True):
         store = zarr.DirectoryStore(path)
@@ -350,7 +366,7 @@ class ScanLBM:
         return self._data
 
     def __str__(self):
-        return f"Tiled shape: {self.shape}"
+        return f"Tiled shape: {self.shape} with axes {self.dims} and dtype {self.dtype}."
 
     def __getitem__(self, key):
         full_key = fill_key(key, num_dimensions=4)  # key represents the scanfield index
@@ -389,7 +405,6 @@ class ScanLBM:
         # Over each subfield in the field (only one for non-contiguous fields)
         slices = zip(self.yslices, self.xslices, self.yslices_out, self.xslices_out)
         for idx, (yslice, xslice, output_yslice, output_xslice) in enumerate(slices):
-
             # Read the required pages (and slice out the subfield)
             pages = self._read_pages([0], channel_list, frame_list, yslice, xslice)
 
@@ -426,7 +441,7 @@ class ScanLBM:
     @property
     def dtype(self):
         """Datatype of the final tiled image."""
-        return self._data.dtype
+        return self._dtype
 
     @property
     def shape(self):
@@ -770,3 +785,7 @@ class ScanLBM:
         """If ScanImage 2016 or newer. This should be True"""
         # This check is due to us not knowing which metadata value to trust for the scan rate.
         return self.si_metadata["SI.hScan2D.uniformSampling"]
+
+    @dtype.setter
+    def dtype(self, value):
+        self._dtype = value

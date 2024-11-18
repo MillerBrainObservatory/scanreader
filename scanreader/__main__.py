@@ -2,6 +2,7 @@
 __main__.py: scanreader entrypoint.
 """
 import argparse
+import time
 import logging
 import warnings
 from functools import partial
@@ -13,7 +14,7 @@ from scanreader.utils import listify_index
 # set logging to critical only
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.CRITICAL)
+logger.setLevel(logging.WARNING)
 
 # suppress warnings
 warnings.filterwarnings("ignore")
@@ -33,20 +34,19 @@ def print_params(params, indent=5):
 
 def main():
     parser = argparse.ArgumentParser(description="Scanreader CLI for processing ScanImage tiff files.")
-
     parser.add_argument("path",
                         type=str,
                         default=None,
                         help="Path to the file or directory to process.")
     parser.add_argument("--frames",
                         type=str,
-                        default=":", # all frames
+                        default=":",  # all frames
                         help="Frames to read. Use slice notation like NumPy arrays ("
                              "e.g., 1:50 gives frames 1 to 50, 10:100:2 gives frames 10, 20, 30...)."
                         )
     parser.add_argument("--zplanes",
                         type=str,
-                        default=":", # all planes
+                        default=":",  # all planes
                         help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2).")
     parser.add_argument("--trim_x",
                         type=int,
@@ -55,9 +55,10 @@ def main():
                         help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right "
                              "edges).")
     parser.add_argument("--trim_y", type=int, nargs=2, default=(0, 0),
-                        help="Number of y-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for top and bottom edges).")
+                        help="Number of y-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for top and bottom "
+                             "edges).")
     # Boolean Flags
-    parser.add_argument( "--metadata", action="store_true",
+    parser.add_argument("--metadata", action="store_true",
                         help="Print a dictionary of scanimage metadata for files at the given path.")
     parser.add_argument("--roi",
                         action='store_true',
@@ -65,21 +66,26 @@ def main():
                              "arguemnet it would save like 'zarr/plane_1/roi_1'."
                         )
 
-    parser.add_argument("--save", type=str, nargs='?',help="Path to save data to. If not provided, metadata will be "
-                                                           "printed.")
+    parser.add_argument("--save", type=str, nargs='?', help="Path to save data to. If not provided, metadata will be "
+                                                            "printed.")
     parser.add_argument("--overwrite", action='store_true', help="Overwrite existing files if saving data..")
-    parser.add_argument("--tiff",  action='store_false', help="Flag to save as .tiff. Default is True")
+    parser.add_argument("--tiff", action='store_false', help="Flag to save as .tiff. Default is True")
     parser.add_argument("--zarr", action='store_true', help="Flag to save as .zarr. Default is False")
     parser.add_argument("--assemble", action='store_true', help="Flag to assemble the each ROI into a single image.")
+    parser.add_argument("--debug", action='store_true', help="Output verbose debug information.")
 
     # Commands
-
     args = parser.parse_args()
-
     if not args.path:
-        args.path = sr.lbm_home_dir
+        logger.warning("No path provided. Exiting.")
+        return
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug mode enabled.")
 
     files = sr.get_files(args.path, ext='.tiff')
+    logger.debug(f"Files found: {files}")
     if len(files) < 1:
         raise ValueError(
             f"Input path given is a non-tiff file: {args.path}.\n"
@@ -89,29 +95,44 @@ def main():
         print(f'Found files in {args.path}:\n{files}')
 
     if args.metadata:
+        t_metadata = time.time()
         metadata = get_metadata(files[0])
+        t_metadata_end = time.time() - t_metadata
+        print(f"Metadata read in {t_metadata_end:.2f} seconds.")
+        print(f"Metadata for {files[0]}:")
         # filter out the verbose scanimage frame/roi metadata
         print_params({k: v for k, v in metadata.items() if k not in ['si', 'roi_info']})
 
     if args.save:
-        savepath = Path(args.save).expanduser()
-        print(f'Saving z-planes to {savepath}.')
 
+        savepath = Path(args.save).expanduser()
+        logger.info(f"Saving data to {savepath}.")
+
+        t_scan_init = time.time()
         scan = sr.ScanLBM(
             files,
             trim_roi_x=args.trim_x,
             trim_roi_y=args.trim_y,
         )
+        t_scan_init_end = time.time() - t_scan_init
+        logger.info(f"--- Scan initialized in {t_scan_init_end:.2f} seconds.")
 
         frames = listify_index(process_slice_str(args.frames), scan.num_frames)
         zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
 
+        logger.debug(f"Frames: {len(frames)}")
+        logger.debug(f"Z-Planes: {len(zplanes)}")
+
         if args.zarr:
             ext = '.zarr'
+            logger.debug("Saving as .zarr.")
         elif args.tiff:
             ext = '.tiff'
+            logger.debug("Saving as .tiff.")
         else:
             raise NotImplementedError("Only .zarr and .tif are supported file formats.")
+
+        t_save = time.time()
         scan.save_as(
             savepath,
             frames=frames,
@@ -121,10 +142,11 @@ def main():
             ext=ext,
             assemble=args.assemble
         )
-
+        t_save_end = time.time() - t_save
+        logger.info(f"--- Processing complete in {t_save_end:.2f} seconds. --")
         return scan
     else:
-        return metadata
+        print(args.path)
 
 
 def process_slice_str(slice_str):

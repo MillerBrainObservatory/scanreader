@@ -143,6 +143,7 @@ python scanreader.py --help
 CPU: 13th Gen Intel(R) Core(TM) i9-13900KS   3.20 GHz
 RAM: 128 GB usable
 OS: Windows 10 Pro, 22H2
+Drive: 2TB Samsung 980 Pro M.2 NVMe
 
 | **Command**                      | **Time (seconds)** | **Details**                            |
 |----------------------------------|--------------------|----------------------------------------|

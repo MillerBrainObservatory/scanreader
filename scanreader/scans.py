@@ -3,10 +3,12 @@ import itertools
 import functools
 import logging
 import os
+import re
 from pathlib import Path
 import time
 import numpy as np
 import tifffile
+from tifffile.tifffile import matlabstr2py
 import zarr
 
 import scanreader
@@ -139,6 +141,8 @@ class ScanLBM:
         self.metadata = kwargs.get("metadata", None)
         tiffs = Path(files[0]).parent.glob("*.tif*")
         self.tiff_files = [tifffile.TiffFile(fname) for fname in tiffs]
+        self.header = '{}\n{}'.format(self.tiff_files[0].pages[0].description,
+                                      self.tiff_files[0].pages[0].software)  # set header (ScanImage metadata)
         self._dtype = np.uint16
 
         if not self.metadata:
@@ -338,7 +342,7 @@ class ScanLBM:
             return
         logger.info(f"Writing {filename}")
         t_write = time.time()
-        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata, photometric='minisblack',)
+        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata, photometric='minisblack', )
         t_write_end = time.time() - t_write
         logger.info(f"Data written in {t_write_end:.2f} seconds.")
 
@@ -708,8 +712,8 @@ class ScanLBM:
 
     @property
     def _num_pages(self):
-        """Number of tiff directories in the raw .tiff file. For LBM scans, will be num_planes * num_frames"""
-        return self.metadata["num_pages"]
+        num_pages = sum([len(tiff_file.pages) for tiff_file in self.tiff_files])
+        return num_pages
 
     @property
     def _page_height(self):
@@ -723,8 +727,52 @@ class ScanLBM:
 
     @property
     def num_frames(self):
-        """Number of timepoints in each 2D planar timeseries."""
-        return self.raw_shape[0]
+        """ Each tiff page is an image at a given channel, scanning depth combination."""
+        if self.is_slow_stack:
+            num_frames = min(self.num_requested_frames / self._num_averaged_frames,
+                             self._num_pages / self.num_channels)  # finished in the first slice
+        else:
+            num_frames = self._num_pages / (self.num_channels * self.num_scanning_depths)
+        num_frames = int(num_frames)  # discard last frame if incomplete
+        return num_frames
+
+    @property
+    def num_requested_frames(self):
+        if self.is_slow_stack:
+            match = re.search(r'hStackManager\.framesPerSlice = (?P<num_frames>.*)',
+                              self.header)
+        else:
+            match = re.search(r'hFastZ\.numVolumes = (?P<num_frames>.*)', self.header)
+        num_requested_frames = int(1e9 if match.group('num_frames') == 'Inf' else
+                                   float(match.group('num_frames'))) if match else None
+        return num_requested_frames
+
+    @property
+    def num_scanning_depths(self):
+        if self.is_slow_stack:
+            """ Number of scanning depths actually recorded in this stack."""
+            num_scanning_depths = self._num_pages / (self.num_channels * self.num_frames)
+            num_scanning_depths = int(num_scanning_depths)  # discard last slice if incomplete
+        else:
+            num_scanning_depths = len(self.requested_scanning_depths)
+        return num_scanning_depths
+
+    @property
+    def _num_averaged_frames(self):
+        """ Number of requested frames are averaged to form one saved frame. """
+        match = re.search(r'hScan2D\.logAverageFactor = (?P<num_avg_frames>.*)', self.header)
+        num_averaged_frames = int(float(match.group('num_avg_frames'))) if match else None
+        return num_averaged_frames
+
+    @property
+    def requested_scanning_depths(self):
+        match = re.search(r'hStackManager\.zs = (?P<zs>.*)', self.header)
+        if match:
+            zs = matlabstr2py(match.group('zs'))
+            scanning_depths = zs if isinstance(zs, list) else [zs]
+        else:
+            scanning_depths = None
+        return scanning_depths
 
     @property
     def num_channels(self):
@@ -749,10 +797,11 @@ class ScanLBM:
 
     @property
     def is_slow_stack(self):
-        """
-        Fast stack or slow stack. Fast stacks collect all frames for one slice before moving on.
-        """
-        return self.si_metadata["SI.hFastZ.enable"]
+        """ True if fastZ is disabled. All frames for one slice are recorded first before
+        moving to the next slice."""
+        match = re.search(r'hFastZ\.enable = (?P<is_slow>.*)', self.header)
+        is_slow_stack = (match.group('is_slow') in ['false', '0']) if match else None
+        return is_slow_stack
 
     @property
     def multi_roi(self):

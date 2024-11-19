@@ -118,7 +118,7 @@ def main():
         logger.info(f"--- Scan initialized in {t_scan_init_end:.2f} seconds.")
 
         frames = listify_index(process_slice_str(args.frames), scan.num_frames)
-        zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
+        zplanes = listify_index(process_slice_str(args.planes), scan.num_planes)
 
         logger.debug(f"Frames: {len(frames)}")
         logger.debug(f"Z-Planes: {len(zplanes)}")

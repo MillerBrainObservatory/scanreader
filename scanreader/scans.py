@@ -187,7 +187,9 @@ class ScanLBM:
             overwrite=True,
             by_roi=False,
             ext='.tiff',
-            assemble=False
+            assemble=False,
+            trimx=(0, 0),
+            trimy=(0, 0),
     ):
         savedir = Path(savedir)
         if planes is None:
@@ -342,14 +344,14 @@ class ScanLBM:
             return
         logger.info(f"Writing {filename}")
         t_write = time.time()
-        tifffile.imwrite(filename, data, bigtiff=True, metadata=metadata, photometric='minisblack', )
+        tifffile.imwrite(filename, data.squeeze(), bigtiff=True, metadata=metadata, photometric='minisblack', )
         t_write_end = time.time() - t_write
         logger.info(f"Data written in {t_write_end:.2f} seconds.")
 
     def _write_zarr(self, path, name, data, metadata=None, overwrite=True):
         store = zarr.DirectoryStore(path)
         root = zarr.group(store, overwrite=overwrite)
-        ds = root.create_dataset(name=name, data=data, overwrite=True)
+        ds = root.create_dataset(name=name, data=data.squeeze(), overwrite=True)
         if metadata:
             ds.attrs['metadata'] = metadata
 

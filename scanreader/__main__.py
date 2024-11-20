@@ -48,13 +48,13 @@ def main():
                         type=str,
                         default=":",  # all planes
                         help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2).")
-    parser.add_argument("--trim_x",
+    parser.add_argument("--trimx",
                         type=int,
                         nargs=2,
                         default=(0, 0),
                         help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right "
                              "edges).")
-    parser.add_argument("--trim_y", type=int, nargs=2, default=(0, 0),
+    parser.add_argument("--trimy", type=int, nargs=2, default=(0, 0),
                         help="Number of y-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for top and bottom "
                              "edges).")
     # Boolean Flags
@@ -111,8 +111,8 @@ def main():
         t_scan_init = time.time()
         scan = sr.ScanLBM(
             files,
-            trim_roi_x=args.trim_x,
-            trim_roi_y=args.trim_y,
+            trim_roi_x=args.trimx,
+            trim_roi_y=args.trimy,
         )
         t_scan_init_end = time.time() - t_scan_init
         logger.info(f"--- Scan initialized in {t_scan_init_end:.2f} seconds.")
@@ -140,7 +140,9 @@ def main():
             by_roi=args.roi,
             overwrite=args.overwrite,
             ext=ext,
-            assemble=args.assemble
+            assemble=args.assemble,
+            trimx=args.trimx,
+            trimy=args.trimy,
         )
         t_save_end = time.time() - t_save
         logger.info(f"--- Processing complete in {t_save_end:.2f} seconds. --")

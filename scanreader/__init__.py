@@ -6,6 +6,7 @@ import tifffile
 from .multiroi import Field, ROI
 from .scans import ScanLBM
 from . import scans
+from .utils import fix_scan_phase, return_scan_offset
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)

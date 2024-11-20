@@ -44,17 +44,17 @@ def main():
                         help="Frames to read. Use slice notation like NumPy arrays ("
                              "e.g., 1:50 gives frames 1 to 50, 10:100:2 gives frames 10, 20, 30...)."
                         )
-    parser.add_argument("--zplanes",
+    parser.add_argument("--planes",
                         type=str,
                         default=":",  # all planes
                         help="Z-Planes to read. Use slice notation like NumPy arrays (e.g., 1:50, 5:15:2).")
-    parser.add_argument("--trim_x",
+    parser.add_argument("--trimx",
                         type=int,
                         nargs=2,
                         default=(0, 0),
                         help="Number of x-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for left and right "
                              "edges).")
-    parser.add_argument("--trim_y", type=int, nargs=2, default=(0, 0),
+    parser.add_argument("--trimy", type=int, nargs=2, default=(0, 0),
                         help="Number of y-pixels to trim from each ROI. Tuple or list (e.g., 4 4 for top and bottom "
                              "edges).")
     # Boolean Flags
@@ -111,14 +111,14 @@ def main():
         t_scan_init = time.time()
         scan = sr.ScanLBM(
             files,
-            trim_roi_x=args.trim_x,
-            trim_roi_y=args.trim_y,
+            trim_roi_x=args.trimx,
+            trim_roi_y=args.trimy,
         )
         t_scan_init_end = time.time() - t_scan_init
         logger.info(f"--- Scan initialized in {t_scan_init_end:.2f} seconds.")
 
         frames = listify_index(process_slice_str(args.frames), scan.num_frames)
-        zplanes = listify_index(process_slice_str(args.zplanes), scan.num_planes)
+        zplanes = listify_index(process_slice_str(args.planes), scan.num_planes)
 
         logger.debug(f"Frames: {len(frames)}")
         logger.debug(f"Z-Planes: {len(zplanes)}")
@@ -140,7 +140,9 @@ def main():
             by_roi=args.roi,
             overwrite=args.overwrite,
             ext=ext,
-            assemble=args.assemble
+            assemble=args.assemble,
+            trimx=args.trimx,
+            trimy=args.trimy,
         )
         t_save_end = time.time() - t_save
         logger.info(f"--- Processing complete in {t_save_end:.2f} seconds. --")
